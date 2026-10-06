@@ -95,3 +95,27 @@ AI CLUB is a production-grade full-stack web platform designed as an elite artif
 2. **No Secret Leaks**: Only `VITE_` prefixed public configuration is accessible to client bundles.
 3. **Reproducible Migrations**: All database schema changes are managed via version-controlled SQL migrations.
 4. **Resilient Routing**: Hierarchical routes with layout isolation for Public, Applicant, Member, and Admin surfaces.
+5. **Canonical User Identity**: Immutable link between `auth.users.id` and `public.profiles.id`. Normal users cannot modify their authorization role or impersonate other accounts.
+
+---
+
+## 5. Milestone 2 Identity Lifecycle
+
+```
+[Register: /register] 
+       │
+       ▼
+[Supabase auth.users created] 
+       │
+       ▼ (Database Trigger: handle_new_user)
+[public.profiles provisioned: role = 'applicant']
+       │
+       ▼
+[Session Restored in AuthProvider]
+       │
+       ▼
+[Protected /profile Route: View & Edit Permitted Fields]
+       │
+       ▼
+[PATCH /api/v1/profile: Validated & Protected against Role Escalation]
+```

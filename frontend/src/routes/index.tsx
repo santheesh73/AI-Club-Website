@@ -8,10 +8,15 @@ import { RouteGuard } from '@/routes/RouteGuard';
 import { LandingPage } from '@/pages/public/LandingPage';
 import { MilestonePlaceholder } from '@/components/shared/MilestonePlaceholder';
 
+import { LoginPage } from '@/pages/public/LoginPage';
+import { RegisterPage } from '@/pages/public/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
+import { ProfilePage } from '@/pages/applicant/ProfilePage';
+
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* ================= PUBLIC ROUTES ================= */}
+      {/* ================= PUBLIC & AUTH ROUTES ================= */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
         <Route
@@ -74,34 +79,15 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
-          path="/login"
+          path="/profile"
           element={
-            <MilestonePlaceholder
-              title="Authentication"
-              milestone="Milestone 3: Authentication"
-              description="Secure authentication gateway powered by Supabase Auth."
-            />
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <MilestonePlaceholder
-              title="Register Account"
-              milestone="Milestone 3: Authentication"
-              description="Account registration for prospective AI CLUB applicants."
-            />
-          }
-        />
-        <Route
-          path="/forgot-password"
-          element={
-            <MilestonePlaceholder
-              title="Reset Password"
-              milestone="Milestone 3: Authentication"
-              description="Password recovery and secure email reset workflow."
-            />
+            <RouteGuard requiredRole="authenticated">
+              <ProfilePage />
+            </RouteGuard>
           }
         />
       </Route>
@@ -155,16 +141,7 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path="profile"
-          element={
-            <MilestonePlaceholder
-              title="Applicant Profile"
-              milestone="Milestone 3: Applicant Portal"
-              description="Manage candidate credentials, GitHub profile, and resume."
-            />
-          }
-        />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
       {/* ================= MEMBER ROUTES ================= */}

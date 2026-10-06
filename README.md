@@ -248,13 +248,14 @@ npm run build
 
 ## 10. Platform Milestone Roadmap
 
-- [x] **Milestone 1 — Foundation & Architecture** *(Current)*: Monorepo layout, design system tokens, routing foundation, modular backend, health telemetry, Supabase schema baseline, and security model.
-- [ ] **Milestone 2 — Public Experience**: Editorial landing page, About page, curriculum preview, public projects showcase, community directory.
-- [ ] **Milestone 3 — Applicant Experience & Authentication**: Student registration, login with Supabase Auth, application intake forms, applicant status tracker.
+- [x] **Milestone 1 — Foundation & Architecture**: Monorepo layout, design system tokens, routing foundation, modular backend, health telemetry, Supabase schema baseline, and security model.
+- [x] **Milestone 2 — Identity, Authentication & Profiles**: Supabase Auth integration, centralized AuthContext, session restoration, registration, login, logout, password recovery, protected routes, user profile schema with academic & portfolio attributes, Row-Level Security, backend verification, and anti-privilege escalation triggers.
+- [ ] **Milestone 3 — Applicant Experience & Intake**: Multi-step club application forms, academic profile enrichment, submission validation, and applicant status tracker.
 - [ ] **Milestone 4 — Assessment Engine**: 25-question MCQ timed assessment, automated grading algorithm, percentile calculation, result dashboard.
-- [ ] **Milestone 5 — Member Dashboard & Profiles**: Member workspace, active sprints, announcements feed, portfolio profiles.
+- [ ] **Milestone 5 — Member Dashboard & Activation**: Member onboarding, verified membership status, sprint boards, and community workspace.
 - [ ] **Milestone 6 — Courses & Events**: Interactive curriculum modules, code exercises, event calendar, RSVPs, attendance tracking.
 - [ ] **Milestone 7 — Projects & Teams**: Cross-disciplinary AI project teams, sprint boards, repository links, submission reviews.
 - [ ] **Milestone 8 — Achievements & Notifications**: Verifiable badges, activity streaks, real-time alerts, multi-channel email dispatch.
 - [ ] **Milestone 9 — AI Experience**: Interactive AI learning assistant, automated code explainers, skill-gap analysis, personalized course recommendations.
 - [ ] **Milestone 10 — Admin Platform & Governance**: Administrative dashboard, applicant scoring queue, member roster management, event administration, audit logs.
+

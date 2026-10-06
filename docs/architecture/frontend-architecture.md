@@ -64,3 +64,13 @@ Layouts provide persistent framing and semantic grouping for the four primary us
 - `src/services/apiClient.ts` provides a typed abstraction over the native browser `fetch` API.
 - Automatically retrieves and binds the Supabase user JWT bearer token to the `Authorization` header.
 - Unifies response parsing into standard `{ success: true, data: T }` or `{ success: false, error: ApiError }` format.
+
+---
+
+## 6. Authentication State & Identity Architecture (Milestone 2)
+
+- **Centralized Store**: Implemented via `AuthProvider` and `useAuth()` in `src/features/auth/AuthContext.tsx`.
+- **State Properties**: Exposes `user`, `session`, `profile`, `isAuthenticated`, `isLoading`, and action methods (`signIn`, `signUp`, `signOut`, `resetPassword`, `updatePassword`, `refreshProfile`, `updateProfile`).
+- **Reactive Subscription**: Subscribes to `supabase.auth.onAuthStateChange` to synchronize state automatically across tab focus, token expiration, sign-in, and sign-out.
+- **Race Condition Prevention**: Holds `isLoading = true` until initial session check and linked profile fetch complete, preventing flashing of protected views.
+- **Error Sanitization**: Formats provider responses via `mapAuthError()`, insulating users from raw infrastructure errors.

@@ -90,3 +90,12 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
   - `403 Forbidden`: Authenticated user lacks required role
   - `404 Not Found`: Endpoint or resource does not exist
   - `500 Internal Server Error`: Uncaught exceptions (stack redacted in production)
+
+---
+
+## 5. Profile & Identity Endpoints (Milestone 2)
+
+- **Identity Derivation**: `req.user.id` is extracted strictly from the verified Supabase Auth JWT in `authenticate` middleware. No endpoints accept user ID as an input parameter for self operations.
+- **Endpoints**:
+  - `GET /api/v1/profile`: Returns the authenticated user's profile entity.
+  - `PATCH /api/v1/profile`: Updates permitted academic, contact, and bio fields. Enforces `updateProfileSchema.body.strict()`, rejecting payloads that attempt to modify `role`, `id`, or `email`.

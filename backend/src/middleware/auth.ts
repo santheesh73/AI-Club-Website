@@ -28,12 +28,19 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
   try {
     if (!supabaseAdmin) {
-      // In local dev without Supabase credentials connected yet:
+      // In local development/testing without live Supabase cloud connection
       if (process.env.NODE_ENV !== 'production') {
+        const isAdmin = token === 'admin-test-token';
+        const isUserB = token === 'user-b-token';
+
         req.user = {
-          id: 'dev-user-id',
-          email: 'dev@aiclub.internal',
-          role: 'admin',
+          id: isAdmin ? 'admin-user-id' : isUserB ? 'user-b-id' : 'user-a-id',
+          email: isAdmin
+            ? 'admin@aiclub.internal'
+            : isUserB
+            ? 'userb@aiclub.internal'
+            : 'usera@aiclub.internal',
+          role: isAdmin ? 'admin' : 'applicant',
         };
         return next();
       }
@@ -46,7 +53,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       return next(new AppError('Invalid or expired authentication session', 401, 'UNAUTHORIZED'));
     }
 
-    // Role is authoritative from user_metadata or app_metadata
+    // Role is authoritative from user metadata or database profile
     const userRole = (user.app_metadata?.role || user.user_metadata?.role || 'applicant') as AuthenticatedUser['role'];
 
     req.user = {

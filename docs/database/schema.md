@@ -52,18 +52,27 @@ database/supabase/
 |---|---|---|---|
 | `id` | `UUID` | `PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE` | 1-to-1 link to Supabase Auth User |
 | `email` | `TEXT` | `NOT NULL, UNIQUE` | User's verified email address |
-| `full_name` | `TEXT` | `NOT NULL, DEFAULT ''` | Display and legal name |
+| `full_name` | `TEXT` | `NOT NULL, DEFAULT '', CHECK (length <= 100)` | Display and legal name |
 | `role` | `user_role` | `NOT NULL, DEFAULT 'applicant'` | System authorization role |
-| `avatar_url` | `TEXT` | `NULLABLE` | Profile photo storage URI |
-| `bio` | `TEXT` | `NULLABLE` | Short personal/academic summary |
-| `github_username` | `TEXT` | `NULLABLE` | Verified GitHub handle |
+| `register_number` | `TEXT` | `NULLABLE, UNIQUE` | Academic roll / registration number |
+| `department` | `TEXT` | `NULLABLE` | Student academic department |
+| `year` | `SMALLINT` | `NULLABLE, CHECK (year >= 1 AND year <= 5)` | Academic year of study |
+| `section` | `TEXT` | `NULLABLE` | Academic cohort section |
+| `phone` | `TEXT` | `NULLABLE` | Phone contact number |
+| `avatar_url` | `TEXT` | `NULLABLE` | Profile photo storage URI or link |
+| `bio` | `TEXT` | `NULLABLE, CHECK (length <= 1000)` | Academic / engineering summary |
+| `skills` | `TEXT[]` | `NOT NULL, DEFAULT '{}'` | Technical competencies list |
+| `interests` | `TEXT[]` | `NOT NULL, DEFAULT '{}'` | AI and research focus areas |
+| `github_url` | `TEXT` | `NULLABLE` | Verified GitHub profile URL |
 | `linkedin_url` | `TEXT` | `NULLABLE` | LinkedIn profile URL |
+| `portfolio_url` | `TEXT` | `NULLABLE` | Personal website URL |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL, DEFAULT NOW()` | Entity creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL, DEFAULT NOW()` | Automatically maintained timestamp |
 
-### 4.4 Automated Triggers
+### 4.4 Automated Triggers & Security
 - `update_updated_at_column()`: Automatically modifies `updated_at` upon any row update.
 - `handle_new_user()`: Automatically provisions a row in `public.profiles` whenever an entity is created in `auth.users`.
+- `protect_profile_security_fields()`: Enforces that `id`, `email`, and `role` cannot be modified by non-admin users, preventing self-promotion to admin.
 
 ---
 

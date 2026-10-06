@@ -1,9 +1,12 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/features/auth';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, profile, signOut } = useAuth();
 
   const navLinks = [
     { label: 'About', path: '/about' },
@@ -12,6 +15,22 @@ export const Navbar: React.FC = () => {
     { label: 'Projects', path: '/projects' },
     { label: 'Community', path: '/community' },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-surface-border bg-canvas/80 backdrop-blur-md">
@@ -45,18 +64,44 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Action Buttons */}
+        {/* Action Buttons & Auth State */}
         <div className="flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-          </Link>
-          <Link to="/join">
-            <Button variant="primary" size="sm">
-              Join AI CLUB
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" className="flex items-center gap-2 group">
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.fullName || 'User'}
+                    className="h-8 w-8 rounded-full object-cover border border-surface-border group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-ink text-canvas text-xs font-semibold flex items-center justify-center group-hover:scale-105 transition-transform">
+                    {getInitials(profile?.fullName)}
+                  </div>
+                )}
+                <span className="hidden sm:inline text-xs font-medium text-ink group-hover:underline">
+                  {profile?.fullName || 'Profile'}
+                </span>
+              </Link>
+              <Button onClick={handleSignOut} variant="ghost" size="sm">
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button variant="primary" size="sm">
+                  Join AI CLUB
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
