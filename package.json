@@ -1,0 +1,29 @@
+{
+  "name": "ai-club",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI CLUB - Premium AI Innovation Community Platform",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --workspace=frontend run dev",
+    "dev:backend": "npm --workspace=backend run dev",
+    "build": "npm --workspace=frontend run build && npm --workspace=backend run build",
+    "build:frontend": "npm --workspace=frontend run build",
+    "build:backend": "npm --workspace=backend run build",
+    "test": "npm --workspace=frontend run test && npm --workspace=backend run test",
+    "test:frontend": "npm --workspace=frontend run test",
+    "test:backend": "npm --workspace=backend run test",
+    "lint": "npm --workspace=frontend run lint && npm --workspace=backend run lint"
+  },
+  "keywords": [
+    "ai-club",
+    "community",
+    "fullstack",
+    "typescript"
+  ],
+  "author": "AI Club Engineering",
+  "license": "UNLICENSED"
+}
