@@ -1,11 +1,11 @@
 -- ==============================================================================
--- AI CLUB - Local Development Seed Script (Milestone 2)
+-- AI CLUB - Local Development Seed Script (Milestone 3)
 -- ==============================================================================
 
--- Note: When running with local Supabase CLI, users in auth.users trigger
--- public.handle_new_user() automatically creating profiles.
+-- Include 52 curated assessment questions
+\i seed_questions.sql
 
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed ready for Milestone 2: Identity, Auth & Profiles.';
+    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 3: Applications & Assessment Engine.';
 END $$;
