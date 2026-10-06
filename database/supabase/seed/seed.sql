@@ -1,12 +1,11 @@
 -- ==============================================================================
--- AI CLUB - Local Development Seed Script
+-- AI CLUB - Local Development Seed Script (Milestone 2)
 -- ==============================================================================
 
--- Placeholder seed for local testing
--- Note: User profiles must reference valid auth.users(id) entities.
--- In local development, seed users are provisioned via Supabase Auth CLI or admin scripts.
+-- Note: When running with local Supabase CLI, users in auth.users trigger
+-- public.handle_new_user() automatically creating profiles.
 
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 1.';
+    RAISE NOTICE 'AI CLUB database seed ready for Milestone 2: Identity, Auth & Profiles.';
 END $$;
