@@ -381,6 +381,11 @@ export class AssessmentService {
     // Load full question bank to reconstruct safe DTOs in persistent order
     const allQuestions = await this.loadActiveQuestions();
     const questionMap = new Map(allQuestions.map((q) => [q.id, q]));
+    for (const fq of fallbackQuestionBank) {
+      if (!questionMap.has(fq.id)) {
+        questionMap.set(fq.id, fq);
+      }
+    }
 
     const safeQuestions: SafeQuestionDto[] = attempt.questionIds
       .map((qId) => questionMap.get(qId))

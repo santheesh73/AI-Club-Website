@@ -15,10 +15,31 @@ class ApiClient {
   private async getAuthToken(): Promise<string | null> {
     try {
       const { data } = await supabase.auth.getSession();
-      return data.session?.access_token || null;
+      if (data.session?.access_token) {
+        return data.session.access_token;
+      }
     } catch {
-      return null;
+      // ignore
     }
+
+    // Local dev standby mode token fallback
+    try {
+      const devUser = localStorage.getItem('ai_club_dev_user_session');
+      if (devUser) {
+        const parsed = JSON.parse(devUser);
+        if (parsed.id) {
+          return parsed.role === 'admin'
+            ? 'admin-test-token'
+            : parsed.role === 'member'
+            ? 'member-test-token'
+            : 'applicant-test-token';
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
   }
 
   public async request<T = unknown>(

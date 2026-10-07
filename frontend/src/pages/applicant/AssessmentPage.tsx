@@ -87,15 +87,24 @@ export const AssessmentPage: React.FC = () => {
     }
   };
 
-  if (appLoading || assessmentLoading) {
+  // Auto-initialize application if candidate visits assessment directly without one
+  useEffect(() => {
+    if (!appLoading && !application && !appError && !isInitializing && !initError) {
+      handleQuickInitialize();
+    }
+  }, [appLoading, application, appError, isInitializing, initError]);
+
+  // If application is still loading
+  if (appLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-        <Spinner size="lg" label="Loading assessment session..." />
-        <p className="text-xs text-ink-muted">Establishing secure evaluation environment...</p>
+        <Spinner size="lg" label="Checking application status..." />
+        <p className="text-xs text-ink-muted">Retrieving candidate profile and exam status...</p>
       </div>
     );
   }
 
+  // If application doesn't exist yet or had error creating
   if (appError || !application) {
     return (
       <div className="max-w-xl mx-auto p-8 rounded-card-lg bg-surface border border-surface-border text-center space-y-4 shadow-soft">
@@ -133,6 +142,16 @@ export const AssessmentPage: React.FC = () => {
             </Button>
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  // If assessment attempt/questions are loading
+  if (assessmentLoading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Spinner size="lg" label="Loading assessment session..." />
+        <p className="text-xs text-ink-muted">Establishing secure evaluation environment...</p>
       </div>
     );
   }

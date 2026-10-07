@@ -20,7 +20,10 @@ export function useAssessment(applicationId?: string) {
 
   // Load or resume attempt
   const loadAttempt = useCallback(async () => {
-    if (!applicationId) return;
+    if (!applicationId) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
