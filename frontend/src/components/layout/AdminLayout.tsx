@@ -20,7 +20,9 @@ import {
   X,
   Sparkles,
   HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
+
 import { NotificationBell } from '@/features/notifications';
 
 export const AdminLayout: React.FC = () => {
@@ -68,7 +70,9 @@ export const AdminLayout: React.FC = () => {
     { name: 'Members', href: '/admin/members', icon: Users, activeInM4: true },
     { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: true },
     { name: 'Courses', href: '/admin/courses', icon: BookOpen, activeInM4: true },
+    { name: 'External Courses', href: '/admin/external-courses', icon: ExternalLink, activeInM4: true },
     { name: 'Projects', href: '/admin/projects', icon: FolderGit2, activeInM4: true },
+
     { name: 'Achievements', href: '/admin/achievements', icon: Award, activeInM4: true },
     { name: 'Announcements', href: '/admin/announcements', icon: Megaphone, activeInM4: false },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, activeInM4: true },

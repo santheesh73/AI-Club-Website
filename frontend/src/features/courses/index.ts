@@ -10,3 +10,5 @@ export * from './useMyCourses';
 export * from './useAdminCourses';
 export * from './useAdminCourseEditor';
 export * from './useAdminCourseEnrollments';
+export * from './ExternalCourseCard';
+export * from './RecommendedCoursesSection';

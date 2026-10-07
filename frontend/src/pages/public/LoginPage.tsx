@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { GraduationCap, ShieldCheck } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [selectedRole, setSelectedRole] = useState<'student' | 'admin'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,12 +20,25 @@ export const LoginPage: React.FC = () => {
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/profile';
 
+  const handleRoleSwitch = (role: 'student' | 'admin') => {
+    setSelectedRole(role);
+    setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!email.trim() || !password) {
       setError('Please provide both your email address and password.');
+      return;
+    }
+
+    const userEmail = email.trim().toLowerCase();
+
+    // Strict client-side check if Admin mode is chosen
+    if (selectedRole === 'admin' && userEmail !== AUTHORIZED_ADMIN_EMAIL) {
+      setError(`Access denied. Only the authorized administrator (${AUTHORIZED_ADMIN_EMAIL}) can sign in through the Admin Gateway.`);
       return;
     }
 
@@ -36,11 +51,20 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    const userEmail = email.trim().toLowerCase();
     const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL;
     const isMember = result.profile?.role === 'member';
 
     // Role-based authoritative navigation
+    if (selectedRole === 'admin') {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        setError(`Access denied. You do not have administrator privileges.`);
+      }
+      return;
+    }
+
+    // Student / Member flow
     if (from && from !== '/profile') {
       if (from.startsWith('/admin')) {
         navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/dashboard', { replace: true });
@@ -65,12 +89,48 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         <Card className="shadow-elevated border-surface-border">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-2">
-              <Badge variant="neutral">Member Gateway</Badge>
+            {/* Role-based [ADMIN/STUDENT] switching tabs */}
+            <div className="grid grid-cols-2 p-1 mb-5 rounded-xl bg-canvas border border-surface-border shadow-inner">
+              <button
+                type="button"
+                onClick={() => handleRoleSwitch('student')}
+                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                  selectedRole === 'student'
+                    ? 'bg-ink text-canvas shadow-subtle'
+                    : 'text-ink-secondary hover:text-ink'
+                }`}
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span>STUDENT</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRoleSwitch('admin')}
+                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                  selectedRole === 'admin'
+                    ? 'bg-ink text-canvas shadow-subtle'
+                    : 'text-ink-secondary hover:text-ink'
+                }`}
+              >
+                <ShieldCheck className={`h-4 w-4 ${selectedRole === 'admin' ? 'text-accent-green' : ''}`} />
+                <span>ADMIN</span>
+              </button>
             </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Sign In to AI CLUB</CardTitle>
+
+            <div className="mx-auto mb-2">
+              <Badge variant={selectedRole === 'admin' ? 'orange' : 'neutral'}>
+                {selectedRole === 'admin' ? 'Admin Gateway' : 'Student & Member Gateway'}
+              </Badge>
+            </div>
+
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              {selectedRole === 'admin' ? 'Sign In as Administrator' : 'Sign In to AI CLUB'}
+            </CardTitle>
             <CardDescription>
-              Access your student identity, applications, and innovation portal.
+              {selectedRole === 'admin'
+                ? 'Restricted control console for authorized AI CLUB administration.'
+                : 'Access your student identity, applications, and innovation portal.'}
             </CardDescription>
           </CardHeader>
 
@@ -86,9 +146,9 @@ export const LoginPage: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <Input
-                label="Email Address"
+                label={selectedRole === 'admin' ? 'Authorized Admin Email' : 'Student Email Address'}
                 type="email"
-                placeholder="ada@university.edu"
+                placeholder={selectedRole === 'admin' ? 'santheesh651@gmail.com' : 'ada@university.edu'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -125,20 +185,29 @@ export const LoginPage: React.FC = () => {
                   className="w-full shadow-subtle"
                   isLoading={isSubmitting}
                 >
-                  Sign In
+                  {selectedRole === 'admin' ? 'Sign In to Admin Portal' : 'Sign In'}
                 </Button>
               </div>
             </form>
           </CardContent>
 
           <CardFooter className="justify-center text-xs text-ink-muted">
-            Don't have an account yet?{' '}
-            <Link to="/register" className="ml-1 text-ink font-semibold hover:underline">
-              Create Account
-            </Link>
+            {selectedRole === 'admin' ? (
+              <span className="font-mono text-[11px] text-ink-muted">
+                Admin access restricted to verified allowlist.
+              </span>
+            ) : (
+              <>
+                Don't have an account yet?{' '}
+                <Link to="/register" className="ml-1 text-ink font-semibold hover:underline">
+                  Create Account
+                </Link>
+              </>
+            )}
           </CardFooter>
         </Card>
       </div>
     </div>
   );
 };
+

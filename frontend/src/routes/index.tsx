@@ -41,9 +41,11 @@ import { MemberCourseDetailPage } from '@/pages/member/MemberCourseDetailPage';
 import { MemberMyCoursesPage } from '@/pages/member/MemberMyCoursesPage';
 import { MemberLearningPage } from '@/pages/member/MemberLearningPage';
 import { AdminCoursesPage } from '@/pages/admin/AdminCoursesPage';
+import { AdminExternalCoursesPage } from '@/pages/admin/AdminExternalCoursesPage';
 import { AdminCourseCreatePage } from '@/pages/admin/AdminCourseCreatePage';
 import { AdminCourseEditPage } from '@/pages/admin/AdminCourseEditPage';
 import { AdminCourseEnrollmentsPage } from '@/pages/admin/AdminCourseEnrollmentsPage';
+
 import { MemberProjectsPage } from '@/pages/member/MemberProjectsPage';
 import { MemberProjectCreatePage } from '@/pages/member/MemberProjectCreatePage';
 import { MemberProjectEditPage } from '@/pages/member/MemberProjectEditPage';
@@ -156,7 +158,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="events/:id/edit" element={<AdminEventEditPage />} />
         <Route path="events/:id/registrations" element={<AdminEventRegistrationsPage />} />
         <Route path="courses" element={<AdminCoursesPage />} />
+        <Route path="external-courses" element={<AdminExternalCoursesPage />} />
         <Route path="courses/new" element={<AdminCourseCreatePage />} />
+
         <Route path="courses/:id" element={<AdminCourseEditPage />} />
         <Route path="courses/:id/enrollments" element={<AdminCourseEnrollmentsPage />} />
         <Route path="projects" element={<AdminCommunityPage />} />

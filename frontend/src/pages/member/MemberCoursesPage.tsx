@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, BookOpen, Sparkles, Filter, AlertCircle, Compass } from 'lucide-react';
 import { useCourses } from '@/features/courses/useCourses';
-import { CourseCard } from '@/features/courses/CourseCard';
+import { CourseCard, RecommendedCoursesSection } from '@/features/courses';
 import { Spinner } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -31,7 +31,7 @@ export const MemberCoursesPage: React.FC = () => {
   } = useCourses();
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-10 animate-in fade-in duration-300">
       {/* Top Editorial Banner */}
       <div className="p-8 sm:p-10 rounded-card-lg bg-surface border border-surface-border shadow-soft space-y-4">
         <div className="flex items-center gap-2">
@@ -82,8 +82,23 @@ export const MemberCoursesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 sm:p-6 rounded-card bg-surface border border-surface-border shadow-soft flex flex-col md:flex-row items-center gap-4 justify-between">
+      {/* AI External Course Recommendations */}
+      <RecommendedCoursesSection />
+
+      {/* Internal LMS Section Divider & Heading */}
+      <div className="space-y-4 pt-4 border-t border-surface-border">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
+            Internal Courses & Curriculum
+          </h2>
+          <p className="text-xs sm:text-sm text-ink-secondary mt-0.5">
+            Core community-led coursework, interactive assessments, and completion certifications.
+          </p>
+        </div>
+
+        {/* Filter and Search Bar */}
+        <div className="p-4 sm:p-6 rounded-card bg-surface border border-surface-border shadow-soft flex flex-col md:flex-row items-center gap-4 justify-between">
+
         {/* Search Input */}
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
@@ -178,6 +193,8 @@ export const MemberCoursesPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
+

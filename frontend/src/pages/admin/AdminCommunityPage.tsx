@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { communityApi } from '@/services/communityApi';
 import { ProjectHideModal } from '@/features/projects/ProjectHideModal';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +25,26 @@ import {
 } from 'lucide-react';
 
 export const AdminCommunityPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'projects' | 'reports' | 'achievements'>('projects');
+  const location = useLocation();
+
+  const getInitialTab = (): 'projects' | 'reports' | 'achievements' => {
+    if (location.pathname.includes('achievements')) return 'achievements';
+    if (location.pathname.includes('reports')) return 'reports';
+    return 'projects';
+  };
+
+  const [activeTab, setActiveTab] = useState<'projects' | 'reports' | 'achievements'>(getInitialTab);
+
+  // Sync activeTab if location.pathname changes
+  useEffect(() => {
+    if (location.pathname.includes('achievements')) {
+      setActiveTab('achievements');
+    } else if (location.pathname.includes('reports')) {
+      setActiveTab('reports');
+    } else if (location.pathname.includes('projects')) {
+      setActiveTab('projects');
+    }
+  }, [location.pathname]);
 
   // Projects State
   const [projects, setProjects] = useState<AdminProjectSummaryDto[]>([]);
@@ -48,8 +68,16 @@ export const AdminCommunityPage: React.FC = () => {
     try {
       const res = await communityApi.getAdminProjects();
       if (res.success && res.data) {
-        setProjects(res.data.items);
+        const items = Array.isArray(res.data.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+          ? (res.data as any)
+          : [];
+        setProjects(items);
       }
+    } catch (err) {
+      console.error('Failed to load admin projects', err);
+      setProjects([]);
     } finally {
       setProjectsLoading(false);
     }
@@ -61,8 +89,11 @@ export const AdminCommunityPage: React.FC = () => {
     try {
       const res = await communityApi.getAdminReports();
       if (res.success && res.data) {
-        setReports(res.data);
+        setReports(Array.isArray(res.data) ? res.data : []);
       }
+    } catch (err) {
+      console.error('Failed to load admin reports', err);
+      setReports([]);
     } finally {
       setReportsLoading(false);
     }
@@ -74,8 +105,11 @@ export const AdminCommunityPage: React.FC = () => {
     try {
       const res = await communityApi.getAchievements();
       if (res.success && res.data) {
-        setAchievements(res.data);
+        setAchievements(Array.isArray(res.data) ? res.data : []);
       }
+    } catch (err) {
+      console.error('Failed to load admin achievements', err);
+      setAchievements([]);
     } finally {
       setAchLoading(false);
     }
@@ -86,6 +120,7 @@ export const AdminCommunityPage: React.FC = () => {
     if (activeTab === 'reports') fetchReports();
     if (activeTab === 'achievements') fetchAchievements();
   }, [activeTab, fetchProjects, fetchReports, fetchAchievements]);
+
 
   // Project Actions
   const handleFeature = async (id: string, isFeatured: boolean) => {
@@ -151,7 +186,7 @@ export const AdminCommunityPage: React.FC = () => {
           }`}
         >
           <FolderGit2 className="w-4 h-4" />
-          Projects Management ({projects.length})
+          Projects Management ({projects?.length || 0})
         </button>
 
         <button
@@ -163,7 +198,7 @@ export const AdminCommunityPage: React.FC = () => {
           }`}
         >
           <Flag className="w-4 h-4" />
-          Reports Queue ({reports.filter((r) => r.status === 'open' || r.status === 'under_review').length})
+          Reports Queue ({(Array.isArray(reports) ? reports : []).filter((r) => r?.status === 'open' || r?.status === 'under_review').length})
         </button>
 
         <button
@@ -175,7 +210,7 @@ export const AdminCommunityPage: React.FC = () => {
           }`}
         >
           <Award className="w-4 h-4" />
-          Achievements Oversight
+          Achievements Oversight ({achievements?.length || 0})
         </button>
       </div>
 
@@ -189,7 +224,7 @@ export const AdminCommunityPage: React.FC = () => {
               <Spinner className="w-8 h-8 text-ink" />
               <p className="text-sm text-ink-muted">Loading projects database...</p>
             </div>
-          ) : projects.length === 0 ? (
+          ) : !projects || projects.length === 0 ? (
             <EmptyState
               icon={<FolderGit2 className="h-7 w-7 text-ink-muted" />}
               title="No projects found"
@@ -210,30 +245,33 @@ export const AdminCommunityPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-surface-border">
                   {projects.map((p) => (
-                    <tr key={p.id} className="hover:bg-surface-muted/50 transition-colors">
+                    <tr key={p?.id} className="hover:bg-surface-muted/50 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-ink leading-snug">{p.title}</div>
-                        <div className="text-xs text-ink-muted font-mono">{p.slug}</div>
+                        <div className="font-semibold text-ink leading-snug">{p?.title || 'Untitled Project'}</div>
+                        <div className="text-xs text-ink-muted font-mono">{p?.slug || ''}</div>
                       </td>
-                      <td className="px-4 py-3 text-xs">{p.category.name}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {p?.category?.name || (typeof p?.category === 'string' ? p.category : 'General')}
+                      </td>
                       <td className="px-4 py-3">
-                        <div className="text-xs font-medium text-ink">{p.owner.fullName}</div>
-                        <div className="text-[11px] text-ink-muted">{p.ownerEmail}</div>
+                        <div className="text-xs font-medium text-ink">{p?.owner?.fullName || 'Anonymous'}</div>
+                        <div className="text-[11px] text-ink-muted">{p?.ownerEmail || p?.owner?.email || ''}</div>
                       </td>
                       <td className="px-4 py-3">
                         <Badge
                           variant={
-                            p.status === 'published'
+                            p?.status === 'published'
                               ? 'success'
-                              : p.status === 'hidden'
+                              : p?.status === 'hidden'
                               ? 'error'
                               : 'neutral'
                           }
                           className="text-[10px]"
                         >
-                          {p.status}
+                          {p?.status || 'published'}
                         </Badge>
                       </td>
+
                       <td className="px-4 py-3">
                         {p.reportsCount > 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
@@ -303,7 +341,7 @@ export const AdminCommunityPage: React.FC = () => {
               <Spinner className="w-8 h-8 text-ink" />
               <p className="text-sm text-ink-muted">Loading reports queue...</p>
             </div>
-          ) : reports.length === 0 ? (
+          ) : !reports || reports.length === 0 ? (
             <EmptyState
               icon={<ShieldAlert className="h-7 w-7 text-ink-muted" />}
               title="No reports filed"
@@ -311,8 +349,9 @@ export const AdminCommunityPage: React.FC = () => {
             />
           ) : (
             <div className="space-y-3">
-              {reports.map((r) => (
-                <Card key={r.id} className="border-surface-border space-y-3">
+              {(Array.isArray(reports) ? reports : []).map((r) => (
+                <Card key={r?.id} className="border-surface-border space-y-3">
+
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
@@ -409,20 +448,23 @@ export const AdminCommunityPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border">
-                  {achievements.map((a) => (
-                    <tr key={a.id} className="hover:bg-surface-muted/50 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-ink">{a.title}</td>
-                      <td className="px-4 py-3 text-xs">{a.category.name}</td>
-                      <td className="px-4 py-3 text-xs">{a.user.fullName}</td>
-                      <td className="px-4 py-3 text-xs">{a.issuer}</td>
+                  {(Array.isArray(achievements) ? achievements : []).map((a) => (
+                    <tr key={a?.id} className="hover:bg-surface-muted/50 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-ink">{a?.title || 'Untitled'}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {a?.category?.name || (typeof a?.category === 'string' ? a.category : 'General')}
+                      </td>
+                      <td className="px-4 py-3 text-xs">{a?.user?.fullName || 'Member'}</td>
+                      <td className="px-4 py-3 text-xs">{a?.issuer || 'N/A'}</td>
                       <td className="px-4 py-3">
                         <Badge
-                          variant={a.status === 'published' ? 'success' : a.status === 'hidden' ? 'error' : 'neutral'}
+                          variant={a?.status === 'published' ? 'success' : a?.status === 'hidden' ? 'error' : 'neutral'}
                           className="text-[10px]"
                         >
-                          {a.status}
+                          {a?.status || 'published'}
                         </Badge>
                       </td>
+
                       <td className="px-4 py-3 text-right">
                         {a.status === 'hidden' ? (
                           <Button

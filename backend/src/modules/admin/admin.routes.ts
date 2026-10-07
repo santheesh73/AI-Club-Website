@@ -13,6 +13,7 @@ import { adminAssessmentRoutes } from './assessment.routes';
 import { adminAnnouncementsRoutes } from '../announcements/announcements.routes';
 import { adminProjectIdeasRoutes } from '../projects/projectIdeas.routes';
 import { adminLeaderboardRoutes } from '../leaderboard/leaderboard.routes';
+import { adminExternalCoursesRoutes } from '../courses/adminExternalCourses.routes';
 
 /**
  * AI CLUB - Module: admin
@@ -78,6 +79,7 @@ router.use('/leaderboard', adminLeaderboardRoutes);
 
 // Courses & Learning Management Oversight
 router.use('/courses', adminCoursesRoutes);
+router.use('/external-courses', adminExternalCoursesRoutes);
 
 // Projects, Achievements & Community Moderation
 router.use('/projects', adminProjectsRoutes);
