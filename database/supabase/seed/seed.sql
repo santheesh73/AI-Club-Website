@@ -20,7 +20,10 @@
 -- Include Milestone 8 projects & achievements records
 \i seed_m8_projects.sql
 
+-- Include Milestone 9 notifications, analytics & AI records
+\i seed_m9_notifications.sql
+
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 8: Projects, Achievements & Community Showcase Platform.';
+    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 9: Notifications, Analytics, AI Intelligence & Engagement Platform.';
 END $$;

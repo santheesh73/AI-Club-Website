@@ -45,6 +45,12 @@ import { MemberAchievementsPage } from '@/pages/member/MemberAchievementsPage';
 import { CommunityProjectsPage } from '@/pages/community/CommunityProjectsPage';
 import { ProjectDetailPage } from '@/pages/community/ProjectDetailPage';
 import { AdminCommunityPage } from '@/pages/admin/AdminCommunityPage';
+import { MemberNotificationsPage } from '@/pages/member/MemberNotificationsPage';
+import { MemberActivityPage } from '@/pages/member/MemberActivityPage';
+import { MemberLearningAnalyticsPage } from '@/pages/member/MemberLearningAnalyticsPage';
+import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
+import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
+import { AdminIntelligencePage } from '@/pages/admin/AdminIntelligencePage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -152,16 +158,9 @@ export const AppRoutes: React.FC = () => {
           element={<CommunityProjectsPage />}
         />
         <Route path="achievements" element={<MemberAchievementsPage />} />
-        <Route
-          path="notifications"
-          element={
-            <MilestonePlaceholder
-              title="Notifications"
-              milestone="Milestone 8: Notifications"
-              description="Real-time alerts, project updates, and system announcements."
-            />
-          }
-        />
+        <Route path="notifications" element={<MemberNotificationsPage />} />
+        <Route path="activity" element={<MemberActivityPage />} />
+        <Route path="learning" element={<MemberLearningAnalyticsPage />} />
         <Route
           path="ai"
           element={
@@ -217,26 +216,9 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path="notifications"
-          element={
-            <MilestonePlaceholder
-              title="Notification Center"
-              milestone="Milestone 10: Admin Platform"
-              description="System triggers, email dispatch logs, and push delivery status."
-            />
-          }
-        />
-        <Route
-          path="analytics"
-          element={
-            <MilestonePlaceholder
-              title="Platform Analytics"
-              milestone="Milestone 10: Admin Platform"
-              description="Engagement metrics, assessment distributions, and member retention."
-            />
-          }
-        />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
+        <Route path="analytics" element={<AdminAnalyticsPage />} />
+        <Route path="intelligence" element={<AdminIntelligencePage />} />
         <Route
           path="audit-logs"
           element={

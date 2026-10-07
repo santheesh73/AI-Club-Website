@@ -20,6 +20,9 @@ import {
   PlayCircle,
   FolderGit2,
   Trophy,
+  Bell,
+  History,
+  BarChart2,
 } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
@@ -499,6 +502,51 @@ export const MemberDashboard: React.FC = () => {
           </div>
           <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
             <span>View Results</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
+        <Link
+          to="/member/notifications"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <Bell className="h-5 w-5 text-ink-muted group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Notifications & Alerts</h4>
+            <p className="text-xs text-ink-muted">View incoming messages, invitations, and system updates.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>Open Inbox</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
+        <Link
+          to="/member/activity"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <History className="h-5 w-5 text-ink-muted group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Activity Timeline</h4>
+            <p className="text-xs text-ink-muted">Trace your chronological progress and milestones.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>View Timeline</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
+        <Link
+          to="/member/learning"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <BarChart2 className="h-5 w-5 text-ink-muted group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Learning Analytics</h4>
+            <p className="text-xs text-ink-muted">Monitor completion percentages and lecture progress.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>Inspect Analytics</span>
             <ArrowRight className="h-3 w-3" />
           </div>
         </Link>

@@ -2,6 +2,7 @@ import { AppError } from '../../utils/response';
 import { supabaseAdmin } from '../../services/supabase';
 import { assessmentConfig } from '../../config/assessment.config';
 import { applicationsService, localMemoryApplications } from '../applications/applications.service';
+import { notificationsService } from '../notifications/notifications.service';
 
 export interface SafeQuestionDto {
   id: string;
@@ -634,6 +635,15 @@ export class AssessmentService {
         })
         .eq('id', attempt.applicationId);
     }
+
+    await notificationsService.createNotification({
+      userId: '00000000-0000-0000-0000-000000000001',
+      type: 'NEW_APPLICATION',
+      title: 'New Applicant Intake Submitted',
+      message: `Applicant completed assessment (Score: ${score}/25) for ${appNumber}.`,
+      actionUrl: '/admin/applications',
+      metadata: { applicationId: attempt.applicationId, applicationNumber: appNumber, score },
+    });
 
     return {
       applicationId: attempt.applicationId,

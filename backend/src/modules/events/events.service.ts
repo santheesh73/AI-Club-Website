@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import {
   EventRecord,
   EventRegistrationRecord,
@@ -817,6 +818,15 @@ export class EventsService {
       requestId,
     });
 
+    await notificationsService.createNotification({
+      userId,
+      type: 'EVENT_REGISTRATION_CONFIRMED',
+      title: 'Seat Reserved',
+      message: `Your registration for "${event.title}" has been confirmed.`,
+      actionUrl: `/member/events/${event.slug}`,
+      metadata: { eventId, eventSlug: event.slug },
+    });
+
     return finalReg;
   }
 
@@ -887,6 +897,15 @@ export class EventsService {
       entityId: reg.id,
       metadata: { eventId, eventTitle: event.title },
       requestId,
+    });
+
+    await notificationsService.createNotification({
+      userId,
+      type: 'EVENT_CANCELLED',
+      title: 'Registration Cancelled',
+      message: `Your registration for "${event.title}" has been cancelled.`,
+      actionUrl: `/member/events/${event.slug}`,
+      metadata: { eventId, eventSlug: event.slug },
     });
 
     return updated;

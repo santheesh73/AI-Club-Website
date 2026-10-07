@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import {
   MembershipRecord,
   MemberDashboardData,
@@ -200,6 +201,15 @@ export class MembershipService {
           requestId,
         });
 
+        await notificationsService.createNotification({
+          userId: record.userId,
+          type: 'MEMBERSHIP_ACTIVATED',
+          title: 'Official Membership Activated',
+          message: `Welcome to AI CLUB! Your digital membership card (${record.memberNumber}) is now active.`,
+          actionUrl: '/member/membership',
+          metadata: { memberNumber: record.memberNumber },
+        });
+
         logger.info(`Membership successfully activated for user ${record.userId} with number ${record.memberNumber}`);
         return record;
       } catch (err: unknown) {
@@ -252,6 +262,15 @@ export class MembershipService {
         notes: notes || null,
       },
       requestId,
+    });
+
+    await notificationsService.createNotification({
+      userId: newRecord.userId,
+      type: 'MEMBERSHIP_ACTIVATED',
+      title: 'Official Membership Activated',
+      message: `Welcome to AI CLUB! Your digital membership card (${newRecord.memberNumber}) is now active.`,
+      actionUrl: '/member/membership',
+      metadata: { memberNumber: newRecord.memberNumber },
     });
 
     return newRecord;

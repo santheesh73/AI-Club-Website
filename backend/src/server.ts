@@ -20,6 +20,7 @@ import { teamsRoutes } from './modules/teams/teams.routes';
 import { achievementsRoutes, memberAchievementsRoutes } from './modules/achievements/achievements.routes';
 import { announcementsRoutes } from './modules/announcements/announcements.routes';
 import { notificationsRoutes } from './modules/notifications/notifications.routes';
+import { memberAnalyticsRoutes } from './modules/analytics/analytics.routes';
 import { adminRoutes } from './modules/admin/admin.routes';
 import { aiRoutes } from './modules/ai/ai.routes';
 
@@ -55,6 +56,8 @@ v1Router.use('/achievements', achievementsRoutes);
 v1Router.use('/member/achievements', memberAchievementsRoutes);
 v1Router.use('/announcements', announcementsRoutes);
 v1Router.use('/notifications', notificationsRoutes);
+v1Router.use('/member/notifications', notificationsRoutes);
+v1Router.use('/member/analytics', memberAnalyticsRoutes);
 v1Router.use('/admin', adminRoutes);
 v1Router.use('/ai', aiRoutes);
 

@@ -20,7 +20,11 @@ import {
   X,
   ShieldCheck,
   ChevronRight,
+  Bell,
+  History,
+  BarChart2,
 } from 'lucide-react';
+import { NotificationBell } from '@/features/notifications';
 
 export const MemberLayout: React.FC = () => {
   const location = useLocation();
@@ -36,6 +40,9 @@ export const MemberLayout: React.FC = () => {
 
   const coreNavigation = [
     { name: 'Dashboard', href: '/member', icon: LayoutDashboard },
+    { name: 'Notifications', href: '/member/notifications', icon: Bell },
+    { name: 'Activity', href: '/member/activity', icon: History },
+    { name: 'Learning Stats', href: '/member/learning', icon: BarChart2 },
     { name: 'Courses', href: '/member/courses', icon: BookOpen },
     { name: 'Events', href: '/member/events', icon: Calendar },
     { name: 'Projects', href: '/member/projects', icon: FolderGit2 },
@@ -196,6 +203,7 @@ export const MemberLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell viewAllLink="/member/notifications" />
             <Link to="/member/membership">
               <Badge variant="success" className="hidden sm:inline-flex">
                 <ShieldCheck className="h-3 w-3 mr-1" />

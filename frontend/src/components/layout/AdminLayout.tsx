@@ -19,7 +19,9 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react';
+import { NotificationBell } from '@/features/notifications';
 
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
@@ -41,8 +43,9 @@ export const AdminLayout: React.FC = () => {
     { name: 'Projects', href: '/admin/projects', icon: FolderGit2, activeInM4: true },
     { name: 'Achievements', href: '/admin/achievements', icon: Award, activeInM4: true },
     { name: 'Announcements', href: '/admin/announcements', icon: Megaphone, activeInM4: false },
-    { name: 'Notifications', href: '/admin/notifications', icon: Bell, activeInM4: false },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, activeInM4: false },
+    { name: 'Notifications', href: '/admin/notifications', icon: Bell, activeInM4: true },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, activeInM4: true },
+    { name: 'AI Intelligence', href: '/admin/intelligence', icon: Sparkles, activeInM4: true },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: History, activeInM4: false },
     { name: 'Settings', href: '/admin/settings', icon: Settings, activeInM4: false },
   ];
@@ -138,6 +141,7 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            <NotificationBell viewAllLink="/admin/notifications" />
             <div className="text-right hidden sm:block">
               <p className="text-xs font-semibold text-ink leading-tight">
                 {profile?.fullName || 'Administrator'}

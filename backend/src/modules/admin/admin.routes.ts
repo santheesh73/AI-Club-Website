@@ -65,4 +65,12 @@ router.use('/projects', adminProjectsRoutes);
 router.use('/community', adminProjectsRoutes);
 router.use('/achievements', adminAchievementsRoutes);
 
+// Milestone 9: Notifications, Analytics & AI Intelligence
+import { adminNotificationsRoutes } from '../notifications/notifications.routes';
+import { adminAnalyticsRoutes } from '../analytics/analytics.routes';
+import { adminIntelligenceRoutes } from '../ai/ai.routes';
+router.use('/notifications', adminNotificationsRoutes);
+router.use('/analytics', adminAnalyticsRoutes);
+router.use('/intelligence', adminIntelligenceRoutes);
+
 export const adminRoutes = router;

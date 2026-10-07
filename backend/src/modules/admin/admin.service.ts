@@ -4,6 +4,7 @@ import { localMemoryApplications, ApplicationRecord } from '../applications/appl
 import { localMemoryAttempts } from '../assessment/assessment.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
 import { auditService } from './audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import type {
   AdminApplicationItemDto,
   AdminApplicationQueryDto,
@@ -499,6 +500,15 @@ export class AdminService {
         requestId,
       });
 
+      await notificationsService.createNotification({
+        userId: detail.application.userId,
+        type: 'APPLICATION_STATUS_CHANGED',
+        title: 'Application Approved!',
+        message: 'Congratulations! Your AI CLUB application has been approved. You are invited to activate your membership.',
+        actionUrl: '/member/membership',
+        metadata: { applicationId, status: 'approved' },
+      });
+
       return {
         id: data.id,
         userId: data.user_id,
@@ -540,6 +550,15 @@ export class AdminService {
         reviewerNotes: reviewerNotes || null,
       },
       requestId,
+    });
+
+    await notificationsService.createNotification({
+      userId: detail.application.userId,
+      type: 'APPLICATION_STATUS_CHANGED',
+      title: 'Application Approved!',
+      message: 'Congratulations! Your AI CLUB application has been approved. You are invited to activate your membership.',
+      actionUrl: '/member/membership',
+      metadata: { applicationId, status: 'approved' },
     });
 
     return app;
@@ -600,6 +619,15 @@ export class AdminService {
         requestId,
       });
 
+      await notificationsService.createNotification({
+        userId: detail.application.userId,
+        type: 'APPLICATION_STATUS_CHANGED',
+        title: 'Application Update: Waitlisted',
+        message: 'Your AI CLUB application has been placed on the admissions waitlist.',
+        actionUrl: '/applicant/dashboard',
+        metadata: { applicationId, status: 'waitlisted' },
+      });
+
       return {
         id: data.id,
         userId: data.user_id,
@@ -641,6 +669,15 @@ export class AdminService {
         reviewerNotes: reviewerNotes || null,
       },
       requestId,
+    });
+
+    await notificationsService.createNotification({
+      userId: detail.application.userId,
+      type: 'APPLICATION_STATUS_CHANGED',
+      title: 'Application Update: Waitlisted',
+      message: 'Your AI CLUB application has been placed on the admissions waitlist.',
+      actionUrl: '/applicant/dashboard',
+      metadata: { applicationId, status: 'waitlisted' },
     });
 
     return app;
@@ -710,6 +747,15 @@ export class AdminService {
         requestId,
       });
 
+      await notificationsService.createNotification({
+        userId: detail.application.userId,
+        type: 'APPLICATION_STATUS_CHANGED',
+        title: 'Application Decision',
+        message: 'An update has been posted regarding your AI CLUB entrance application.',
+        actionUrl: '/applicant/dashboard',
+        metadata: { applicationId, status: 'rejected' },
+      });
+
       return {
         id: data.id,
         userId: data.user_id,
@@ -751,6 +797,15 @@ export class AdminService {
         reasonLength: rejectionReason.trim().length,
       },
       requestId,
+    });
+
+    await notificationsService.createNotification({
+      userId: detail.application.userId,
+      type: 'APPLICATION_STATUS_CHANGED',
+      title: 'Application Decision',
+      message: 'An update has been posted regarding your AI CLUB entrance application.',
+      actionUrl: '/applicant/dashboard',
+      metadata: { applicationId, status: 'rejected' },
     });
 
     return app;

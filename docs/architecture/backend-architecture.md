@@ -281,3 +281,15 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
     - `POST /api/v1/admin/projects/:id/restore`: Restores a hidden project back to `published`.
     - `POST /api/v1/admin/projects/:id/feature`: Spotlights a project into the featured showcase.
     - `DELETE /api/v1/admin/projects/:id/feature`: Removes project from featured showcase.
+
+### 2.9 Milestone 9: Notifications, Analytics & AI Intelligence
+- **Module Responsibilities**:
+  - `src/modules/notifications/`: Centralized inbox alerting, unread counter, read-state transitions, user delivery preference gating, and domain event listeners.
+  - `src/modules/analytics/`: Real-time derivation of platform metrics (overview, memberships, admissions, events, courses, community, engagement) across timeframes (`7d`, `30d`, `90d`, `12m`, `all`) with zero redundant data stores. Also computes private member learning and activity streams.
+  - `src/modules/ai/`: Advisory platform intelligence synthesis that computes executive trajectory summaries, curriculum insights, workshop attendance dynamics, and strategic recommendations with automatic caching in `public.ai_insights` and deterministic offline fallback.
+- **Architectural Principles**:
+  - **Zero Duplicate Databases**: Platform telemetry is computed authoritatively and dynamically from primary Supabase PostgreSQL tables and state stores.
+  - **Non-PII AI Pre-Aggregation**: AI analysis receives strictly anonymized statistical buckets (counts, rates, averages). No student names, emails, or personal identifiers are transmitted.
+  - **Advisory Isolation**: AI endpoints have zero mutation capabilities over platform records. All administrative actions require explicit manual verification by human admins.
+  - **Inbox Sovereignty**: Notifications check recipient `notification_preferences` prior to insertion; disabled categories are suppressed without throwing errors.
+

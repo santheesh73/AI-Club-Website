@@ -260,3 +260,21 @@ Layouts provide persistent framing and semantic grouping for the four primary us
     - Tab navigation: "Report Queue" and "All Projects".
     - Report review queue: reporter info, reason, violation category, project preview, and one-click actions: "Dismiss" or "Resolve & Hide Content".
     - Project management table: Toggle featured status, quick inspect dossier, and hide project with modal reason (`ProjectHideModal.tsx`).
+
+### 3.8 Milestone 9: Notifications, Analytics & AI Intelligence
+- **Feature Packages**:
+  - `src/features/notifications/`:
+    - `useNotifications.ts`: React hook managing unread counts, pagination, read state transitions, and delivery preference configurations.
+    - `NotificationBell.tsx`: Utility header button with badge counter and responsive quick-preview popover drawer.
+    - `NotificationItemCard.tsx`: Card component with contextual icon mapping, status indicators, and deep-link navigation.
+  - `src/features/analytics/`:
+    - `MetricCard.tsx`: Reusable indicator card displaying primary metrics, trend badges, and contextual icons.
+    - `AnalyticsChartCard.tsx`: Responsive breakdown visualization for distributions and categories.
+- **Pages & Routes**:
+  - **Member Notification Center (`/member/notifications` - `MemberNotificationsPage.tsx`)**: Filterable inbox (All vs Unread) with inline mark-read actions and Delivery Preferences toggles.
+  - **Member Activity Timeline (`/member/activity` - `MemberActivityPage.tsx`)**: Chronological event stream tracking admissions, membership activation, registrations, enrollments, projects, and badges.
+  - **Member Learning Analytics (`/member/learning` - `MemberLearningAnalyticsPage.tsx`)**: Individual course progress metrics, lessons finished, and curriculum telemetry.
+  - **Admin Notification Center (`/admin/notifications` - `AdminNotificationsPage.tsx`)**: Intake queue of application alerts, moderation flags, and the club-wide Broadcast Announcement composer.
+  - **Admin Analytics Dashboard (`/admin/analytics` - `AdminAnalyticsPage.tsx`)**: Telemetry console supporting time ranges (`7d`, `30d`, `90d`, `12m`, `all`) across 7 domains: Platform Overview, Memberships, Admissions, Events, Courses, Community, and Engagement.
+  - **Admin AI Intelligence Advisory (`/admin/intelligence` - `AdminIntelligencePage.tsx`)**: Advisory intelligence center with executive trajectory synthesis, strategic recommendations, and domain breakdowns with strict privacy disclaimers and offline fallback.
+

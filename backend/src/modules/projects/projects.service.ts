@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import { membershipService } from '../membership/membership.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
 import {
@@ -1455,6 +1456,15 @@ export class ProjectsService {
       metadata: { targetType: input.targetType, targetId: input.targetId, reason: input.reason },
     });
 
+    await notificationsService.createNotification({
+      userId: '00000000-0000-0000-0000-000000000001',
+      type: 'NEW_REPORT',
+      title: 'Community Report Filed',
+      message: `A member has reported a ${input.targetType} for ${input.reason}.`,
+      actionUrl: '/admin/community',
+      metadata: { targetType: input.targetType, targetId: input.targetId, reason: input.reason },
+    });
+
     return newReport;
   }
 
@@ -1602,6 +1612,15 @@ export class ProjectsService {
       metadata: { reason },
     });
 
+    await notificationsService.createNotification({
+      userId: project.ownerId,
+      type: 'PROJECT_MODERATION',
+      title: 'Project Moderated',
+      message: `Your project "${project.title}" was hidden by an administrator: ${reason}`,
+      actionUrl: '/member/projects',
+      metadata: { projectId, reason },
+    });
+
     return project;
   }
 
@@ -1687,6 +1706,15 @@ export class ProjectsService {
       entityType: 'PROJECT',
       entityId: projectId,
       metadata: { position, featuredUntil },
+    });
+
+    await notificationsService.createNotification({
+      userId: project.ownerId,
+      type: 'PROJECT_FEATURED',
+      title: 'Project Spotlight! ⭐',
+      message: `Congratulations! Your project "${project.title}" has been featured on the community showcase!`,
+      actionUrl: `/community/projects/${project.slug}`,
+      metadata: { projectId, position },
     });
 
     return featRecord;

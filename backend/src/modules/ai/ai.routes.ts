@@ -1,19 +1,20 @@
 import { Router } from 'express';
-import { sendSuccess } from '../../utils/response';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { aiIntelligenceController } from './ai.controller';
 
-/**
- * AI CLUB - Module: ai
- * Architectural foundation established for Milestone 1.
- * Business endpoints will be attached during respective milestones.
- */
 const router = Router();
 
-router.get('/info', (_req, res) => {
-  sendSuccess(res, {
-    module: 'ai',
-    status: 'initialized',
-    milestone: 'Milestone 1 Architecture'
-  });
-});
+// Administrative AI Intelligence routes
+router.use(authenticate);
+router.use(requireRole(['admin']));
+
+router.get('/insights', (req, res, next) =>
+  aiIntelligenceController.getInsights(req, res, next)
+);
+
+router.post('/generate', (req, res, next) =>
+  aiIntelligenceController.generateInsight(req, res, next)
+);
 
 export const aiRoutes = router;
+export const adminIntelligenceRoutes = router;

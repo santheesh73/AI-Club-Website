@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import { membershipService } from '../membership/membership.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
 import {
@@ -1177,6 +1178,15 @@ export class CoursesService {
       requestId,
     });
 
+    await notificationsService.createNotification({
+      userId,
+      type: 'COURSE_ENROLLMENT_CONFIRMED',
+      title: 'Course Enrollment Confirmed',
+      message: `You are enrolled in "${course.title}". Start with module 1 now!`,
+      actionUrl: `/member/courses/${course.slug}`,
+      metadata: { courseId, courseSlug: course.slug },
+    });
+
     return enrollment;
   }
 
@@ -1430,6 +1440,16 @@ export class CoursesService {
         entityId: enrollment.id,
         metadata: { courseId, completedAt: now, totalLessons },
         requestId,
+      });
+
+      const crs = await this.getCourseById(courseId);
+      await notificationsService.createNotification({
+        userId: enrollment.userId,
+        type: 'COURSE_COMPLETED',
+        title: 'Course Completed! 🎉',
+        message: `Congratulations! You have completed all lessons in "${crs?.title || 'the course'}".`,
+        actionUrl: `/member/courses/${crs?.slug || ''}`,
+        metadata: { courseId, courseSlug: crs?.slug },
       });
     }
 

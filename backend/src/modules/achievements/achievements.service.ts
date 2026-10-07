@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
+import { notificationsService } from '../notifications/notifications.service';
 import { membershipService } from '../membership/membership.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
 import {
@@ -313,6 +314,15 @@ export class AchievementsService {
       entityType: 'ACHIEVEMENT',
       entityId: achievementId,
       metadata: { title: record.title, issuer: record.issuer },
+    });
+
+    await notificationsService.createNotification({
+      userId,
+      type: 'ACHIEVEMENT_UNLOCKED',
+      title: 'Achievement Published! 🏆',
+      message: `You earned the "${record.title}" achievement credential!`,
+      actionUrl: '/member/achievements',
+      metadata: { achievementId, title: record.title },
     });
 
     const userSummary = await this.resolveUserSummary(userId);

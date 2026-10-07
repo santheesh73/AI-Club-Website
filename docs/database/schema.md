@@ -717,6 +717,92 @@ WHERE (status IN ('open', 'under_review'));
    - `SELECT`: Reporter can view own filed reports. Admins can view all reports.
    - `UPDATE`: Admins only.
 
+---
+
+## 13. Milestone 9: Notifications, Analytics & AI Intelligence
+
+### 13.1 Enum Types
+
+```sql
+CREATE TYPE notification_type AS ENUM (
+  'APPLICATION_STATUS_CHANGED',
+  'MEMBERSHIP_ACTIVATED',
+  'EVENT_PUBLISHED',
+  'EVENT_REGISTRATION_CONFIRMED',
+  'EVENT_CANCELLED',
+  'EVENT_REMINDER',
+  'COURSE_PUBLISHED',
+  'COURSE_ENROLLMENT_CONFIRMED',
+  'COURSE_COMPLETED',
+  'PROJECT_FEATURED',
+  'PROJECT_MODERATION',
+  'ACHIEVEMENT_UNLOCKED',
+  'ADMIN_ANNOUNCEMENT',
+  'SYSTEM_ALERT',
+  'NEW_APPLICATION',
+  'NEW_REPORT',
+  'COURSE_ACTIVITY_ALERT',
+  'EVENT_ACTIVITY_ALERT'
+);
+```
+
+### 13.2 Table: `public.notifications`
+Event-driven inbox alerts dispatched upon domain events across M3-M8.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Notification ID |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Recipient identity |
+| `type` | `notification_type` | `NOT NULL` | Categorization enum |
+| `title` | `TEXT` | `NOT NULL` | Notification headline |
+| `message` | `TEXT` | `NOT NULL` | Notification body |
+| `action_url` | `TEXT` | `NULLABLE` | Deep-link to platform page |
+| `metadata` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Structured entity context |
+| `read_at` | `TIMESTAMPTZ` | `NULLABLE` | Read timestamp (NULL = unread) |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+
+### 13.3 Table: `public.notification_preferences`
+Delivery gating settings per user.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Preference ID |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE` | User identity |
+| `application_updates` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Admissions updates |
+| `membership_updates` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Membership updates |
+| `event_updates` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Event registrations & alerts |
+| `course_updates` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Course enrollments & badges |
+| `community_updates` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Project & achievement alerts |
+| `system_notifications` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Broadcasts & platform alerts |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 13.4 Table: `public.ai_insights`
+Cached advisory intelligence synthesis reports.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Insight record ID |
+| `period` | `TEXT` | `NOT NULL` | '7d', '30d', '90d', '12m', 'all' |
+| `summary` | `TEXT` | `NOT NULL` | Executive synthesis |
+| `platform_overview` | `TEXT` | `NOT NULL` | Platform health & scale |
+| `member_engagement` | `TEXT` | `NOT NULL` | Member participation trajectory |
+| `learning_insights` | `TEXT` | `NOT NULL` | Curriculum telemetry insights |
+| `event_insights` | `TEXT` | `NOT NULL` | Workshop & RSVP dynamics |
+| `community_insights` | `TEXT` | `NOT NULL` | Showcase & badge trends |
+| `recommendations` | `JSONB` | `NOT NULL DEFAULT '[]'::jsonb` | Strategic recommendations array |
+| `metrics_snapshot` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Aggregated non-PII metrics |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Generation timestamp |
+
+### 13.5 Composite Indexes & Performance Optimization
+```sql
+CREATE INDEX idx_notifications_user_created ON public.notifications(user_id, created_at DESC);
+CREATE INDEX idx_notifications_user_unread ON public.notifications(user_id) WHERE (read_at IS NULL);
+CREATE INDEX idx_notifications_type ON public.notifications(type);
+CREATE INDEX idx_ai_insights_period ON public.ai_insights(period, created_at DESC);
+```
+
+
 
 
 
