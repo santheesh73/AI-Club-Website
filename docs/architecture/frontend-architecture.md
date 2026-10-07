@@ -112,3 +112,25 @@ Layouts provide persistent framing and semantic grouping for the four primary us
     - **Reject Candidate**: Launches `RejectReasonModal` with mandatory reason validation (disabled until $\ge 3$ characters typed).
   - Immutable Audit History Trail: Chronological event timeline displaying decision timestamps, actor IDs, and reviewer comments.
 
+---
+
+## 9. Member Portal & Membership Experience (Milestone 5)
+
+- **Member Layout (`MemberLayout.tsx`)**:
+  - Distinctive member branding with persistent Member Number pill and active induction indicator.
+  - Primary navigation links: Dashboard, Digital Card, Member Profile, Application History, Assessment Scorecard.
+  - Forward-compatible placeholder navigation for future milestones: Courses, Events, Projects, Community, Achievements, AI Assistant.
+  - Mobile drawer navigation with responsive collapsing and active route highlighting.
+
+- **Member Workspace Pages (`src/pages/member/`)**:
+  - **Member Dashboard (`/member`)**: Editorial greeting banner, induction date, official member ID cardlet, admissions journey progression track (Profile $\rightarrow$ Application $\rightarrow$ Examination $\rightarrow$ Review $\rightarrow$ Active Member), and summary scorecard.
+  - **Official Membership Card (`/member/membership`)**: High-contrast, dark editorial card with metallic accenting, active induction beacon, student identity, official member number (`AIC-YYYY-XXXX`), and a browser print action (`window.print()`).
+  - **Member Profile (`/member/profile`)**: Integrated student profile editor with disabled/immutable security credential badges (Member Number, Role, Induction Date).
+  - **Admissions Record (`/member/application`)**: Read-only historical record of the student's approved application, admission cycle, and committee determination.
+  - **Examination Scorecard (`/member/assessment`)**: Transparent breakdown of 25-MCQ entrance examination performance (score, percentage, correct/wrong/unanswered tally, and duration).
+
+- **Route Protection & Guards (`RouteGuard.tsx`)**:
+  - Validates that routes under `/member/*` require both an authenticated session and verified member status (`role === 'member' || role === 'admin'`).
+  - Non-members are safely redirected to `/applicant` or `/login`.
+
+

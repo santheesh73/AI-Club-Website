@@ -139,3 +139,29 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
 - **Operational Audit Service**:
   - Every decision automatically logs an immutable event to `public.audit_logs` (`APPLICATION_APPROVED`, `APPLICATION_WAITLISTED`, `APPLICATION_REJECTED`) with actor ID, timestamp, and metadata.
 
+---
+
+## 8. Membership Activation & Member Experience (Milestone 5)
+
+- **Architectural Principle**: `APPROVED` application $\ne$ `MEMBER`.
+  An approved candidate is only admitted as a member when an authoritative record is committed to `public.memberships`.
+
+- **Endpoints**:
+  - `POST /api/v1/admin/memberships/activate`: Admin-only transactional induction.
+    - Input: `{ applicationId: string, notes?: string }`
+    - Checks: Validates target application exists and has `status = 'approved'` (returns `409` otherwise).
+    - Duplicate Guard: Verifies no existing active membership exists for the user (returns `409` duplicate protection).
+    - Sequential ID: Issues next `AIC-YYYY-XXXX` member number via PostgreSQL sequence `member_number_seq`.
+    - Profile Sync: Elevates `profiles.role` to `'member'`.
+    - Audit Trail: Commits `MEMBERSHIP_ACTIVATED` log to `public.audit_logs`.
+  - `GET /api/v1/admin/members`: Admin roster listing with status, student identity, and member number.
+  - `GET /api/v1/membership/me`: Retrieves authenticated member's active membership record. Returns `404` if not a member.
+  - `GET /api/v1/membership/me/dashboard`: Consolidated telemetry returning member profile, membership card details, approved application history, and entrance assessment scorecard.
+  - `GET /api/v1/membership/me/application`: Member's own approved entrance application record.
+  - `GET /api/v1/membership/me/assessment`: Member's own completed 25-MCQ entrance evaluation scorecard.
+
+- **Role Verification & Database-Backed Authority**:
+  - Handled by `authenticate` and `requireRole(['member', 'admin'])`.
+  - Guarantees non-members cannot read member telemetry even if authenticated as applicants.
+
+

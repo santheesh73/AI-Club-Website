@@ -220,3 +220,99 @@ $$ LANGUAGE plpgsql;
 - Insertion is restricted to service roles and authenticated administrators.
 - Modifications and deletions are strictly rejected.
 
+---
+
+## 9. Milestone 5 Membership Activation & Lifecycle Schema
+
+### 9.1 Membership Status Enum Expansion
+The `membership_status` enum is expanded to accommodate full member lifecycles:
+```sql
+ALTER TYPE membership_status ADD VALUE IF NOT EXISTS 'pending';
+ALTER TYPE membership_status ADD VALUE IF NOT EXISTS 'expired';
+ALTER TYPE membership_status ADD VALUE IF NOT EXISTS 'revoked';
+```
+Permitted values: `'pending'`, `'active'`, `'alumni'`, `'suspended'`, `'expired'`, `'revoked'`.
+
+### 9.2 Member Number Sequence & Generator
+Member numbers follow the immutable format `AIC-YYYY-XXXX`:
+```sql
+CREATE SEQUENCE IF NOT EXISTS member_number_seq
+  START WITH 1
+  INCREMENT BY 1
+  MINVALUE 1
+  NO MAXVALUE
+  CACHE 1;
+
+CREATE OR REPLACE FUNCTION generate_member_number()
+RETURNS TEXT AS $$
+DECLARE
+  current_yr TEXT := to_char(CURRENT_DATE, 'YYYY');
+  seq_val BIGINT := nextval('member_number_seq');
+BEGIN
+  RETURN 'AIC-' || current_yr || '-' || lpad(seq_val::text, 4, '0');
+END;
+$$ LANGUAGE plpgsql VOLATILE;
+```
+- Guarantees sequential, collision-free numbers across concurrent activations.
+- Year-namespaced and zero-padded to 4 digits.
+
+### 9.3 Table: `public.memberships`
+Authoritative membership records linking students to active club induction.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Unique membership record identifier |
+| `user_id` | `UUID` | `NOT NULL, REFERENCES public.profiles(id) ON DELETE RESTRICT` | Target member user ID |
+| `application_id` | `UUID` | `NOT NULL, UNIQUE, REFERENCES public.applications(id) ON DELETE RESTRICT` | Linked approved application (1-to-1) |
+| `member_number` | `TEXT` | `NOT NULL, UNIQUE, DEFAULT generate_member_number()` | Authoritative member number (`AIC-YYYY-XXXX`) |
+| `status` | `membership_status` | `NOT NULL DEFAULT 'active'` | Current membership status |
+| `joined_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Date of initial induction |
+| `activated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Date of activation |
+| `activated_by` | `UUID` | `NULLABLE, REFERENCES public.profiles(id) ON DELETE SET NULL` | Administrator who activated the membership |
+| `suspended_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp of suspension if applicable |
+| `revoked_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp of revocation if applicable |
+| `expires_at` | `TIMESTAMPTZ` | `NULLABLE` | Expiration date if term-limited |
+| `metadata` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Extensible metadata (induction notes, cohort) |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record last updated timestamp |
+
+### 9.4 Database-Enforced Integrity Rules
+1. **One Active Membership Rule**:
+   ```sql
+   CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_membership_per_user
+     ON public.memberships(user_id)
+     WHERE (status = 'active');
+   ```
+   Ensures no student can ever have multiple concurrent active memberships.
+2. **Immutable Security Fields Trigger**:
+   ```sql
+   CREATE OR REPLACE FUNCTION protect_membership_security_fields()
+   RETURNS TRIGGER AS $$
+   BEGIN
+     IF (OLD.user_id <> NEW.user_id) THEN
+       RAISE EXCEPTION 'Membership user_id is immutable';
+     END IF;
+     IF (OLD.application_id <> NEW.application_id) THEN
+       RAISE EXCEPTION 'Membership application_id is immutable';
+     END IF;
+     IF (OLD.member_number <> NEW.member_number) THEN
+       RAISE EXCEPTION 'Membership member_number is immutable and cannot be changed';
+     END IF;
+     RETURN NEW;
+   END;
+   $$ LANGUAGE plpgsql;
+
+   CREATE TRIGGER trg_protect_membership_security_fields
+     BEFORE UPDATE ON public.memberships
+     FOR EACH ROW
+     EXECUTE FUNCTION protect_membership_security_fields();
+   ```
+
+### 9.5 Row-Level Security for Memberships
+- **Self-Inspection**: Active members can view their own membership:
+  `user_id = auth.uid()` (SELECT)
+- **Administrative Access**: Administrators can view and manage all memberships:
+  `EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')` (ALL)
+- **Mutation Guard**: Direct client `INSERT`, `UPDATE`, `DELETE` are disallowed for regular members.
+
+
