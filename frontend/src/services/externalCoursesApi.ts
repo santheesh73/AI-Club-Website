@@ -93,7 +93,7 @@ export const externalCoursesApi = {
     search?: string;
     limit?: number;
     offset?: number;
-  }): Promise<ApiResponse<{ courses: ExternalCourseDto[]; total: number; limit: number; offset: number }>> {
+  }): Promise<ApiResponse<ExternalCourseDto[] | { courses: ExternalCourseDto[]; total: number; limit: number; offset: number }>> {
     const searchParams = new URLSearchParams();
     if (params?.provider) searchParams.append('provider', params.provider);
     if (params?.category) searchParams.append('category', params.category);
@@ -104,14 +104,14 @@ export const externalCoursesApi = {
 
     const qs = searchParams.toString();
     const endpoint = `/api/v1/admin/external-courses${qs ? `?${qs}` : ''}`;
-    return apiClient.get<{ courses: ExternalCourseDto[]; total: number; limit: number; offset: number }>(endpoint);
+    return apiClient.get<ExternalCourseDto[] | { courses: ExternalCourseDto[]; total: number; limit: number; offset: number }>(endpoint);
   },
 
   /**
    * Admin: Fetch catalog stats summary
    */
-  async getAdminStats(): Promise<ApiResponse<{ stats: AdminExternalCourseStatsDto }>> {
-    return apiClient.get<{ stats: AdminExternalCourseStatsDto }>('/api/v1/admin/external-courses/stats');
+  async getAdminStats(): Promise<ApiResponse<AdminExternalCourseStatsDto | { stats: AdminExternalCourseStatsDto }>> {
+    return apiClient.get<AdminExternalCourseStatsDto | { stats: AdminExternalCourseStatsDto }>('/api/v1/admin/external-courses/stats');
   },
 
   /**

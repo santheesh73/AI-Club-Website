@@ -11,7 +11,11 @@ interface ExternalCourseCardProps {
 }
 
 export const ExternalCourseCard: React.FC<ExternalCourseCardProps> = ({ recommendation }) => {
-  const { course, reason, matchScore, skillGap } = recommendation;
+  const { course } = recommendation;
+  const reason = (recommendation as any).reason || (recommendation as any).explanation || '';
+  const rawScore = (recommendation as any).matchScore ?? (recommendation as any).relevanceScore ?? 0;
+  const matchScore = rawScore > 0 && rawScore <= 1 ? Math.round(rawScore * 100) : Math.round(rawScore);
+  const skillGap = recommendation.skillGap;
 
   const handleCourseClick = () => {
     // Record analytics click event asynchronously
