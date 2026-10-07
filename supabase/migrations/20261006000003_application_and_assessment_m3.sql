@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS public.applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     application_number TEXT NOT NULL UNIQUE DEFAULT generate_application_number(),
-    status application_status NOT NULL DEFAULT 'test_required',
+    -- Status defaults to 'draft' (from baseline M1 enum) to remain PostgreSQL transaction-safe (avoiding SQLSTATE 55P04)
+    status application_status NOT NULL DEFAULT 'draft',
     submitted_at TIMESTAMPTZ,
     assessment_score NUMERIC(5,2),
     assessment_percentage NUMERIC(5,2),
