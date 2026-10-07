@@ -7,6 +7,7 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, profile, signOut } = useAuth();
+  const isLandingPage = location.pathname === '/';
 
   const navLinks = [
     { label: 'About', path: '/about' },
@@ -64,45 +65,47 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Action Buttons & Auth State */}
-        <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="flex items-center gap-2 group">
-                {profile?.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={profile.fullName || 'User'}
-                    className="h-8 w-8 rounded-full object-cover border border-surface-border group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-ink text-canvas text-xs font-semibold flex items-center justify-center group-hover:scale-105 transition-transform">
-                    {getInitials(profile?.fullName)}
-                  </div>
-                )}
-                <span className="hidden sm:inline text-xs font-medium text-ink group-hover:underline">
-                  {profile?.fullName || 'Profile'}
-                </span>
-              </Link>
-              <Button onClick={handleSignOut} variant="ghost" size="sm">
-                Sign Out
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="ghost" size="sm">
-                  Sign In
+        {/* Action Buttons: Suppressed on Landing Page per strict requirement */}
+        {!isLandingPage && (
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                <Link to="/profile" className="flex items-center gap-2 group">
+                  {profile?.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={profile.fullName || 'User'}
+                      className="h-8 w-8 rounded-full object-cover border border-surface-border group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-ink text-canvas text-xs font-semibold flex items-center justify-center group-hover:scale-105 transition-transform">
+                      {getInitials(profile?.fullName)}
+                    </div>
+                  )}
+                  <span className="hidden sm:inline text-xs font-medium text-ink group-hover:underline">
+                    {profile?.fullName || 'Profile'}
+                  </span>
+                </Link>
+                <Button onClick={handleSignOut} variant="ghost" size="sm">
+                  Sign Out
                 </Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="primary" size="sm">
-                  Join AI CLUB
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="primary" size="sm">
+                    Join AI CLUB
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

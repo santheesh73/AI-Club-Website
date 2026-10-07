@@ -620,7 +620,9 @@ export class AnalyticsService {
         }
 
         activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        return activities;
+        if (activities.length > 0) {
+          return activities;
+        }
       } catch (err) {
         logger.warn('Member activity summary fallback:', { error: String(err) });
       }

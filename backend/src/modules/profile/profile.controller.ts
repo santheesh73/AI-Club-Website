@@ -41,7 +41,8 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
       return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
     }
 
-    if (!supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!supabaseAdmin || !isUuid) {
       // Local development or test fallback
       let existing = localMemoryProfiles.get(user.id);
       if (!existing) {
@@ -131,7 +132,8 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
     if (updates.linkedinUrl !== undefined) dbPayload.linkedin_url = updates.linkedinUrl;
     if (updates.portfolioUrl !== undefined) dbPayload.portfolio_url = updates.portfolioUrl;
 
-    if (!supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!supabaseAdmin || !isUuid) {
       // Local memory fallback
       const existing = localMemoryProfiles.get(user.id) || {
         id: user.id,

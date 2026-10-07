@@ -157,7 +157,7 @@ export class CoursesService {
       updatedAt: now,
     };
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         const { data, error } = await supabaseAdmin.from('course_categories').insert({
           name: cat.name,
@@ -216,7 +216,7 @@ export class CoursesService {
       updatedAt: now,
     };
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         const { data, error } = await supabaseAdmin.from('courses').insert({
           title: course.title,

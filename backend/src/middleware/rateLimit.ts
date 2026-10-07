@@ -39,10 +39,7 @@ export function createRateLimiter(options: RateLimiterOptions = {}) {
 
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip in test environment unless explicitly instructed
-    if (
-      skipInTest &&
-      (Boolean(process.env.VITEST) || process.env.NODE_ENV === 'test' || env.NODE_ENV === 'test')
-    ) {
+    if (skipInTest && env.NODE_ENV === 'test') {
       return next();
     }
 

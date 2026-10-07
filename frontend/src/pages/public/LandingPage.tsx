@@ -10,7 +10,7 @@ export const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <section className="mx-auto max-w-7xl px-6 sm:px-8 text-center space-y-8">
         <div className="inline-flex items-center gap-2">
-          <Badge variant="success">Milestone 1 — Architecture Online</Badge>
+          <Badge variant="success">Platform Online</Badge>
           <span className="text-xs text-ink-muted">AI Innovation Platform</span>
         </div>
 
@@ -22,15 +22,16 @@ export const LandingPage: React.FC = () => {
           AI CLUB is a dedicated collective for students, researchers, and innovators creating production-grade artificial intelligence systems.
         </p>
 
+        {/* STRICT REQUIREMENT: Only two CTA buttons on the entire landing page: Explore and Join Club */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-          <Link to="/join">
+          <Link to="/register">
             <Button size="lg" className="px-8 shadow-elevated">
-              Join AI CLUB
+              Join Club
             </Button>
           </Link>
-          <Link to="/about">
+          <Link to="/projects">
             <Button variant="outline" size="lg" className="px-8">
-              Explore Platform
+              Explore
             </Button>
           </Link>
         </div>
@@ -96,22 +97,16 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Architecture Readiness Banner */}
+      {/* Platform Architecture & Innovation Overview */}
       <section className="mx-auto max-w-5xl px-6 sm:px-8">
         <div className="rounded-card-lg bg-surface border border-surface-border p-8 sm:p-10 shadow-soft">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <Badge variant="neutral">Milestone 1 Status</Badge>
-              <h3 className="text-2xl font-bold text-ink">Architecture & Foundation Ready</h3>
-              <p className="text-sm text-ink-muted max-w-xl">
-                Repository structure, design tokens, backend API, database migration schema, and security boundaries are fully operational.
-              </p>
-            </div>
-            <Link to="/applicant">
-              <Button variant="secondary" size="md">
-                View Applicant Portal &rarr;
-              </Button>
-            </Link>
+          <div className="space-y-3">
+            <Badge variant="neutral">Club Foundation</Badge>
+            <h3 className="text-2xl font-bold text-ink">Authoritative Standards & Merit Intake</h3>
+            <p className="text-sm text-ink-muted max-w-2xl leading-relaxed">
+              Membership intake is guided by an objective 25-MCQ technical assessment followed by administrative review. 
+              Our community is grounded in demonstrable skills, active research collaboration, and peer-reviewed project delivery.
+            </p>
           </div>
         </div>
       </section>

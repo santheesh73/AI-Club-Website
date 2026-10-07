@@ -62,7 +62,10 @@ export class AuditService {
       requestId,
     });
 
-    if (supabaseAdmin) {
+    const isActorUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId);
+    const isEntityUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entityId);
+
+    if (supabaseAdmin && isActorUuid && isEntityUuid) {
       try {
         const { data, error } = await supabaseAdmin
           .from('audit_logs')

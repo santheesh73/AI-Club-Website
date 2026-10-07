@@ -305,7 +305,8 @@ export class AdminService {
     let studentProfile: Record<string, unknown> | null = null;
     let attemptRow: Record<string, unknown> | null = null;
 
-    if (supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId);
+    if (supabaseAdmin && isUuid) {
       try {
         const { data: app, error: appErr } = await supabaseAdmin
           .from('applications')
@@ -471,7 +472,8 @@ export class AdminService {
 
     const reviewedAt = new Date().toISOString();
 
-    if (supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId);
+    if (supabaseAdmin && isUuid) {
       const { data, error } = await supabaseAdmin
         .from('applications')
         .update({
@@ -590,7 +592,8 @@ export class AdminService {
 
     const reviewedAt = new Date().toISOString();
 
-    if (supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId);
+    if (supabaseAdmin && isUuid) {
       const { data, error } = await supabaseAdmin
         .from('applications')
         .update({
@@ -718,7 +721,8 @@ export class AdminService {
 
     const reviewedAt = new Date().toISOString();
 
-    if (supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(applicationId);
+    if (supabaseAdmin && isUuid) {
       const { data, error } = await supabaseAdmin
         .from('applications')
         .update({

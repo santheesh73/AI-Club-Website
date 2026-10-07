@@ -15,6 +15,7 @@ import { localMemoryProfiles } from '../profile/profile.controller';
 // In-memory store for fallback / local testing mode
 const localMemberships = new Map<string, MembershipRecord>();
 let localMemberCounter = 1;
+const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
 export class MembershipService {
   /**
@@ -56,7 +57,7 @@ export class MembershipService {
     } | null = null;
 
     // 1. Fetch application details
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(applicationId)) {
       try {
         const { data, error } = await supabaseAdmin
           .from('applications')
@@ -102,7 +103,7 @@ export class MembershipService {
     }
 
     // 3. Duplicate Protection: Check if an active membership already exists
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(applicationRow.userId)) {
       const { data: existingActive } = await supabaseAdmin
         .from('memberships')
         .select('id, member_number, status')
@@ -132,7 +133,7 @@ export class MembershipService {
     const timestamp = new Date().toISOString();
 
     // 4. Create Membership Record
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(applicationRow.userId)) {
       try {
         // Generate member number via DB function
         const { data: numData } = await supabaseAdmin.rpc('generate_member_number');
@@ -280,7 +281,7 @@ export class MembershipService {
    * Get active membership for a user
    */
   async getMembershipByUserId(userId: string): Promise<MembershipRecord | null> {
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(userId)) {
       try {
         const { data, error } = await supabaseAdmin
           .from('memberships')
@@ -334,7 +335,7 @@ export class MembershipService {
     let applicationData: MemberDashboardData['application'];
     let assessmentData: MemberDashboardData['assessment'] = null;
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(userId)) {
       // 1. Fetch Profile
       const { data: prof } = await supabaseAdmin
         .from('profiles')
@@ -517,7 +518,7 @@ export class MembershipService {
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(50, Math.max(1, options.pageSize || 10));
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && localMemberships.size === 0) {
       let query = supabaseAdmin
         .from('memberships')
         .select(`

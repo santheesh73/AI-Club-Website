@@ -15,25 +15,7 @@ class ApiClient {
   private async getAuthToken(): Promise<string | null> {
     try {
       const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) {
-        return data.session.access_token;
-      }
-
-      // Check for active demo session in localStorage
-      const devSession = localStorage.getItem('ai_club_dev_user_session');
-      if (devSession) {
-        try {
-          const parsed = JSON.parse(devSession);
-          if (parsed.token) return parsed.token;
-          if (parsed.role === 'admin') return 'admin-test-token';
-          if (parsed.role === 'member') return 'member-test-token';
-          return 'user-a-token';
-        } catch {
-          // ignore corrupted session JSON
-        }
-      }
-
-      return null;
+      return data.session?.access_token || null;
     } catch {
       return null;
     }

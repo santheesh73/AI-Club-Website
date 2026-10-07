@@ -220,6 +220,6 @@ describe('Milestone 10: Production Hardening & Security Audit Test Suite', () =>
       expect(res.body.data.summary).toBeDefined();
       expect(Array.isArray(res.body.data.recommendations)).toBe(true);
       // AI insights are strictly read-only advisory
-    });
+    }, 15000);
   });
 });

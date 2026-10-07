@@ -1,19 +1,30 @@
 import { Router } from 'express';
-import { sendSuccess } from '../../utils/response';
+import { announcementsController } from './announcements.controller';
+import { optionalAuthenticate, authenticate, requireRole } from '../../middleware/auth';
 
-/**
- * AI CLUB - Module: announcements
- * Architectural foundation established for Milestone 1.
- * Business endpoints will be attached during respective milestones.
- */
 const router = Router();
 
-router.get('/info', (_req, res) => {
-  sendSuccess(res, {
-    module: 'announcements',
-    status: 'initialized',
-    milestone: 'Milestone 1 Architecture'
-  });
-});
+// Public & member announcements list (adapts to user session if present)
+router.get('/', optionalAuthenticate, (req, res, next) =>
+  announcementsController.getAnnouncements(req, res, next)
+);
+
+// Admin dedicated routes
+export const adminAnnouncementsRoutes = Router();
+adminAnnouncementsRoutes.use(authenticate);
+adminAnnouncementsRoutes.use(requireRole(['admin']));
+
+adminAnnouncementsRoutes.get('/', (req, res, next) =>
+  announcementsController.getAdminAnnouncements(req, res, next)
+);
+adminAnnouncementsRoutes.post('/', (req, res, next) =>
+  announcementsController.createAnnouncement(req, res, next)
+);
+adminAnnouncementsRoutes.put('/:id', (req, res, next) =>
+  announcementsController.updateAnnouncement(req, res, next)
+);
+adminAnnouncementsRoutes.delete('/:id', (req, res, next) =>
+  announcementsController.archiveAnnouncement(req, res, next)
+);
 
 export const announcementsRoutes = router;

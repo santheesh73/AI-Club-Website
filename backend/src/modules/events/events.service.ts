@@ -20,6 +20,8 @@ import { localMemoryProfiles } from '../profile/profile.controller';
 export const localMemoryEvents = new Map<string, EventRecord>();
 export const localMemoryRegistrations = new Map<string, EventRegistrationRecord>();
 
+const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
 export class EventsService {
   /**
    * Reset local state for testing isolation
@@ -151,7 +153,8 @@ export class EventsService {
       updatedAt: now,
     };
 
-    if (supabaseAdmin) {
+    const isActorUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId);
+    if (supabaseAdmin && isActorUuid) {
       try {
         const { data, error } = await supabaseAdmin
           .from('events')
@@ -263,7 +266,8 @@ export class EventsService {
       updatedAt: new Date().toISOString(),
     };
 
-    if (supabaseAdmin) {
+    const isEventUuid = isUuid(eventId);
+    if (supabaseAdmin && isEventUuid) {
       try {
         await supabaseAdmin
           .from('events')
@@ -752,7 +756,9 @@ export class EventsService {
         updatedAt: regTimestamp,
       };
 
-      if (supabaseAdmin) {
+      const isEventUuid = isUuid(eventId);
+      const isUserUuid = isUuid(userId);
+      if (supabaseAdmin && isEventUuid && isUserUuid) {
         try {
           await supabaseAdmin
             .from('event_registrations')
@@ -780,7 +786,9 @@ export class EventsService {
         updatedAt: regTimestamp,
       };
 
-      if (supabaseAdmin) {
+      const isEventUuid = isUuid(eventId);
+      const isUserUuid = isUuid(userId);
+      if (supabaseAdmin && isEventUuid && isUserUuid) {
         try {
           const { data, error } = await supabaseAdmin
             .from('event_registrations')
@@ -988,7 +996,7 @@ export class EventsService {
       return localMemoryEvents.get(id)!;
     }
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(id)) {
       try {
         const { data } = await supabaseAdmin.from('events').select('*').eq('id', id).maybeSingle();
         if (data) {
@@ -1024,7 +1032,7 @@ export class EventsService {
   }
 
   async getEventRegistrationCount(eventId: string): Promise<number> {
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(eventId)) {
       try {
         const { count, error } = await supabaseAdmin
           .from('event_registrations')
@@ -1057,7 +1065,7 @@ export class EventsService {
       }
     }
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(eventId) && isUuid(userId)) {
       try {
         const { data } = await supabaseAdmin
           .from('event_registrations')

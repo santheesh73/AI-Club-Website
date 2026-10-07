@@ -56,7 +56,7 @@ END $$;
 
 -- 2.1 Project Categories
 CREATE TABLE IF NOT EXISTS public.project_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   description TEXT,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.project_categories (
 
 -- 2.2 Technologies Dictionary
 CREATE TABLE IF NOT EXISTS public.technologies (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   category TEXT NOT NULL DEFAULT 'General',
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS public.technologies (
 
 -- 2.3 Projects Table
 CREATE TABLE IF NOT EXISTS public.projects (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
 
 -- 2.4 Project Technologies (Many-to-Many Join)
 CREATE TABLE IF NOT EXISTS public.project_technologies (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   technology_id UUID NOT NULL REFERENCES public.technologies(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS public.project_technologies (
 
 -- 2.5 Project Contributors
 CREATE TABLE IF NOT EXISTS public.project_contributors (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'contributor',
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS public.project_contributors (
 
 -- 2.6 Project Links
 CREATE TABLE IF NOT EXISTS public.project_links (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   label TEXT NOT NULL,
   url TEXT NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.project_links (
 
 -- 2.7 Project Media (Screenshots, Demo images)
 CREATE TABLE IF NOT EXISTS public.project_media (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   media_url TEXT NOT NULL,
   media_type public.project_media_type NOT NULL DEFAULT 'image',
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS public.project_media (
 
 -- 2.8 Achievement Categories
 CREATE TABLE IF NOT EXISTS public.achievement_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   description TEXT,
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS public.achievement_categories (
 
 -- 2.9 Achievements Table
 CREATE TABLE IF NOT EXISTS public.achievements (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   category_id UUID NOT NULL REFERENCES public.achievement_categories(id) ON DELETE RESTRICT,
   title TEXT NOT NULL,
@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS public.achievements (
 
 -- 2.10 Featured Projects (Admin Curation)
 CREATE TABLE IF NOT EXISTS public.featured_projects (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE UNIQUE,
   position INTEGER NOT NULL DEFAULT 0,
   featured_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS public.featured_projects (
 
 -- 2.11 Content Reports
 CREATE TABLE IF NOT EXISTS public.reports (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reporter_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   target_type public.report_target_type NOT NULL,
   target_id UUID NOT NULL,

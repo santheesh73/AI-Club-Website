@@ -2,10 +2,21 @@ import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth';
 import { adminController } from './admin.controller';
 import { membershipController } from '../membership/membership.controller';
+import { adminEventsRoutes } from '../events/events.routes';
+import { adminCoursesRoutes } from '../courses/courses.routes';
+import { adminProjectsRoutes } from '../projects/projects.routes';
+import { adminAchievementsRoutes } from '../achievements/achievements.routes';
+import { adminNotificationsRoutes } from '../notifications/notifications.routes';
+import { adminAnalyticsRoutes } from '../analytics/analytics.routes';
+import { adminIntelligenceRoutes } from '../ai/ai.routes';
+import { adminAssessmentRoutes } from './assessment.routes';
+import { adminAnnouncementsRoutes } from '../announcements/announcements.routes';
+import { adminProjectIdeasRoutes } from '../projects/projectIdeas.routes';
+import { adminLeaderboardRoutes } from '../leaderboard/leaderboard.routes';
 
 /**
  * AI CLUB - Module: admin
- * Milestone 4: Admin Control Center, Application Review & Decision Engine
+ * Comprehensive Admin Control Center
  */
 const router = Router();
 
@@ -41,7 +52,10 @@ router.post('/applications/:id/reject', (req, res, next) =>
   adminController.rejectApplication(req, res, next)
 );
 
-// Milestone 5: Membership Activation & Member Management
+// Assessment Question Bank & Examination Management
+router.use('/assessment', adminAssessmentRoutes);
+
+// Membership Activation & Member Management
 router.post('/memberships/activate', (req, res, next) =>
   membershipController.activateMembership(req, res, next)
 );
@@ -50,25 +64,27 @@ router.get('/members', (req, res, next) =>
   membershipController.getMembersList(req, res, next)
 );
 
-// Milestone 6: Events Management & Registrations Oversight
-import { adminEventsRoutes } from '../events/events.routes';
+// Events Management & Registrations Oversight
 router.use('/events', adminEventsRoutes);
 
-// Milestone 7: Courses & Learning Management Oversight
-import { adminCoursesRoutes } from '../courses/courses.routes';
+// Announcements Management
+router.use('/announcements', adminAnnouncementsRoutes);
+
+// Project Ideas Curation (Admin Created)
+router.use('/project-ideas', adminProjectIdeasRoutes);
+
+// Leaderboard & Points Ledger Management
+router.use('/leaderboard', adminLeaderboardRoutes);
+
+// Courses & Learning Management Oversight
 router.use('/courses', adminCoursesRoutes);
 
-// Milestone 8: Projects, Achievements & Community Moderation
-import { adminProjectsRoutes } from '../projects/projects.routes';
-import { adminAchievementsRoutes } from '../achievements/achievements.routes';
+// Projects, Achievements & Community Moderation
 router.use('/projects', adminProjectsRoutes);
 router.use('/community', adminProjectsRoutes);
 router.use('/achievements', adminAchievementsRoutes);
 
-// Milestone 9: Notifications, Analytics & AI Intelligence
-import { adminNotificationsRoutes } from '../notifications/notifications.routes';
-import { adminAnalyticsRoutes } from '../analytics/analytics.routes';
-import { adminIntelligenceRoutes } from '../ai/ai.routes';
+// Notifications, Analytics & AI Intelligence
 router.use('/notifications', adminNotificationsRoutes);
 router.use('/analytics', adminAnalyticsRoutes);
 router.use('/intelligence', adminIntelligenceRoutes);

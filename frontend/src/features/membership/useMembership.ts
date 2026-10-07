@@ -23,44 +23,17 @@ export function useMembership() {
       const res = await membershipApi.getMyMembership();
       if (res.success && res.data) {
         setMembership(res.data);
-      } else if (auth?.profile?.role === 'member' || auth?.profile?.role === 'admin') {
-        // Fallback demo membership record for seamless demo & preview
-        setMembership({
-          id: 'demo-membership-001',
-          userId: auth?.profile?.id || 'demo-member-id',
-          applicationId: 'demo-app-001',
-          memberNumber: 'AIC-2026-0001',
-          status: 'active',
-          joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          activatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
       } else {
         setMembership(null);
       }
     } catch (err: unknown) {
-      if (auth?.profile?.role === 'member' || auth?.profile?.role === 'admin') {
-        setMembership({
-          id: 'demo-membership-001',
-          userId: auth?.profile?.id || 'demo-member-id',
-          applicationId: 'demo-app-001',
-          memberNumber: 'AIC-2026-0001',
-          status: 'active',
-          joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          activatedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      } else {
-        const msg = err instanceof Error ? err.message : 'Failed to fetch membership';
-        setError(msg);
-        setMembership(null);
-      }
+      const msg = err instanceof Error ? err.message : 'Failed to fetch membership';
+      setError(msg);
+      setMembership(null);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, auth?.profile]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchMembership();

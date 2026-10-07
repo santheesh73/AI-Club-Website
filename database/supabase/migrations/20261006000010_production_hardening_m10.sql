@@ -40,80 +40,46 @@ BEGIN
     END IF;
 END $$;
 
--- 2. Storage Row-Level Security Policies
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'storage' AND table_name = 'objects') THEN
-        -- Enable RLS on storage.objects
-        ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
-        -- Public Read Access for avatars and project-media
-        DROP POLICY IF EXISTS "Public Read Avatars and Media" ON storage.objects;
-        CREATE POLICY "Public Read Avatars and Media"
-            ON storage.objects FOR SELECT
-            USING (bucket_id IN ('avatars', 'project-media'));
-
-        -- User Own Avatar Upload Policy (path must begin with user's auth.uid)
-        DROP POLICY IF EXISTS "Users can manage own avatar" ON storage.objects;
-        CREATE POLICY "Users can manage own avatar"
-            ON storage.objects FOR ALL
-            TO authenticated
-            USING (
-                bucket_id = 'avatars' 
-                AND (storage.foldername(name))[1] = auth.uid()::text
-            )
-            WITH CHECK (
-                bucket_id = 'avatars' 
-                AND (storage.foldername(name))[1] = auth.uid()::text
-            );
-
-        -- Active Member Project Media Upload Policy
-        DROP POLICY IF EXISTS "Members can upload project media" ON storage.objects;
-        CREATE POLICY "Members can upload project media"
-            ON storage.objects FOR ALL
-            TO authenticated
-            USING (
-                bucket_id = 'project-media' 
-                AND (storage.foldername(name))[1] = auth.uid()::text
-                AND (
-                    EXISTS (
-                        SELECT 1 FROM public.memberships 
-                        WHERE user_id = auth.uid() AND status = 'active'
-                    )
-                    OR EXISTS (
-                        SELECT 1 FROM public.profiles 
-                        WHERE id = auth.uid() AND role = 'admin'
-                    )
-                )
-            )
-            WITH CHECK (
-                bucket_id = 'project-media' 
-                AND (storage.foldername(name))[1] = auth.uid()::text
-                AND (
-                    EXISTS (
-                        SELECT 1 FROM public.memberships 
-                        WHERE user_id = auth.uid() AND status = 'active'
-                    )
-                    OR EXISTS (
-                        SELECT 1 FROM public.profiles 
-                        WHERE id = auth.uid() AND role = 'admin'
-                    )
-                )
-            );
-
-        -- Admins Full Access to All Storage Objects
-        DROP POLICY IF EXISTS "Admins full storage access" ON storage.objects;
-        CREATE POLICY "Admins full storage access"
-            ON storage.objects FOR ALL
-            TO authenticated
-            USING (
-                EXISTS (
-                    SELECT 1 FROM public.profiles 
-                    WHERE id = auth.uid() AND role = 'admin'
-                )
-            );
-    END IF;
-END $$;
+-- 2. Storage Row-Level Security Policies Reference
+-- NOTE: In Supabase hosted environments, storage.objects is owned by supabase_storage_admin.
+-- DDL operations such as ALTER TABLE storage.objects and CREATE POLICY ON storage.objects
+-- require relation ownership and cannot be executed by the standard migration role (postgres).
+-- Furthermore, Supabase Storage enables RLS on storage.objects by default.
+--
+-- Configure the following policies via Supabase Studio (Storage > Policies)
+-- or via the Supabase Dashboard SQL Editor:
+--
+-- Policy 1: "Public Read Avatars and Media"
+-- FOR SELECT ON storage.objects
+-- USING (bucket_id IN ('avatars', 'project-media'))
+--
+-- Policy 2: "Users can manage own avatar"
+-- FOR ALL ON storage.objects TO authenticated
+-- USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)
+-- WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)
+--
+-- Policy 3: "Members can upload project media"
+-- FOR ALL ON storage.objects TO authenticated
+-- USING (
+--     bucket_id = 'project-media' 
+--     AND (storage.foldername(name))[1] = auth.uid()::text
+--     AND (
+--         EXISTS (SELECT 1 FROM public.memberships WHERE user_id = auth.uid() AND status = 'active')
+--         OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+--     )
+-- )
+-- WITH CHECK (
+--     bucket_id = 'project-media' 
+--     AND (storage.foldername(name))[1] = auth.uid()::text
+--     AND (
+--         EXISTS (SELECT 1 FROM public.memberships WHERE user_id = auth.uid() AND status = 'active')
+--         OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+--     )
+-- )
+--
+-- Policy 4: "Admins full storage access"
+-- FOR ALL ON storage.objects TO authenticated
+-- USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'))
 
 -- 3. High-Throughput Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_event_registrations_event_status 

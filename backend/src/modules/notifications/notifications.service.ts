@@ -88,10 +88,10 @@ export class NotificationsService {
 
     localNotifications.unshift(record);
 
-    if (supabaseAdmin) {
+    const isUserUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (supabaseAdmin && isUserUuid) {
       try {
         const { error } = await supabaseAdmin.from('notifications').insert({
-          id,
           user_id: userId,
           type,
           title,
@@ -458,7 +458,7 @@ export class NotificationsService {
         }
 
         const { data, count, error } = await builder.range(offset, offset + limit - 1);
-        if (!error && data) {
+        if (!error && data && (data.length > 0 || localNotifications.length === 0)) {
           const { count: unreadCount } = await supabaseAdmin
             .from('notifications')
             .select('*', { count: 'exact', head: true })

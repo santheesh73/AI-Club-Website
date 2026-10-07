@@ -83,6 +83,8 @@ const fallbackQuestionBank: InternalQuestionRecord[] = Array.from({ length: 40 }
 export const localMemoryAttempts: Map<string, AttemptRecord> = new Map();
 export const localMemoryAnswers: Map<string, Map<string, 'A' | 'B' | 'C' | 'D'>> = new Map();
 
+const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
 export class AssessmentService {
   /**
    * Projects full database question row into a secure client DTO.
@@ -155,7 +157,7 @@ export class AssessmentService {
 
     // 2. Check for existing attempt
     let existingAttempt: AttemptRecord | null = null;
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(applicationId)) {
       existingAttempt = localMemoryAttempts.get(applicationId) || null;
     } else {
       const { data } = await supabaseAdmin
@@ -216,7 +218,7 @@ export class AssessmentService {
     const expiresAt = new Date(startedAt.getTime() + assessmentConfig.durationSeconds * 1000);
 
     const newAttempt: AttemptRecord = {
-      id: !supabaseAdmin ? `attempt-${Date.now()}` : '',
+      id: !supabaseAdmin || !isUuid(applicationId) ? `attempt-${Date.now()}` : '',
       applicationId,
       userId,
       status: 'IN_PROGRESS',
@@ -232,7 +234,7 @@ export class AssessmentService {
       unansweredCount: 0,
     };
 
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(applicationId)) {
       localMemoryAttempts.set(applicationId, newAttempt);
       localMemoryAnswers.set(newAttempt.id, new Map());
       // update app status
@@ -288,7 +290,7 @@ export class AssessmentService {
     let attempt: AttemptRecord | null = null;
     let savedAnswersMap: Record<string, 'A' | 'B' | 'C' | 'D'> = {};
 
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(attemptId)) {
       for (const att of localMemoryAttempts.values()) {
         if (att.id === attemptId) {
           attempt = att;
@@ -388,7 +390,7 @@ export class AssessmentService {
     }
 
     let attempt: AttemptRecord | null = null;
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(attemptId)) {
       for (const att of localMemoryAttempts.values()) {
         if (att.id === attemptId) {
           attempt = att;
@@ -441,7 +443,7 @@ export class AssessmentService {
     }
 
     // Save
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(attemptId)) {
       let answers = localMemoryAnswers.get(attemptId);
       if (!answers) {
         answers = new Map();
@@ -482,7 +484,7 @@ export class AssessmentService {
     let attempt: AttemptRecord | null = null;
     let savedAnswers: Record<string, 'A' | 'B' | 'C' | 'D'> = {};
 
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(attemptId)) {
       for (const att of localMemoryAttempts.values()) {
         if (att.id === attemptId) {
           attempt = att;
@@ -589,7 +591,7 @@ export class AssessmentService {
     const submittedAt = new Date().toISOString();
 
     // Persist to attempt and transition application
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(attemptId)) {
       attempt.status = 'SUBMITTED';
       attempt.submittedAt = submittedAt;
       attempt.score = score;

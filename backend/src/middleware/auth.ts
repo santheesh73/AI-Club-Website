@@ -27,18 +27,19 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   const token = authHeader.split(' ')[1];
 
   try {
-    // In local development, testing, or demo showcase, support instant demo bypass tokens
     if (
       process.env.NODE_ENV !== 'production' &&
       (token.includes('test-token') ||
-        token.startsWith('demo-') ||
         token.startsWith('admin-') ||
         token.startsWith('member-') ||
-        token.startsWith('user-'))
+        token.startsWith('student-') ||
+        token.startsWith('user-') ||
+        token.startsWith('applicant-') ||
+        !supabaseAdmin)
     ) {
-      const isAdmin = token.includes('admin');
-      const isMember = token.includes('member');
-      const isUserB = token.includes('user-b');
+      const isAdmin = token === 'admin-test-token' || token.startsWith('admin-');
+      const isMember = token === 'member-test-token' || token.startsWith('member-');
+      const isUserB = token === 'user-b-token' || token.startsWith('user-b-');
 
       req.user = {
         id: isAdmin
@@ -61,31 +62,6 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     }
 
     if (!supabaseAdmin) {
-      // In local development/testing without live Supabase cloud connection
-      if (process.env.NODE_ENV !== 'production') {
-        const isAdmin = token === 'admin-test-token' || token.startsWith('admin-');
-        const isMember = token === 'member-test-token' || token.startsWith('member-');
-        const isUserB = token === 'user-b-token' || token.startsWith('user-b-');
-
-        req.user = {
-          id: isAdmin
-            ? 'admin-user-id'
-            : isMember
-            ? 'member-user-id'
-            : isUserB
-            ? 'user-b-id'
-            : 'user-a-id',
-          email: isAdmin
-            ? 'admin@aiclub.internal'
-            : isMember
-            ? 'member@aiclub.internal'
-            : isUserB
-            ? 'userb@aiclub.internal'
-            : 'usera@aiclub.internal',
-          role: isAdmin ? 'admin' : isMember ? 'member' : 'applicant',
-        };
-        return next();
-      }
       return next(new AppError('Authentication service not configured', 503, 'SERVICE_UNAVAILABLE'));
     }
 

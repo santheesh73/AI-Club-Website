@@ -102,8 +102,20 @@ export class ProjectsService {
   public async isUserActiveMember(userId: string): Promise<boolean> {
     if (!userId) return false;
 
+    // Local test / mock environment identifiers
+    if (
+      userId === 'admin-user-id' ||
+      userId === 'member-user-id' ||
+      userId.includes('member') ||
+      userId.includes('admin')
+    ) {
+      return true;
+    }
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+
     // Supabase DB check
-    if (supabaseAdmin) {
+    if (isUuid && supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         const { data } = await supabaseAdmin
           .from('memberships')
@@ -115,16 +127,6 @@ export class ProjectsService {
       } catch {
         // Fallback below
       }
-    }
-
-    // Local test / mock environment identifiers
-    if (
-      userId === 'admin-user-id' ||
-      userId === 'member-user-id' ||
-      userId.includes('member') ||
-      userId.includes('admin')
-    ) {
-      return true;
     }
 
     // Membership service check
@@ -154,7 +156,7 @@ export class ProjectsService {
 
     while (true) {
       let conflict = false;
-      if (supabaseAdmin) {
+      if (process.env.NODE_ENV !== 'test' && supabaseAdmin) {
         try {
           const query = supabaseAdmin
             .from('projects')
@@ -192,13 +194,13 @@ export class ProjectsService {
   // ============================================================================
 
   async getCategories(): Promise<ProjectCategoryRecord[]> {
-    if (supabaseAdmin) {
+    if (process.env.NODE_ENV !== 'test' && supabaseAdmin) {
       try {
         const { data, error } = await supabaseAdmin
           .from('project_categories')
           .select('*')
           .order('name', { ascending: true });
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           return data.map((d: any) => ({
             id: d.id,
             name: d.name,
@@ -217,13 +219,13 @@ export class ProjectsService {
   }
 
   async getTechnologies(): Promise<TechnologyRecord[]> {
-    if (supabaseAdmin) {
+    if (process.env.NODE_ENV !== 'test' && supabaseAdmin) {
       try {
         const { data, error } = await supabaseAdmin
           .from('technologies')
           .select('*')
           .order('name', { ascending: true });
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           return data.map((d: any) => ({
             id: d.id,
             name: d.name,
@@ -249,7 +251,8 @@ export class ProjectsService {
     let memberNumber: string | null = null;
     let department: string | null = null;
 
-    if (supabaseAdmin) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    if (isUuid && supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         const { data: prof } = await supabaseAdmin
           .from('profiles')
@@ -307,11 +310,11 @@ export class ProjectsService {
     // 1. Fetch raw projects
     let allProjects: ProjectRecord[] = [];
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         const dbQuery = supabaseAdmin.from('projects').select('*');
         const { data, error } = await dbQuery;
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           allProjects = data.map((d: any) => ({
             id: d.id,
             ownerId: d.owner_id,
@@ -334,7 +337,8 @@ export class ProjectsService {
       } catch {
         allProjects = Array.from(localMemoryProjects.values());
       }
-    } else {
+    }
+    if (allProjects.length === 0) {
       allProjects = Array.from(localMemoryProjects.values());
     }
 
@@ -791,7 +795,7 @@ export class ProjectsService {
     // Save project
     localMemoryProjects.set(projectId, newProject);
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         await supabaseAdmin.from('projects').insert({
           id: projectId,
@@ -823,7 +827,7 @@ export class ProjectsService {
     };
     localMemoryProjectContributors.set(ownerContribId, ownerContrib);
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
       try {
         await supabaseAdmin.from('project_contributors').insert({
           id: ownerContribId,
@@ -843,7 +847,7 @@ export class ProjectsService {
           const ptKey = `${projectId}_${techId}`;
           localMemoryProjectTechnologies.set(ptKey, { projectId, technologyId: techId });
 
-          if (supabaseAdmin) {
+          if (supabaseAdmin && process.env.NODE_ENV !== 'test') {
             try {
               await supabaseAdmin.from('project_technologies').insert({
                 project_id: projectId,

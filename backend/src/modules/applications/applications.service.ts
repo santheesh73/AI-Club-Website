@@ -50,6 +50,8 @@ function formatApplicationResponse(row: Record<string, unknown>): ApplicationRec
   };
 }
 
+const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
 export class ApplicationsService {
   /**
    * Verifies required student profile fields before permitting application creation
@@ -57,7 +59,7 @@ export class ApplicationsService {
   public async verifyProfileCompletion(userId: string): Promise<void> {
     let profileData: Record<string, unknown> | null = null;
 
-    if (supabaseAdmin) {
+    if (supabaseAdmin && isUuid(userId)) {
       const { data, error } = await supabaseAdmin
         .from('profiles')
         .select('*')
@@ -123,7 +125,7 @@ export class ApplicationsService {
     }
 
     // 3. Create application
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(userId)) {
       localAppSeq++;
       const year = new Date().getFullYear();
       const appNum = `AIC-${year}-${String(localAppSeq).padStart(6, '0')}`;
@@ -166,7 +168,7 @@ export class ApplicationsService {
    * Retrieves the current user's application
    */
   public async getApplicationByUserId(userId: string): Promise<ApplicationRecord | null> {
-    if (!supabaseAdmin) {
+    if (!supabaseAdmin || !isUuid(userId)) {
       return localMemoryApplications.get(userId) || null;
     }
 

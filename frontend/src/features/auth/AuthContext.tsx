@@ -5,7 +5,7 @@ import { env } from '@/lib/env';
 import type { UserProfile } from '@/types/user';
 import { mapAuthError } from './authErrors';
 
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
@@ -23,7 +23,6 @@ export interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
-  loginAsDemo?: (role?: 'admin' | 'member' | 'applicant') => Promise<{ success: boolean; error?: string }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -150,27 +149,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             initialSession.user.email,
             initialSession.user.user_metadata?.full_name
           );
-        } else if (isMounted) {
-          // Restore demo session if present
-          const saved = localStorage.getItem(LOCAL_STORAGE_DEV_USER_KEY);
-          if (saved) {
-            try {
-              const devProfile: UserProfile & { token?: string } = JSON.parse(saved);
-              setProfile(devProfile);
-              setUser({
-                id: devProfile.id,
-                email: devProfile.email,
-                app_metadata: { role: devProfile.role },
-                user_metadata: { full_name: devProfile.fullName, role: devProfile.role },
-              } as unknown as User);
-              setSession({
-                access_token: devProfile.token || `${devProfile.role}-test-token`,
-                user: { id: devProfile.id, email: devProfile.email },
-              } as unknown as Session);
-            } catch {
-              localStorage.removeItem(LOCAL_STORAGE_DEV_USER_KEY);
-            }
-          }
         }
       } catch (err) {
         console.error('[AI CLUB Auth] Error restoring session:', err);
@@ -448,87 +426,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Demo Login (Instant evaluation & all-functions testing)
-  const loginAsDemo = useCallback(async (role: 'admin' | 'member' | 'applicant' = 'admin') => {
-    setIsLoading(true);
-    try {
-      const demoProfiles: Record<'admin' | 'member' | 'applicant', UserProfile> = {
-        admin: {
-          id: 'admin-user-id',
-          email: 'admin@aiclub.internal',
-          fullName: 'Dr. Sarah Turing (Lead Admin)',
-          role: 'admin',
-          registerNumber: 'FAC-AI-001',
-          department: 'Computer Science & AI',
-          year: 4,
-          section: 'A',
-          skills: ['Deep Learning', 'System Architecture', 'Governance', 'PyTorch'],
-          interests: ['AI Alignment', 'Autonomous Agents', 'Ethics in AI'],
-          bio: 'Executive Director & Chief Faculty Advisor of AI CLUB. Oversees admissions, events, courses, and platform governance.',
-          createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        member: {
-          id: 'member-user-id',
-          email: 'member@aiclub.internal',
-          fullName: 'Sri Nikesh (Active Member)',
-          role: 'member',
-          registerNumber: '2023AIDS0001',
-          department: 'Artificial Intelligence & Data Science',
-          year: 3,
-          section: 'B',
-          skills: ['PyTorch', 'Transformers', 'FastAPI', 'React'],
-          interests: ['Large Language Models', 'Computer Vision', 'Robotics'],
-          bio: 'Core builder and researcher at AI CLUB with active project sprints and completed courses.',
-          createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        applicant: {
-          id: 'applicant-user-id',
-          email: 'applicant@aiclub.internal',
-          fullName: 'Rahul Sharma (Prospective Applicant)',
-          role: 'applicant',
-          registerNumber: '2024CSE0102',
-          department: 'Computer Science & Engineering',
-          year: 2,
-          section: 'A',
-          skills: ['Python', 'Data Structures', 'Machine Learning'],
-          interests: ['Generative AI', 'Neural Networks'],
-          bio: 'Aspiring machine learning engineer preparing application and assessment for AI CLUB intake.',
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      };
-
-      const selectedProfile = demoProfiles[role] || demoProfiles.admin;
-      const token = `${selectedProfile.role}-test-token`;
-
-      const sessionData = {
-        ...selectedProfile,
-        token,
-      };
-      localStorage.setItem(LOCAL_STORAGE_DEV_USER_KEY, JSON.stringify(sessionData));
-
-      setProfile(selectedProfile);
-      setUser({
-        id: selectedProfile.id,
-        email: selectedProfile.email,
-        app_metadata: { role: selectedProfile.role },
-        user_metadata: { full_name: selectedProfile.fullName, role: selectedProfile.role },
-      } as unknown as User);
-      setSession({
-        access_token: token,
-        user: { id: selectedProfile.id, email: selectedProfile.email },
-      } as unknown as Session);
-
-      setIsLoading(false);
-      return { success: true };
-    } catch (err) {
-      setIsLoading(false);
-      return { success: false, error: err instanceof Error ? err.message : 'Demo login failed' };
-    }
-  }, []);
-
   return (
     <AuthContext.Provider
       value={{
@@ -544,7 +441,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updatePassword,
         refreshProfile,
         updateProfile,
-        loginAsDemo,
       }}
     >
       {children}
