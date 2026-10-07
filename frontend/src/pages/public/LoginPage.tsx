@@ -38,7 +38,7 @@ export const LoginPage: React.FC = () => {
 
     // Strict client-side check if Admin mode is chosen
     if (selectedRole === 'admin' && userEmail !== AUTHORIZED_ADMIN_EMAIL) {
-      setError(`Access denied. Only the authorized administrator (${AUTHORIZED_ADMIN_EMAIL}) can sign in through the Admin Gateway.`);
+      setError(`ACCESS IS DENIED. U CAN'T SIGNIN THROUGH THE ADMIN GATEWAY`);
       return;
     }
 
@@ -59,10 +59,11 @@ export const LoginPage: React.FC = () => {
       if (isAdmin) {
         navigate('/admin', { replace: true });
       } else {
-        setError(`Access denied. You do not have administrator privileges.`);
+        setError(`ACCESS IS DENIED. U CAN'T SIGNIN THROUGH THE ADMIN GATEWAY`);
       }
       return;
     }
+
 
     // Student / Member flow
     if (from && from !== '/profile') {
@@ -148,8 +149,9 @@ export const LoginPage: React.FC = () => {
               <Input
                 label={selectedRole === 'admin' ? 'Authorized Admin Email' : 'Student Email Address'}
                 type="email"
-                placeholder={selectedRole === 'admin' ? 'santheesh651@gmail.com' : 'ada@university.edu'}
+                placeholder={selectedRole === 'admin' ? 'admin@aiclub.org' : 'ada@university.edu'}
                 value={email}
+
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
