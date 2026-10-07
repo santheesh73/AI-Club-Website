@@ -1,76 +1,192 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/features/auth';
+import { Button } from '@/components/ui/Button';
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Calendar,
+  BookOpen,
+  FolderGit2,
+  Award,
+  Megaphone,
+  Bell,
+  BarChart3,
+  History,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  Menu,
+  X,
+} from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Overview', href: '/admin' },
-    { name: 'Applications', href: '/admin/applications' },
-    { name: 'Members', href: '/admin/members' },
-    { name: 'Events', href: '/admin/events' },
-    { name: 'Courses', href: '/admin/courses' },
-    { name: 'Projects', href: '/admin/projects' },
-    { name: 'Achievements', href: '/admin/achievements' },
-    { name: 'Announcements', href: '/admin/announcements' },
-    { name: 'Notifications', href: '/admin/notifications' },
-    { name: 'Analytics', href: '/admin/analytics' },
-    { name: 'Audit Logs', href: '/admin/audit-logs' },
-    { name: 'Settings', href: '/admin/settings' },
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const navItems = [
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, activeInM4: true },
+    { name: 'Applications', href: '/admin/applications', icon: FileText, activeInM4: true },
+    { name: 'Members', href: '/admin/members', icon: Users, activeInM4: false },
+    { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: false },
+    { name: 'Courses', href: '/admin/courses', icon: BookOpen, activeInM4: false },
+    { name: 'Projects', href: '/admin/projects', icon: FolderGit2, activeInM4: false },
+    { name: 'Achievements', href: '/admin/achievements', icon: Award, activeInM4: false },
+    { name: 'Announcements', href: '/admin/announcements', icon: Megaphone, activeInM4: false },
+    { name: 'Notifications', href: '/admin/notifications', icon: Bell, activeInM4: false },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, activeInM4: false },
+    { name: 'Audit Logs', href: '/admin/audit-logs', icon: History, activeInM4: false },
+    { name: 'Settings', href: '/admin/settings', icon: Settings, activeInM4: false },
   ];
 
   return (
     <div className="min-h-screen flex bg-canvas text-ink">
-      {/* Admin Sidebar */}
-      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex flex-col justify-between hidden md:flex">
+      {/* Desktop Admin Sidebar */}
+      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex-col justify-between hidden md:flex flex-shrink-0">
         <div className="space-y-6">
           <Link to="/" className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-ink text-canvas font-bold flex items-center justify-center">
               AI
             </div>
             <div>
-              <span className="font-semibold text-sm tracking-tight text-ink block">AI CLUB</span>
-              <span className="text-[10px] tracking-wider text-red-600 uppercase font-semibold">Admin Center</span>
+              <span className="font-semibold text-sm tracking-tight text-ink block">
+                AI CLUB
+              </span>
+              <span className="text-[10px] tracking-wider text-ink-muted uppercase font-mono font-bold">
+                CONTROL
+              </span>
             </div>
           </Link>
 
           <nav className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+            {navItems.map((item) => {
+              const isActive =
+                item.href === '/admin'
+                  ? location.pathname === '/admin'
+                  : location.pathname.startsWith(item.href);
+              const Icon = item.icon;
+
               return (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`block px-3 py-2 rounded-cardSm text-sm font-medium transition-colors ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-card-sm text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-ink text-canvas font-semibold'
-                      : 'text-ink-secondary hover:text-ink hover:bg-surface-muted/60'
+                      ? 'bg-ink text-canvas font-semibold shadow-subtle'
+                      : 'text-ink-secondary hover:text-ink hover:bg-canvas-alt'
                   }`}
                 >
-                  {item.name}
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </div>
+                  {!item.activeInM4 && (
+                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-canvas-alt text-ink-muted font-mono">
+                      Soon
+                    </span>
+                  )}
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-surface-border text-xs text-ink-muted flex items-center justify-between">
-          <span>Authoritative Mode</span>
-          <span className="h-2 w-2 rounded-full bg-accent-green" />
+        <div className="pt-4 border-t border-surface-border space-y-3">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-accent-green" />
+              <span>Admin Role Verified</span>
+            </span>
+            <span className="h-2 w-2 rounded-full bg-accent-green" />
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-ink-muted hover:text-ink"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-3.5 w-3.5 mr-2" />
+            <span>Sign Out</span>
+          </Button>
         </div>
       </aside>
 
-      {/* Admin Main Body */}
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-surface-border bg-surface px-6 flex items-center justify-between">
-          <div className="text-sm font-semibold text-ink">
-            Administrative Management Console
+      {/* Main Admin Wrapper */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 border-b border-surface-border bg-surface px-6 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-canvas-alt"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-ink">AI CLUB CONTROL</span>
+              <span className="text-xs text-ink-muted hidden sm:inline">• Administrative Console</span>
+            </div>
           </div>
-          <div className="text-xs text-ink-muted">
-            Privileged Boundary
+
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-semibold text-ink leading-tight">
+                {profile?.fullName || 'Administrator'}
+              </p>
+              <p className="text-[10px] font-mono text-ink-muted">{profile?.email}</p>
+            </div>
+            <div className="h-8 w-8 rounded-full bg-ink text-canvas text-xs font-bold flex items-center justify-center font-mono">
+              ADM
+            </div>
           </div>
         </header>
-        <main className="flex-1 p-6 sm:p-8 max-w-7xl w-full">
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-surface-border bg-surface p-4 space-y-1 animate-in fade-in">
+            {navItems.map((item) => {
+              const isActive =
+                item.href === '/admin'
+                  ? location.pathname === '/admin'
+                  : location.pathname.startsWith(item.href);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-card-sm text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'bg-ink text-canvas font-semibold'
+                      : 'text-ink-secondary hover:text-ink'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </div>
+                  {!item.activeInM4 && (
+                    <span className="text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-canvas-alt text-ink-muted font-mono">
+                      Soon
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

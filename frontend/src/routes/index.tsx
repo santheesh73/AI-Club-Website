@@ -16,6 +16,9 @@ import { ApplicantDashboard } from '@/pages/applicant/ApplicantDashboard';
 import { ApplicationPage } from '@/pages/applicant/ApplicationPage';
 import { AssessmentPage } from '@/pages/applicant/AssessmentPage';
 import { AssessmentResultPage } from '@/pages/applicant/AssessmentResultPage';
+import { AdminDashboard } from '@/pages/admin/AdminDashboard';
+import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
+import { AdminApplicationDetailPage } from '@/pages/admin/AdminApplicationDetailPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -222,26 +225,9 @@ export const AppRoutes: React.FC = () => {
           </RouteGuard>
         }
       >
-        <Route
-          index
-          element={
-            <MilestonePlaceholder
-              title="Admin Overview"
-              milestone="Milestone 10: Admin Platform"
-              description="Club analytics, active cohort stats, and governance controls."
-            />
-          }
-        />
-        <Route
-          path="applications"
-          element={
-            <MilestonePlaceholder
-              title="Application Management"
-              milestone="Milestone 10: Admin Platform"
-              description="Review applicant submissions, scores, and decision queue."
-            />
-          }
-        />
+        <Route index element={<AdminDashboard />} />
+        <Route path="applications" element={<AdminApplicationsPage />} />
+        <Route path="applications/:id" element={<AdminApplicationDetailPage />} />
         <Route
           path="members"
           element={

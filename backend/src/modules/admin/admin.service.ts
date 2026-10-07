@@ -422,11 +422,11 @@ export class AdminService {
             submittedAt: attemptRow.submitted_at ? String(attemptRow.submitted_at) : (attemptRow.submittedAt ? String(attemptRow.submittedAt) : null),
             status: String(attemptRow.status || 'SUBMITTED'),
           }
-        : applicationRow.assessmentScore !== null
+        : applicationRow.assessmentScore !== null && applicationRow.assessmentScore !== undefined
         ? {
-            score: applicationRow.assessmentScore,
-            percentage: applicationRow.assessmentPercentage,
-            passed: applicationRow.assessmentPassed,
+            score: applicationRow.assessmentScore ?? null,
+            percentage: applicationRow.assessmentPercentage ?? null,
+            passed: applicationRow.assessmentPassed ?? null,
             totalQuestions: 25,
             correctCount: applicationRow.assessmentScore,
             wrongCount: 25 - (applicationRow.assessmentScore || 0),

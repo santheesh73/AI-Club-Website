@@ -77,6 +77,10 @@ export class ApplicationsService {
       };
     }
 
+    if (!profileData) {
+      throw new AppError('Profile not found', 400, 'PROFILE_NOT_FOUND');
+    }
+
     const missingFields: string[] = [];
     if (!profileData.full_name || String(profileData.full_name).trim() === '') {
       missingFields.push('fullName');
