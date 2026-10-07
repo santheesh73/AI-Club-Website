@@ -119,3 +119,56 @@ AI CLUB is a production-grade full-stack web platform designed as an elite artif
        ▼
 [PATCH /api/v1/profile: Validated & Protected against Role Escalation]
 ```
+
+---
+
+## 6. Milestone 3 Admissions & Assessment Architecture
+
+```
+                 AUTHENTICATED USER
+                         │
+               [Complete Student Profile]
+                         │
+                         ▼
+             [Initiate Club Application]
+                         │
+                         ▼
+        Generated Dossier: AIC-YYYY-XXXXXX (status = 'draft')
+                         │
+                         ▼
+             [Start 25-MCQ Assessment]
+                         │
+    ┌────────────────────┴────────────────────┐
+    ▼                                         ▼
+Random 25-question sampling            30-min server timer
+Persistent question ordering           Autosave answers
+Safe DTO (answers hidden)              Refresh resistance
+    │                                         │
+    └────────────────────┬────────────────────┘
+                         │
+                         ▼
+           [Submit / Expiry Evaluation]
+                         │
+                         ▼
+      Server-side Scoring (60% Pass Threshold)
+                         │
+                         ▼
+        Application Status: UNDER_REVIEW
+                         │
+   ╔═════════════════════╧═════════════════════╗
+   ║        CRITICAL ARCHITECTURAL RULE        ║
+   ║                                           ║
+   ║ Passing the exam moves the candidate to   ║
+   ║ UNDER_REVIEW. It does NOT approve them    ║
+   ║ or grant AI CLUB Membership. Final        ║
+   ║ admission belongs to Admin Review (M4)    ║
+   ║ and Induction (M5).                       ║
+   ╚═════════════════════╤═════════════════════╝
+                         │
+                         ▼
+            [Admin Deliberation - M4]
+                         │
+                         ▼
+            [Member Induction - M5]
+```
+

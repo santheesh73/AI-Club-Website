@@ -104,3 +104,66 @@ database/supabase/
   ```bash
   supabase db push
   ```
+
+---
+
+## 7. Milestone 3 Schema (Applications & Assessment Engine)
+
+### 7.1 Sequence: `public.application_number_seq`
+Generates sequential integers starting at 1 used by `generate_application_number()` to produce unique human-readable identifiers formatted as `AIC-YYYY-XXXXXX` (e.g. `AIC-2026-000001`).
+
+### 7.2 Table: `public.applications`
+Stores student club applications.
+- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- `user_id`: `UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE`
+- `application_number`: `TEXT NOT NULL UNIQUE`
+- `status`: `application_status NOT NULL DEFAULT 'draft'`
+- `academic_year`: `INTEGER NOT NULL DEFAULT EXTRACT(YEAR FROM CURRENT_DATE)`
+- `submitted_at`: `TIMESTAMPTZ NULL`
+- `reviewed_at`: `TIMESTAMPTZ NULL`
+- `reviewer_notes`: `TEXT NULL`
+- `assessment_score`: `NUMERIC(4, 1) NULL CHECK (assessment_score >= 0 AND assessment_score <= 25)`
+- `assessment_passed`: `BOOLEAN NULL`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+- `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+
+### 7.3 Table: `public.assessment_questions`
+Question bank for algorithmic, AI, and math entrance evaluation.
+- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- `category`: `TEXT NOT NULL` (e.g., Python, Machine Learning, Deep Learning, Mathematics)
+- `difficulty`: `TEXT NOT NULL CHECK (difficulty IN ('easy', 'medium', 'hard'))`
+- `question_text`: `TEXT NOT NULL`
+- `option_a`, `option_b`, `option_c`, `option_d`: `TEXT NOT NULL`
+- `correct_option`: `TEXT NOT NULL CHECK (correct_option IN ('A', 'B', 'C', 'D'))`
+- `marks`: `NUMERIC(3, 1) NOT NULL DEFAULT 1.0`
+- `is_active`: `BOOLEAN NOT NULL DEFAULT true`
+- `created_at`, `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+
+### 7.4 Table: `public.assessment_attempts`
+Manages the timed 25-question exam instance.
+- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- `application_id`: `UUID NOT NULL UNIQUE REFERENCES public.applications(id) ON DELETE CASCADE`
+- `user_id`: `UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE`
+- `question_ids`: `UUID[] NOT NULL CHECK (array_length(question_ids, 1) = 25)`
+- `started_at`: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+- `expires_at`: `TIMESTAMPTZ NOT NULL`
+- `submitted_at`: `TIMESTAMPTZ NULL`
+- `score`: `NUMERIC(4, 1) NULL`
+- `percentage`: `NUMERIC(5, 2) NULL`
+- `passed`: `BOOLEAN NULL`
+- `total_questions`: `INTEGER NOT NULL DEFAULT 25`
+- `status`: `TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'expired'))`
+
+### 7.5 Table: `public.assessment_answers`
+Stores autosaved student answers.
+- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- `attempt_id`: `UUID NOT NULL REFERENCES public.assessment_attempts(id) ON DELETE CASCADE`
+- `question_id`: `UUID NOT NULL REFERENCES public.assessment_questions(id) ON DELETE CASCADE`
+- `selected_option`: `TEXT NOT NULL CHECK (selected_option IN ('A', 'B', 'C', 'D'))`
+- `is_correct`: `BOOLEAN NULL`
+- `saved_at`: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+- `UNIQUE(attempt_id, question_id)`
+
+### 7.6 Security & Anti-Privilege Escalation Triggers
+- `trg_protect_application_security_fields`: Prevents non-service roles from updating application ownership, application number, or manually modifying score, passed status, or review fields.
+
