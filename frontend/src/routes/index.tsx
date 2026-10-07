@@ -19,6 +19,11 @@ import { AssessmentResultPage } from '@/pages/applicant/AssessmentResultPage';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
 import { AdminApplicationDetailPage } from '@/pages/admin/AdminApplicationDetailPage';
+import { MemberDashboard } from '@/pages/member/MemberDashboard';
+import { MemberMembershipPage } from '@/pages/member/MemberMembershipPage';
+import { MemberProfilePage } from '@/pages/member/MemberProfilePage';
+import { MemberApplicationPage } from '@/pages/member/MemberApplicationPage';
+import { MemberAssessmentPage } from '@/pages/member/MemberAssessmentPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -124,16 +129,11 @@ export const AppRoutes: React.FC = () => {
           </RouteGuard>
         }
       >
-        <Route
-          index
-          element={
-            <MilestonePlaceholder
-              title="Member Dashboard"
-              milestone="Milestone 5: Member Dashboard"
-              description="Centralized member workspace with enrolled courses, sprint tasks, and updates."
-            />
-          }
-        />
+        <Route index element={<MemberDashboard />} />
+        <Route path="profile" element={<MemberProfilePage />} />
+        <Route path="membership" element={<MemberMembershipPage />} />
+        <Route path="application" element={<MemberApplicationPage />} />
+        <Route path="assessment" element={<MemberAssessmentPage />} />
         <Route
           path="courses"
           element={
@@ -191,16 +191,6 @@ export const AppRoutes: React.FC = () => {
               title="Notifications"
               milestone="Milestone 8: Notifications"
               description="Real-time alerts, project updates, and system announcements."
-            />
-          }
-        />
-        <Route
-          path="profile"
-          element={
-            <MilestonePlaceholder
-              title="Professional Profile"
-              milestone="Milestone 5: Member Dashboard"
-              description="Public portfolio, verified skill endorsements, and projects showcase."
             />
           }
         />

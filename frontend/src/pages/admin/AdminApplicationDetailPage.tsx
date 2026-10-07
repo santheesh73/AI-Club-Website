@@ -5,7 +5,9 @@ import {
   ApproveConfirmModal,
   WaitlistConfirmModal,
   RejectReasonModal,
+  ActivateMembershipModal,
 } from '@/features/admin';
+import { membershipApi } from '@/services/membershipApi';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
@@ -22,6 +24,7 @@ import {
   ExternalLink,
   History,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 
 export const AdminApplicationDetailPage: React.FC = () => {
@@ -29,18 +32,47 @@ export const AdminApplicationDetailPage: React.FC = () => {
   const {
     detail,
     isLoading,
-    isSubmitting,
-    error,
+    isSubmitting: isDecisionSubmitting,
+    error: decisionError,
     decisionSuccessMessage,
     approve,
     waitlist,
     reject,
     clearMessages,
+    refresh,
   } = useAdminApplicationDetail(id);
 
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
+  const [activationSuccess, setActivationSuccess] = useState<string | null>(null);
+  const [activationError, setActivationError] = useState<string | null>(null);
+
+  const handleActivateMembership = async (notes?: string) => {
+    if (!detail) return;
+    try {
+      setIsActivating(true);
+      setActivationError(null);
+      const res = await membershipApi.activateMembership(detail.application.id, notes);
+      if (res.success) {
+        setActivationSuccess(
+          res.data.message ||
+            `Membership successfully activated! Member #: ${res.data.membership.memberNumber}`
+        );
+        setIsActivateModalOpen(false);
+        if (refresh) await refresh();
+      } else {
+        setActivationError(res.error.message || 'Failed to activate membership');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Activation error';
+      setActivationError(msg);
+    } finally {
+      setIsActivating(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -51,12 +83,12 @@ export const AdminApplicationDetailPage: React.FC = () => {
     );
   }
 
-  if (error && !detail) {
+  if (decisionError && !detail) {
     return (
       <div className="max-w-xl mx-auto p-8 rounded-card-lg bg-surface border border-surface-border text-center space-y-4 shadow-soft">
         <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
         <h2 className="text-lg font-semibold text-ink">Applicant Dossier Not Found</h2>
-        <p className="text-xs text-ink-muted leading-relaxed">{error}</p>
+        <p className="text-xs text-ink-muted leading-relaxed">{decisionError}</p>
         <Link to="/admin/applications">
           <Button variant="primary">
             <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -115,14 +147,17 @@ export const AdminApplicationDetailPage: React.FC = () => {
       </div>
 
       {/* Success Notification */}
-      {decisionSuccessMessage && (
+      {(decisionSuccessMessage || activationSuccess) && (
         <div className="p-4 rounded-card-sm bg-accent-green-subtle border border-accent-green/30 text-xs text-accent-green-dark flex items-start justify-between gap-3 shadow-subtle">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-            <p className="font-semibold">{decisionSuccessMessage}</p>
+            <p className="font-semibold">{decisionSuccessMessage || activationSuccess}</p>
           </div>
           <button
-            onClick={clearMessages}
+            onClick={() => {
+              clearMessages();
+              setActivationSuccess(null);
+            }}
             className="text-accent-green-dark hover:underline font-mono"
           >
             Dismiss
@@ -131,14 +166,17 @@ export const AdminApplicationDetailPage: React.FC = () => {
       )}
 
       {/* Error Notification */}
-      {error && (
+      {(decisionError || activationError) && (
         <div className="p-4 rounded-card-sm bg-red-50 border border-red-200 text-xs text-red-700 flex items-start justify-between gap-3 shadow-subtle">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600" />
-            <p className="font-semibold">{error}</p>
+            <p className="font-semibold">{decisionError || activationError}</p>
           </div>
           <button
-            onClick={clearMessages}
+            onClick={() => {
+              clearMessages();
+              setActivationError(null);
+            }}
             className="text-red-700 hover:underline font-mono"
           >
             Dismiss
@@ -369,7 +407,7 @@ export const AdminApplicationDetailPage: React.FC = () => {
                     size="sm"
                     className="w-full justify-center"
                     onClick={() => setIsApproveOpen(true)}
-                    disabled={isSubmitting}
+                    disabled={isDecisionSubmitting}
                   >
                     <CheckCircle2 className="h-4 w-4 mr-1.5" />
                     <span>Approve Application</span>
@@ -380,7 +418,7 @@ export const AdminApplicationDetailPage: React.FC = () => {
                     size="sm"
                     className="w-full justify-center"
                     onClick={() => setIsWaitlistOpen(true)}
-                    disabled={isSubmitting}
+                    disabled={isDecisionSubmitting}
                   >
                     <Clock className="h-4 w-4 mr-1.5" />
                     <span>Waitlist Candidate</span>
@@ -391,7 +429,7 @@ export const AdminApplicationDetailPage: React.FC = () => {
                     size="sm"
                     className="w-full justify-center"
                     onClick={() => setIsRejectOpen(true)}
-                    disabled={isSubmitting}
+                    disabled={isDecisionSubmitting}
                   >
                     <XCircle className="h-4 w-4 mr-1.5" />
                     <span>Reject Application</span>
@@ -433,6 +471,21 @@ export const AdminApplicationDetailPage: React.FC = () => {
                   <div className="p-3.5 rounded-card-sm bg-red-50 border border-red-200 space-y-1 text-red-800">
                     <span className="font-semibold">Rejection Reason:</span>
                     <p>{application.rejectionReason}</p>
+                  </div>
+                )}
+
+                {application.status === 'approved' && (
+                  <div className="pt-3 border-t border-surface-border">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full justify-center bg-accent-green text-ink hover:bg-accent-green/90 font-semibold"
+                      onClick={() => setIsActivateModalOpen(true)}
+                      disabled={isActivating || isDecisionSubmitting}
+                    >
+                      <Sparkles className="h-4 w-4 mr-1.5" />
+                      <span>{isActivating ? 'Activating...' : 'Activate Membership'}</span>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -485,7 +538,7 @@ export const AdminApplicationDetailPage: React.FC = () => {
         studentName={student.fullName}
         applicationNumber={application.applicationNumber}
         assessmentScore={assessment?.score}
-        isSubmitting={isSubmitting}
+        isSubmitting={isDecisionSubmitting}
       />
 
       <WaitlistConfirmModal
@@ -494,7 +547,7 @@ export const AdminApplicationDetailPage: React.FC = () => {
         onConfirm={waitlist}
         studentName={student.fullName}
         applicationNumber={application.applicationNumber}
-        isSubmitting={isSubmitting}
+        isSubmitting={isDecisionSubmitting}
       />
 
       <RejectReasonModal
@@ -503,7 +556,16 @@ export const AdminApplicationDetailPage: React.FC = () => {
         onConfirm={reject}
         studentName={student.fullName}
         applicationNumber={application.applicationNumber}
-        isSubmitting={isSubmitting}
+        isSubmitting={isDecisionSubmitting}
+      />
+
+      <ActivateMembershipModal
+        isOpen={isActivateModalOpen}
+        onClose={() => setIsActivateModalOpen(false)}
+        onConfirm={handleActivateMembership}
+        studentName={student.fullName}
+        applicationNumber={application.applicationNumber}
+        isSubmitting={isActivating}
       />
     </div>
   );

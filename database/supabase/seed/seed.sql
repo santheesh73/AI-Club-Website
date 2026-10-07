@@ -8,7 +8,10 @@
 -- Include Milestone 4 admin and applicant records
 \i seed_m4_admin.sql
 
+-- Include Milestone 5 membership records
+\i seed_m5_membership.sql
+
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 4: Admin Control Center & Application Review.';
+    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 5: Membership Activation & Member Experience.';
 END $$;

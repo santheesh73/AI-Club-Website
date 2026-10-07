@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../../middleware/auth';
 import { adminController } from './admin.controller';
+import { membershipController } from '../membership/membership.controller';
 
 /**
  * AI CLUB - Module: admin
@@ -38,6 +39,15 @@ router.post('/applications/:id/waitlist', (req, res, next) =>
 
 router.post('/applications/:id/reject', (req, res, next) =>
   adminController.rejectApplication(req, res, next)
+);
+
+// Milestone 5: Membership Activation & Member Management
+router.post('/memberships/activate', (req, res, next) =>
+  membershipController.activateMembership(req, res, next)
+);
+
+router.get('/members', (req, res, next) =>
+  membershipController.getMembersList(req, res, next)
 );
 
 export const adminRoutes = router;

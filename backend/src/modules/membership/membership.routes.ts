@@ -1,19 +1,37 @@
 import { Router } from 'express';
+import { authenticate } from '../../middleware/auth';
+import { membershipController } from './membership.controller';
 import { sendSuccess } from '../../utils/response';
 
 /**
  * AI CLUB - Module: membership
- * Architectural foundation established for Milestone 1.
- * Business endpoints will be attached during respective milestones.
+ * Milestone 5: Membership Activation & Member Experience
  */
 const router = Router();
 
 router.get('/info', (_req, res) => {
   sendSuccess(res, {
     module: 'membership',
-    status: 'initialized',
-    milestone: 'Milestone 1 Architecture'
+    status: 'operational',
+    milestone: 'Milestone 5 Membership Activation & Member Experience',
   });
 });
+
+// Member Protected Endpoints
+router.get('/me', authenticate, (req, res, next) =>
+  membershipController.getMyMembership(req, res, next)
+);
+
+router.get('/me/dashboard', authenticate, (req, res, next) =>
+  membershipController.getMyDashboard(req, res, next)
+);
+
+router.get('/me/application', authenticate, (req, res, next) =>
+  membershipController.getMyApplication(req, res, next)
+);
+
+router.get('/me/assessment', authenticate, (req, res, next) =>
+  membershipController.getMyAssessment(req, res, next)
+);
 
 export const membershipRoutes = router;

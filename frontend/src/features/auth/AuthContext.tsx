@@ -25,7 +25,7 @@ interface AuthContextType {
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_DEV_USER_KEY = 'ai_club_dev_user_session';
 

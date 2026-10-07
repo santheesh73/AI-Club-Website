@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Copy, Check, ArrowRight, ShieldCheck, Clock, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { useMembership } from '@/features/membership';
 import type { Application } from '@/types/application';
 
 interface ApplicationCardProps {
@@ -17,6 +18,7 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
   assessmentStatus,
 }) => {
   const navigate = useNavigate();
+  const { membership, isActiveMember } = useMembership();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -142,6 +144,41 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
             <p className="font-semibold text-ink">Application Under Committee Review</p>
             <p className="text-ink-muted">
               Your assessment and academic profile have been safely cataloged. The admissions board evaluates candidate submissions holistically. Final determinations will be announced upon review conclusion.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {application.status === 'approved' && isActiveMember && (
+        <div className="p-4 rounded-card-sm bg-accent-green-subtle/50 border border-accent-green/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-accent-green mt-0.5 flex-shrink-0" />
+            <div className="text-xs space-y-0.5">
+              <p className="font-bold text-ink">Membership Officially Activated</p>
+              <p className="text-ink-secondary">
+                Your member credentials (<span className="font-mono font-bold text-ink">{membership?.memberNumber}</span>) are active. You may now enter the member workspace.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/member')}
+            className="flex-shrink-0 bg-accent-green text-ink hover:bg-accent-green/90 font-semibold self-start sm:self-auto"
+          >
+            <span>Open Member Workspace</span>
+            <ArrowRight className="h-4 w-4 ml-1.5" />
+          </Button>
+        </div>
+      )}
+
+      {application.status === 'approved' && !isActiveMember && (
+        <div className="p-4 rounded-card-sm bg-accent-green-subtle/30 border border-accent-green/20 flex items-start gap-3">
+          <Clock className="h-5 w-5 text-accent-green mt-0.5 flex-shrink-0" />
+          <div className="text-xs space-y-1">
+            <p className="font-bold text-ink">Application Formally Approved</p>
+            <p className="text-ink-muted leading-relaxed">
+              Congratulations! The admissions committee has accepted your application. Your official membership record and ID are currently being finalized by club administration.
             </p>
           </div>
         </div>

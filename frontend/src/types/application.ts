@@ -6,9 +6,14 @@ export type ApplicationStatus =
   | 'draft'
   | 'submitted'
   | 'under_review'
+  | 'approved'
   | 'accepted'
   | 'rejected'
-  | 'waitlisted';
+  | 'waitlisted'
+  | 'test_required'
+  | 'test_in_progress'
+  | 'test_completed'
+  | 'withdrawn';
 
 export interface Application {
   id: string;

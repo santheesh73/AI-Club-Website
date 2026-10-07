@@ -31,16 +31,25 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       // In local development/testing without live Supabase cloud connection
       if (process.env.NODE_ENV !== 'production') {
         const isAdmin = token === 'admin-test-token' || token.startsWith('admin-');
+        const isMember = token === 'member-test-token' || token.startsWith('member-');
         const isUserB = token === 'user-b-token' || token.startsWith('user-b-');
 
         req.user = {
-          id: isAdmin ? 'admin-user-id' : isUserB ? 'user-b-id' : 'user-a-id',
+          id: isAdmin
+            ? 'admin-user-id'
+            : isMember
+            ? 'member-user-id'
+            : isUserB
+            ? 'user-b-id'
+            : 'user-a-id',
           email: isAdmin
             ? 'admin@aiclub.internal'
+            : isMember
+            ? 'member@aiclub.internal'
             : isUserB
             ? 'userb@aiclub.internal'
             : 'usera@aiclub.internal',
-          role: isAdmin ? 'admin' : 'applicant',
+          role: isAdmin ? 'admin' : isMember ? 'member' : 'applicant',
         };
         return next();
       }
