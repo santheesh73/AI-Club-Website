@@ -131,6 +131,71 @@ router.delete('/questions/:id', async (req: Request, res: Response, next: NextFu
   }
 });
 
+// POST /api/v1/admin/assessment/generate (AI-assisted MCQ generation)
+router.post('/generate', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const adminUser = req.user;
+    if (!adminUser) {
+      return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
+    }
+
+    const { count, category, difficulty, topic, additionalInstructions } = req.body;
+    const { questionGenerationService } = await import('../ai/questionGenerator');
+
+    const result = await questionGenerationService.generateAndStageQuestions(
+      {
+        count: count !== undefined ? Number(count) : 10,
+        category: category || 'AI Fundamentals',
+        difficulty: difficulty || 'medium',
+        topic,
+        additionalInstructions,
+      },
+      adminUser.id,
+      req.requestId
+    );
+
+    sendSuccess(res, result, 200, { requestId: req.requestId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/admin/assessment/questions/:id/publish
+router.post('/questions/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const adminUser = req.user;
+    if (!adminUser) {
+      return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
+    }
+
+    const { id } = req.params;
+    const published = await adminAssessmentService.publishQuestion(id, adminUser.id, req.requestId);
+    sendSuccess(res, published, 200, { requestId: req.requestId });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/admin/assessment/publish-batch
+router.post('/publish-batch', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const adminUser = req.user;
+    if (!adminUser) {
+      return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
+    }
+
+    const { questionIds } = req.body;
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+      return next(new AppError('questionIds array is required', 400, 'BAD_REQUEST'));
+    }
+
+    const result = await adminAssessmentService.publishBatch(questionIds, adminUser.id, req.requestId);
+    sendSuccess(res, result, 200, { requestId: req.requestId });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/v1/admin/assessment/settings
 router.get('/settings', (req: Request, res: Response) => {
   const settings = adminAssessmentService.getAssessmentSettings();

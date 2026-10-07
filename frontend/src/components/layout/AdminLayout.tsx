@@ -20,6 +20,7 @@ import {
   Menu,
   X,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 import { NotificationBell } from '@/features/notifications';
 
@@ -37,6 +38,7 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, activeInM4: true },
     { name: 'Applications', href: '/admin/applications', icon: FileText, activeInM4: true },
+    { name: 'Question Bank', href: '/admin/assessment', icon: HelpCircle, activeInM4: true },
     { name: 'Members', href: '/admin/members', icon: Users, activeInM4: true },
     { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: true },
     { name: 'Courses', href: '/admin/courses', icon: BookOpen, activeInM4: true },

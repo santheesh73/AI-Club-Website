@@ -58,6 +58,7 @@ import { MemberAiPage } from '@/pages/member/MemberAiPage';
 import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
 import { AdminIntelligencePage } from '@/pages/admin/AdminIntelligencePage';
+import { AdminAssessmentPage } from '@/pages/admin/AdminAssessmentPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -145,6 +146,8 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="assessment" element={<AdminAssessmentPage />} />
+        <Route path="questions" element={<AdminAssessmentPage />} />
         <Route path="applications" element={<AdminApplicationsPage />} />
         <Route path="applications/:id" element={<AdminApplicationDetailPage />} />
         <Route path="members" element={<AdminMembersPage />} />

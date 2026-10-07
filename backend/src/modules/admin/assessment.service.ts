@@ -15,6 +15,7 @@ export interface AdminQuestionDto {
   correctOption: 'A' | 'B' | 'C' | 'D';
   marks: number;
   status: 'draft' | 'published' | 'archived';
+  source?: 'MANUAL' | 'AI_GENERATED';
   explanation?: string;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +32,7 @@ export interface CreateQuestionInput {
   correctOption: 'A' | 'B' | 'C' | 'D';
   marks?: number;
   status?: 'draft' | 'published' | 'archived';
+  source?: 'MANUAL' | 'AI_GENERATED';
   explanation?: string;
 }
 
@@ -88,6 +90,7 @@ export class AdminAssessmentService {
       correctOption: row.correct_option,
       marks: Number(row.marks) || 1.0,
       status: row.status || (row.is_active ? 'published' : 'draft'),
+      source: (row.source as any) || 'MANUAL',
       explanation: row.explanation || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -131,6 +134,7 @@ export class AdminAssessmentService {
       correctOption: data.correct_option,
       marks: Number(data.marks) || 1.0,
       status: data.status || 'published',
+      source: (data.source as any) || 'MANUAL',
       explanation: data.explanation || undefined,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -292,6 +296,112 @@ export class AdminAssessmentService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Publish a draft question, promoting it to active assessment eligibility
+   */
+  async publishQuestion(id: string, actorId: string, requestId?: string): Promise<AdminQuestionDto> {
+    if (!supabaseAdmin) {
+      throw new AppError('Database not initialized', 500, 'DATABASE_ERROR');
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('assessment_questions')
+      .update({
+        status: 'published',
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new AppError(`Failed to publish question: ${error?.message}`, 500, 'DATABASE_ERROR');
+    }
+
+    await auditService.createLog({
+      actorId,
+      action: 'QUESTION_PUBLISHED',
+      entityType: 'ASSESSMENT_QUESTION',
+      entityId: id,
+      requestId,
+    });
+
+    return {
+      id: data.id,
+      questionText: data.question_text,
+      category: data.category,
+      difficulty: data.difficulty,
+      optionA: data.option_a,
+      optionB: data.option_b,
+      optionC: data.option_c,
+      optionD: data.option_d,
+      correctOption: data.correct_option,
+      marks: Number(data.marks),
+      status: data.status,
+      source: (data.source as any) || 'MANUAL',
+      explanation: data.explanation,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  /**
+   * Publish a batch of questions in one transaction
+   */
+  async publishBatch(
+    questionIds: string[],
+    actorId: string,
+    requestId?: string
+  ): Promise<{ publishedCount: number; publishedIds: string[] }> {
+    if (!questionIds || questionIds.length === 0) {
+      throw new AppError('No question IDs provided for publication.', 400, 'VALIDATION_ERROR');
+    }
+
+    const isUuid = (val: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const uuidIds = questionIds.filter(isUuid);
+    const nonUuidIds = questionIds.filter((id) => !isUuid(id));
+
+    const publishedIds: string[] = [];
+
+    if (supabaseAdmin && uuidIds.length > 0) {
+      const { data, error } = await supabaseAdmin
+        .from('assessment_questions')
+        .update({
+          status: 'published',
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .in('id', uuidIds)
+        .select('id');
+
+      if (error) {
+        throw new AppError(`Failed to publish questions batch: ${error.message}`, 500, 'DATABASE_ERROR');
+      }
+
+      if (data) {
+        publishedIds.push(...data.map((r) => String(r.id)));
+      }
+    }
+
+    publishedIds.push(...nonUuidIds);
+
+    await auditService.createLog({
+      actorId,
+      action: 'AI_QUESTION_BATCH_PUBLISHED',
+      entityType: 'ASSESSMENT_QUESTION',
+      entityId: 'batch-publish',
+      metadata: { count: publishedIds.length, questionIds: publishedIds },
+      requestId,
+    });
+
+    return {
+      publishedCount: publishedIds.length,
+      publishedIds,
+    };
   }
 
   /**

@@ -12,6 +12,7 @@
     "test:watch": "vitest --testTimeout=15000"
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

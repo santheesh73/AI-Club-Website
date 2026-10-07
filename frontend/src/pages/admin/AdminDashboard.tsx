@@ -15,6 +15,7 @@ import {
   ArrowRight,
   TrendingUp,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -145,6 +146,12 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link to="/admin/assessment">
+            <Button variant="outline" size="sm" className="gap-1.5 shadow-subtle">
+              <Sparkles className="h-3.5 w-3.5 text-accent-lavender" />
+              <span>Question Bank & AI</span>
+            </Button>
+          </Link>
           <Button variant="outline" size="sm" onClick={fetchSummary}>
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
             <span>Refresh</span>

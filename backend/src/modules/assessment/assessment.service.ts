@@ -130,7 +130,8 @@ export class AssessmentService {
     const { data, error } = await supabaseAdmin
       .from('assessment_questions')
       .select('*')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('status', 'published');
 
     if (error || !data || data.length === 0) {
       return fallbackQuestionBank;
