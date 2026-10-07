@@ -114,14 +114,31 @@ export const AdminExternalCoursesPage: React.FC = () => {
       ]);
 
       if (coursesRes.success && coursesRes.data) {
-        setCourses(coursesRes.data.courses || []);
+        const rawCourses = coursesRes.data;
+        const list: ExternalCourseDto[] = Array.isArray(rawCourses)
+          ? rawCourses
+          : Array.isArray((rawCourses as any).courses)
+          ? (rawCourses as any).courses
+          : [];
+        setCourses(list);
       } else {
-        setError(!coursesRes.success ? coursesRes.error.message : 'Failed to fetch catalog');
+        setError(!coursesRes.success ? (coursesRes as any).error?.message : 'Failed to fetch catalog');
       }
 
-
       if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data.stats || null);
+        const rawStats = (statsRes.data as any).stats || statsRes.data;
+        const total = rawStats.total ?? rawStats.totalCourses ?? 0;
+        const published = rawStats.published ?? rawStats.publishedCourses ?? 0;
+        const archived = rawStats.archived ?? Math.max(0, total - published);
+        const byProvider = rawStats.byProvider ?? rawStats.providerCounts ?? {};
+        const byCategory = rawStats.byCategory ?? rawStats.categoryCounts ?? {};
+        setStats({
+          total,
+          published,
+          archived,
+          byProvider,
+          byCategory,
+        });
       }
     } catch (err: any) {
       setError(err?.message || 'Error communicating with external courses API');

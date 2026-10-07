@@ -99,8 +99,10 @@ export interface RawAIRecommendation {
 export interface CourseRecommendationResult {
   course: ExternalCourseEntity;
   relevanceScore: number;
+  matchScore?: number;
   matchReasons: string[];
   explanation: string;
+  reason?: string;
   skillGap?: string;
   isAiRanked: boolean;
   generatedAt: string;
