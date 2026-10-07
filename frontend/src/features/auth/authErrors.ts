@@ -31,8 +31,12 @@ export function mapAuthError(error: unknown): string {
     return 'Your email address has not been confirmed yet. Please check your inbox.';
   }
 
+  if (lower.includes('email rate limit') || lower.includes('over_email_send_rate_limit')) {
+    return 'Email service limit reached. Please wait a few minutes before trying again.';
+  }
+
   if (lower.includes('rate limit') || lower.includes('too many requests')) {
-    return 'Too many login attempts. Please wait a few minutes before trying again.';
+    return 'Too many attempts. Please wait a few minutes before trying again.';
   }
 
   if (lower.includes('network') || lower.includes('failed to fetch')) {

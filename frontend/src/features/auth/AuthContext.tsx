@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
+import { apiClient } from '@/services/apiClient';
 import type { UserProfile } from '@/types/user';
 import { mapAuthError } from './authErrors';
 
@@ -293,28 +294,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: true };
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Call backend registration endpoint
+      // This uses Supabase Admin API with pre-confirmed email, completely bypassing
+      // Supabase's rate-limited external email sender.
+      const registerRes = await apiClient.post<{ userId: string; email: string; role: string }>('/auth/register', {
         email: email.trim(),
         password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            role: 'applicant', // Strictly applicant on registration
-          },
-        },
+        fullName: fullName.trim(),
+        department: metadata?.department,
+        registerNumber: metadata?.registerNumber,
+        year: metadata?.year,
+        section: metadata?.section,
       });
 
-      if (error) {
+      if (!registerRes.success) {
+        // Fallback to direct client signup only if the backend was completely unreachable
+        if (registerRes.error?.code === 'NETWORK_ERROR') {
+          const { data, error } = await supabase.auth.signUp({
+            email: email.trim(),
+            password,
+            options: {
+              data: {
+                full_name: fullName.trim(),
+                role: 'applicant',
+              },
+            },
+          });
+
+          if (error) {
+            setIsLoading(false);
+            return { success: false, error: mapAuthError(error) };
+          }
+
+          if (data.user) {
+            setUser(data.user);
+            if (data.session) {
+              setSession(data.session);
+              await fetchProfile(data.user.id, data.user.email, fullName);
+            }
+          }
+
+          setIsLoading(false);
+          return { success: true };
+        }
+
         setIsLoading(false);
-        return { success: false, error: mapAuthError(error) };
+        const errMsg = registerRes.error?.message || 'Registration failed.';
+        return { success: false, error: mapAuthError(errMsg) };
       }
 
-      if (data.user) {
-        setUser(data.user);
-        if (data.session) {
-          setSession(data.session);
-          await fetchProfile(data.user.id, data.user.email, fullName);
-        }
+      // 2. Automatically sign in with credentials
+      const signInRes = await signIn(email, password);
+      if (!signInRes.success) {
+        setIsLoading(false);
+        return { success: false, error: signInRes.error || 'Account created, but sign in failed. Please log in.' };
       }
 
       setIsLoading(false);

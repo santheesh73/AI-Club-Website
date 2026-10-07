@@ -1,3 +1,10 @@
+import dns from 'dns';
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // Ignore in environments where not supported
+}
+
 import express from 'express';
 import { env } from './config/env';
 import { logger } from './utils/logger';
