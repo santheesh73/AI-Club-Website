@@ -184,6 +184,22 @@ export function requireRole(allowedRoles: Array<'applicant' | 'member' | 'admin'
         );
       }
 
+        auditService
+          .createLog({
+            actorId: req.user.id,
+            action: 'ADMIN_ACCESS_GRANTED',
+            entityType: 'AUTH',
+            entityId: 'admin-portal',
+            metadata: {
+              email: req.user.email,
+              role: req.user.role,
+              path: req.originalUrl,
+              method: req.method,
+            },
+            requestId: req.requestId,
+          })
+          .catch(() => {});
+
       return next();
     }
 

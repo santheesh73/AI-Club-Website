@@ -231,9 +231,96 @@ describe('AI CLUB: Master Role-Based Authentication & Admin Access Tests', () =>
         .set('Authorization', studentToken);
 
       const logs = await auditService.getLogsForEntity('admin-portal');
-      expect(logs.length).toBeGreaterThan(0);
-      expect(logs[0].action).toBe('ADMIN_ACCESS_DENIED');
-      expect(logs[0].actorId).toBe('user-a-id');
+      const deniedLogs = logs.filter((l) => l.action === 'ADMIN_ACCESS_DENIED');
+      expect(deniedLogs.length).toBeGreaterThan(0);
+      expect(deniedLogs[0].actorId).toBe('user-a-id');
+    });
+
+    it('Records ADMIN_ACCESS_GRANTED audit log event on authorized admin access', async () => {
+      await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', authorizedAdminToken);
+
+      const logs = await auditService.getLogsForEntity('admin-portal');
+      const grantedLogs = logs.filter((l) => l.action === 'ADMIN_ACCESS_GRANTED');
+      expect(grantedLogs.length).toBeGreaterThan(0);
+      expect(grantedLogs[0].actorId).toBe('admin-user-id');
+    });
+  });
+
+  // ============================================================================
+  // SECTION 8 SPECIFIC EMAIL TESTS (TEST A THROUGH TEST G)
+  // ============================================================================
+  describe('Section 8: Explicit Email & Role Validation Matrix', () => {
+    it('TEST A: Email santheesh651@gmail.com with role ADMIN -> ADMIN ACCESS GRANTED', async () => {
+      const res = await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', authorizedAdminToken);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('TEST B: Email another@gmail.com with manipulated role ADMIN -> NOT HAVE ACCESS (403)', async () => {
+      const res = await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', hackedAdminToken);
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.message).toBe('NOT HAVE ACCESS');
+    });
+
+    it('TEST C: Email student@gmail.com with role APPLICANT -> Student access ok, Admin access: NOT HAVE ACCESS', async () => {
+      // Admin access denied
+      const adminRes = await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', studentToken);
+      expect(adminRes.status).toBe(403);
+      expect(adminRes.body.error.message).toBe('NOT HAVE ACCESS');
+
+      // Student access allowed
+      const profileRes = await request(app)
+        .get('/api/v1/profile')
+        .set('Authorization', studentToken);
+      expect(profileRes.status).toBe(200);
+    });
+
+    it('TEST D: Email member@gmail.com with role MEMBER -> Member access ok, Admin access: NOT HAVE ACCESS', async () => {
+      // Admin access denied
+      const adminRes = await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', memberToken);
+      expect(adminRes.status).toBe(403);
+      expect(adminRes.body.error.message).toBe('NOT HAVE ACCESS');
+
+      // Member access allowed
+      const memberRes = await request(app)
+        .get('/api/v1/member/events')
+        .set('Authorization', memberToken);
+      expect(memberRes.status).toBe(200);
+    });
+
+    it('TEST E: Unauthenticated user attempts /admin -> 401 UNAUTHORIZED', async () => {
+      const res = await request(app).get('/api/v1/admin/dashboard/summary');
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('TEST F: Client attempts to send forged role in Authorization -> blocked by backend allowlist', async () => {
+      const res = await request(app)
+        .get('/api/v1/admin/dashboard/summary')
+        .set('Authorization', hackedAdminToken);
+      expect(res.status).toBe(403);
+      expect(res.body.error.message).toBe('NOT HAVE ACCESS');
+    });
+
+    it('TEST G: Client attempts to inject role=admin in request body -> rejected with 400', async () => {
+      const res = await request(app)
+        .patch('/api/v1/profile')
+        .set('Authorization', studentToken)
+        .send({ role: 'admin' });
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
   });
 });
