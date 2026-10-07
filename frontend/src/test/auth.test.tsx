@@ -62,7 +62,11 @@ describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
 
     const handleEdit = vi.fn();
 
-    render(<ProfileView profile={mockProfile} onEdit={handleEdit} />);
+    render(
+      <BrowserRouter>
+        <ProfileView profile={mockProfile} onEdit={handleEdit} />
+      </BrowserRouter>
+    );
 
     expect(screen.getByText('Alan Turing')).toBeInTheDocument();
     expect(screen.getByText(/APPLICANT/i)).toBeInTheDocument();

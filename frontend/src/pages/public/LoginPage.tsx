@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/features/auth';
+import { useAuth, AUTHORIZED_ADMIN_EMAIL } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
@@ -36,7 +36,28 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    navigate(from, { replace: true });
+    const userEmail = email.trim().toLowerCase();
+    const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL && result.profile?.role === 'admin';
+    const isMember = result.profile?.role === 'member';
+
+    // Role-based authoritative navigation
+    if (from && from !== '/profile') {
+      if (from.startsWith('/admin')) {
+        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/dashboard', { replace: true });
+      } else if (from.startsWith('/member')) {
+        navigate(isMember || isAdmin ? from : '/applicant/dashboard', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
+    } else {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else if (isMember) {
+        navigate('/member/dashboard', { replace: true });
+      } else {
+        navigate('/applicant/dashboard', { replace: true });
+      }
+    }
   };
 
   return (

@@ -27,13 +27,40 @@ import { NotificationBell } from '@/features/notifications';
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-canvas">
+        <div className="max-w-md w-full text-center space-y-6 p-8 rounded-card-lg bg-surface border border-surface-border shadow-elevated">
+          <div className="mx-auto w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-ink">
+              NOT HAVE ACCESS
+            </h1>
+            <p className="text-sm text-ink-muted">
+              You do not have permission to access the admin portal.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link to={profile?.role === 'member' ? '/member/dashboard' : '/applicant/dashboard'}>
+              <Button variant="primary" size="md" className="w-full">
+                Go to Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, activeInM4: true },

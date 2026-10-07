@@ -5,13 +5,25 @@ import { env } from '@/lib/env';
 import type { UserProfile } from '@/types/user';
 import { mapAuthError } from './authErrors';
 
+export const AUTHORIZED_ADMIN_EMAIL = 'santheesh651@gmail.com';
+
+export function normalizeEmail(email: string | undefined | null): string {
+  if (!email) return '';
+  return email.trim().toLowerCase();
+}
+
+export function isAuthorizedAdmin(email: string | undefined | null, role?: string): boolean {
+  return normalizeEmail(email) === AUTHORIZED_ADMIN_EMAIL && role === 'admin';
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; profile?: UserProfile }>;
   signUp: (
     email: string,
     password: string,
@@ -60,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   // Fetch user profile from Supabase Database (under RLS)
-  const fetchProfile = useCallback(async (userId: string, userEmail?: string, userFullName?: string) => {
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string, userFullName?: string): Promise<UserProfile | null> => {
     if (!isSupabaseConfigured) {
       // In local development standby mode
       const saved = localStorage.getItem(LOCAL_STORAGE_DEV_USER_KEY);
@@ -68,12 +80,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           const parsed = JSON.parse(saved);
           setProfile(parsed);
-          return;
+          return parsed;
         } catch {
           // ignore corrupted local dev state
         }
       }
-      return;
+      return null;
     }
 
     try {
@@ -85,11 +97,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (error) {
         console.warn('[AI CLUB Auth] Error fetching profile:', error.message);
-        return;
+        return null;
       }
 
       if (data) {
-        setProfile(mapRowToProfile(data));
+        const mapped = mapRowToProfile(data);
+        setProfile(mapped);
+        return mapped;
       } else {
         // Fallback: Provision default profile if trigger hasn't completed
         const defaultProfile = {
@@ -105,11 +119,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .single();
 
         if (!insertError && inserted) {
-          setProfile(mapRowToProfile(inserted));
+          const mapped = mapRowToProfile(inserted);
+          setProfile(mapped);
+          return mapped;
         }
       }
+      return null;
     } catch (err) {
       console.error('[AI CLUB Auth] Exception loading profile:', err);
+      return null;
     }
   }, [isSupabaseConfigured]);
 
@@ -227,7 +245,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.session) {
         setSession(data.session);
         setUser(data.user);
-        await fetchProfile(data.user.id, data.user.email);
+        const userProf = await fetchProfile(data.user.id, data.user.email);
+        setIsLoading(false);
+        return { success: true, profile: userProf || undefined };
       }
 
       setIsLoading(false);
@@ -434,6 +454,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         session,
         profile,
         isAuthenticated: Boolean(user && (isSupabaseConfigured ? session : true)),
+        isAdmin: Boolean(profile && isAuthorizedAdmin(profile.email || user?.email, profile.role)),
         isLoading,
         signIn,
         signUp,

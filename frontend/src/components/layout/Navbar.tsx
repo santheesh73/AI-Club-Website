@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth';
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, profile, signOut } = useAuth();
+  const { isAuthenticated, profile, signOut, isAdmin } = useAuth();
   const isLandingPage = location.pathname === '/';
 
   const navLinks = [
@@ -82,7 +82,7 @@ export const Navbar: React.FC = () => {
                     </Button>
                   </Link>
                 )}
-                {profile?.role === 'admin' && (
+                {isAdmin && (
                   <Link to="/admin">
                     <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
                       Admin Center &rarr;

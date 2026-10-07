@@ -55,6 +55,7 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
     it('redirects unauthenticated visitors to /login', () => {
       vi.spyOn(authContext, 'useAuth').mockReturnValue({
         isAuthenticated: false,
+        isAdmin: false,
         isLoading: false,
         profile: null,
         user: null,
@@ -96,9 +97,10 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
       expect(screen.queryByText('Protected Member Dashboard')).not.toBeInTheDocument();
     });
 
-    it('redirects non-admin authenticated users attempting /admin route to /profile', () => {
+    it('blocks non-admin authenticated users attempting /admin route with NOT HAVE ACCESS', () => {
       vi.spyOn(authContext, 'useAuth').mockReturnValue({
         isAuthenticated: true,
+        isAdmin: false,
         isLoading: false,
         profile: {
           id: 'u-1',
@@ -145,13 +147,14 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText('Profile Page')).toBeInTheDocument();
+      expect(screen.getByText('NOT HAVE ACCESS')).toBeInTheDocument();
       expect(screen.queryByText('Admin Control Center')).not.toBeInTheDocument();
     });
 
     it('permits active member into /member route', () => {
       vi.spyOn(authContext, 'useAuth').mockReturnValue({
         isAuthenticated: true,
+        isAdmin: false,
         isLoading: false,
         profile: {
           id: 'u-1',

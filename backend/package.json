@@ -8,6 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "provision:admin": "tsx src/scripts/provisionAdmin.ts",
     "test": "vitest run --testTimeout=15000",
     "test:watch": "vitest --testTimeout=15000"
   },
