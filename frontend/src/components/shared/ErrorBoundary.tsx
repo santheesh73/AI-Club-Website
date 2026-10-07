@@ -44,17 +44,33 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-ink mb-2">Something went wrong</h2>
-            <p className="text-sm text-ink-muted mb-6">
+            <p className="text-sm text-ink-muted mb-4">
               An unexpected error occurred while rendering this interface.
             </p>
-            <div className="flex justify-center gap-3">
+            {this.state.error && (
+              <div className="mb-4 p-3 rounded bg-red-50 text-red-800 text-xs font-mono text-left overflow-auto max-h-32 border border-red-200">
+                {this.state.error.message}
+              </div>
+            )}
+            <div className="flex flex-wrap justify-center gap-2">
               <Button onClick={this.handleReset} variant="primary" size="sm">
                 Try Again
               </Button>
               <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                 Reload Page
               </Button>
+              <Button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.href = '/admin';
+                }}
+                variant="ghost"
+                size="sm"
+              >
+                Dashboard
+              </Button>
             </div>
+
           </div>
         </div>
       );

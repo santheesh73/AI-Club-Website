@@ -273,7 +273,7 @@ export const AdminCommunityPage: React.FC = () => {
                       </td>
 
                       <td className="px-4 py-3">
-                        {p.reportsCount > 0 ? (
+                        {(p?.reportsCount || 0) > 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {p.reportsCount} open
@@ -283,26 +283,26 @@ export const AdminCommunityPage: React.FC = () => {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right space-x-2">
-                        {p.status === 'published' && (
+                        {p?.status === 'published' && (
                           <button
                             type="button"
-                            onClick={() => handleFeature(p.id, p.isFeatured)}
+                            onClick={() => handleFeature(p?.id || '', Boolean(p?.isFeatured))}
                             className={`p-1.5 rounded transition-colors ${
-                              p.isFeatured
+                              p?.isFeatured
                                 ? 'text-accent-orange bg-accent-orange-subtle hover:bg-accent-orange/20'
                                 : 'text-ink-muted hover:text-accent-orange hover:bg-surface-muted'
                             }`}
-                            title={p.isFeatured ? 'Unfeature project' : 'Feature project'}
+                            title={p?.isFeatured ? 'Unfeature project' : 'Feature project'}
                           >
-                            <Star className={`w-4 h-4 ${p.isFeatured ? 'fill-current' : ''}`} />
+                            <Star className={`w-4 h-4 ${p?.isFeatured ? 'fill-current' : ''}`} />
                           </button>
                         )}
 
-                        {p.status === 'hidden' ? (
+                        {p?.status === 'hidden' ? (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRestoreProject(p.id)}
+                            onClick={() => handleRestoreProject(p?.id || '')}
                             className="gap-1 text-xs text-accent-green-dark border-accent-green/30"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -313,8 +313,10 @@ export const AdminCommunityPage: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setTargetHideProject({ id: p.id, title: p.title });
-                              setHideModalOpen(true);
+                              if (p?.id) {
+                                setTargetHideProject({ id: p.id, title: p.title || 'Project' });
+                                setHideModalOpen(true);
+                              }
                             }}
                             className="text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
                           >
@@ -322,6 +324,7 @@ export const AdminCommunityPage: React.FC = () => {
                           </Button>
                         )}
                       </td>
+
                     </tr>
                   ))}
                 </tbody>
@@ -356,32 +359,32 @@ export const AdminCommunityPage: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <Badge
-                          variant={r.status === 'open' ? 'error' : r.status === 'resolved' ? 'success' : 'neutral'}
+                          variant={r?.status === 'open' ? 'error' : r?.status === 'resolved' ? 'success' : 'neutral'}
                           className="text-[10px]"
                         >
-                          {r.status}
+                          {r?.status || 'open'}
                         </Badge>
                         <Badge variant="orange" className="text-[10px] capitalize">
-                          {r.reason}
+                          {r?.reason || 'report'}
                         </Badge>
                         <span className="text-xs text-ink-muted">
-                          Reported on {new Date(r.createdAt).toLocaleDateString()}
+                          Reported on {new Date(r?.createdAt || Date.now()).toLocaleDateString()}
                         </span>
                       </div>
                       <h4 className="font-semibold text-base text-ink mt-1">
-                        Target: {r.targetTitle} ({r.targetType})
+                        Target: {r?.targetTitle || 'Unknown'} ({r?.targetType || 'item'})
                       </h4>
                       <p className="text-xs text-ink-muted">
-                        Filed by <span className="font-medium text-ink">{r.reporterName}</span> ({r.reporterEmail})
+                        Filed by <span className="font-medium text-ink">{r?.reporterName || 'Anonymous'}</span> ({r?.reporterEmail || 'no-email'})
                       </p>
                     </div>
 
-                    {r.status === 'open' && (
+                    {r?.status === 'open' && (
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleResolveReport(r.id, 'dismissed')}
+                          onClick={() => handleResolveReport(r?.id || '', 'dismissed')}
                           className="gap-1 text-xs"
                         >
                           <XCircle className="w-3.5 h-3.5" />
@@ -390,7 +393,7 @@ export const AdminCommunityPage: React.FC = () => {
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => handleResolveReport(r.id, 'resolved')}
+                          onClick={() => handleResolveReport(r?.id || '', 'resolved')}
                           className="gap-1 text-xs"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -402,15 +405,16 @@ export const AdminCommunityPage: React.FC = () => {
 
                   <div className="p-3 rounded-card bg-surface-muted text-xs text-ink-secondary leading-relaxed border border-surface-border">
                     <span className="font-semibold text-ink block mb-0.5">Reporter Statement:</span>
-                    {r.description}
+                    {r?.description || 'No statement provided.'}
                   </div>
 
-                  {r.adminNotes && (
+                  {r?.adminNotes && (
                     <div className="p-2.5 rounded-card bg-accent-lavender-subtle/40 text-xs text-accent-lavender-dark border border-accent-lavender/20">
                       <span className="font-semibold block mb-0.5">Admin Resolution Notes:</span>
                       {r.adminNotes}
                     </div>
                   )}
+
                 </Card>
               ))}
             </div>
@@ -466,11 +470,11 @@ export const AdminCommunityPage: React.FC = () => {
                       </td>
 
                       <td className="px-4 py-3 text-right">
-                        {a.status === 'hidden' ? (
+                        {a?.status === 'hidden' ? (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRestoreAchievement(a.id)}
+                            onClick={() => handleRestoreAchievement(a?.id || '')}
                             className="text-xs text-accent-green-dark"
                           >
                             Restore
@@ -479,13 +483,14 @@ export const AdminCommunityPage: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleHideAchievement(a.id)}
+                            onClick={() => handleHideAchievement(a?.id || '')}
                             className="text-xs text-red-600 hover:bg-red-50"
                           >
                             Hide
                           </Button>
                         )}
                       </td>
+
                     </tr>
                   ))}
                 </tbody>
