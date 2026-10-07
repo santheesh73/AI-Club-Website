@@ -86,7 +86,7 @@ export const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-canvas text-ink">
       {/* Desktop Admin Sidebar */}
-      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex-col justify-between hidden md:flex flex-shrink-0">
+      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex flex-col justify-between hidden md:flex flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div className="space-y-6">
           <Link to={homeTarget} className="flex items-center gap-3 group">
             <div className="h-9 w-9 rounded-xl bg-ink text-canvas font-bold flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -135,7 +135,7 @@ export const AdminLayout: React.FC = () => {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-surface-border space-y-3">
+        <div className="pt-4 border-t border-surface-border space-y-3 flex-shrink-0">
           <div className="flex items-center justify-between text-xs text-ink-muted">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-accent-green" />

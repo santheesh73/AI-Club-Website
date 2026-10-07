@@ -62,7 +62,7 @@ export const MemberLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-canvas text-ink">
       {/* Desktop Sidebar */}
-      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex flex-col justify-between hidden lg:flex flex-shrink-0">
+      <aside className="w-64 border-r border-surface-border bg-surface p-6 flex flex-col justify-between hidden lg:flex flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div className="space-y-6">
           {/* Brand & Identity */}
           <Link to={homeTarget} className="flex items-center gap-3 group">
@@ -154,7 +154,7 @@ export const MemberLayout: React.FC = () => {
         </div>
 
         {/* User Footer & Sign Out */}
-        <div className="pt-4 border-t border-surface-border space-y-3">
+        <div className="pt-4 border-t border-surface-border space-y-3 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-full bg-canvas-alt border border-surface-border flex items-center justify-center font-bold text-xs text-ink">
               {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : 'M'}
