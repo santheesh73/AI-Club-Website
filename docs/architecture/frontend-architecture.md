@@ -166,5 +166,52 @@ Layouts provide persistent framing and semantic grouping for the four primary us
   - **Attendee Roster Management (`/admin/events/:id/registrations` - `AdminEventRegistrationsPage.tsx`)**:
     - Live seat roster detailing member names, student IDs, registration timestamps, and attendance verification status.
 
+---
+
+## 11. Courses & Learning Management Experience (Milestone 7)
+
+- **Member Experience**:
+  - **Courses Discovery Catalog (`/member/courses` - `MemberCoursesPage.tsx`)**:
+    - Category filtering dropdown (Generative AI, Machine Learning Systems, Deep Learning, AI Ethics).
+    - Difficulty level filtering chips (All Levels, Beginner, Intermediate, Advanced).
+    - Real-time search query matching course titles and topics.
+    - Responsive grid of `CourseCard` components showing estimated durations, module/lesson totals, progress indicators, and status badges.
+    - Empty state with filter reset actions.
+  - **Course Detail & Syllabus Dossier (`/member/courses/:slug` - `MemberCourseDetailPage.tsx`)**:
+    - Course metadata overview, estimated hours, difficulty rating, and comprehensive overview.
+    - Interactive syllabus tree with `ModuleAccordion` components detailing each module's lessons, duration, and completion indicators.
+    - Free Preview lessons accessible directly to unenrolled members.
+    - One-click Enrollment CTA for active members with immediate status updates.
+    - "Continue Learning" and "Resume Lesson" triggers resolving to first incomplete lesson.
+  - **Personal Learning Hub (`/member/courses/my` - `MemberMyCoursesPage.tsx`)**:
+    - Metric summary tiles: Enrolled Courses, In Progress, Completed, Total Lessons Completed.
+    - Spotlight "Resume Learning" card directly linking to the last accessed lesson.
+    - Tab navigation: All Courses, In Progress, and Completed courses.
+  - **Distraction-Free Learning Workspace (`/member/learn/:courseSlug` - `MemberLearningPage.tsx`)**:
+    - Streamlined header with course title, back navigation to syllabus, and compact progress bar.
+    - Collapsible left curriculum sidebar with active lesson highlights and completion checkboxes.
+    - Video player container supporting YouTube embeds and direct video streams.
+    - Rich text/markdown technical instructional viewer.
+    - Bottom action bar with "Previous Lesson", "Mark as Completed", and "Next Lesson" navigation.
+  - **Member Dashboard Integration (`/member` - `MemberDashboard.tsx`)**:
+    - Embedded "Learning Academy & Coursework" progression block featuring the resume learning card and real-time completion telemetry.
+    - Courses & Labs card promoted to core quick navigation.
+
+- **Admin Experience**:
+  - **Curriculum Management Center (`/admin/courses` - `AdminCoursesPage.tsx`)**:
+    - Comprehensive table of courses with category, difficulty, module/lesson counts, learner enrollment counts, and lifecycle badges (`draft`, `published`, `archived`).
+    - Status and domain filters.
+    - Direct actions for Edit, View Learners, Publish, Archive, and Delete.
+    - Modals: `CoursePublishModal.tsx` and `CourseArchiveModal.tsx`.
+  - **Course Creator Studio (`/admin/courses/new` - `AdminCourseCreatePage.tsx`)**:
+    - Structured form for course title, optional custom slug, category, difficulty, duration, short summary, and complete curriculum description.
+  - **Curriculum Syllabus & Content Editor (`/admin/courses/:id` - `AdminCourseEditPage.tsx`)**:
+    - In-place editing of course metadata.
+    - Module management: Add module, edit module, reorder modules (up/down), and safe deletion (enforces non-empty check).
+    - Lesson management: Add lesson, edit lesson title/duration/type/videoUrl/content, reorder lessons, toggle free preview, and delete lesson.
+  - **Learner Enrollment Roster (`/admin/courses/:id/enrollments` - `AdminCourseEnrollmentsPage.tsx`)**:
+    - Real-time roster of enrolled members with member number, department, enrollment status (`active` / `completed`), completed lesson count, progress percentage, and last activity timestamps.
+
+
 
 

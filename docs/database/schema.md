@@ -444,5 +444,136 @@ Seat capacity enforcement is strictly server-authoritative. When registering, tr
    - `UPDATE`: Members can cancel their own active registrations (`user_id = auth.uid()`).
    - `ALL`: Admins have full access to inspect rosters and update attendance statuses.
 
+---
+
+## 11. Milestone 7: Courses & Learning Management Platform
+
+### 11.1 Enums
+```sql
+CREATE TYPE public.course_status AS ENUM ('draft', 'published', 'archived');
+CREATE TYPE public.course_difficulty AS ENUM ('beginner', 'intermediate', 'advanced');
+CREATE TYPE public.lesson_content_type AS ENUM ('text', 'video', 'document', 'external_resource');
+CREATE TYPE public.enrollment_status AS ENUM ('active', 'completed', 'cancelled');
+```
+
+### 11.2 Table: `public.course_categories`
+Taxonomy categorization for curriculum streams (e.g. Generative AI, Machine Learning Systems, Deep Learning, AI Ethics).
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique category ID |
+| `name` | `TEXT` | `NOT NULL UNIQUE` | Category display title |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | URL-safe slug identifier |
+| `description` | `TEXT` | `NULLABLE` | Short overview of the domain |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 11.3 Table: `public.courses`
+Top-level syllabus entities defining structured technical curriculum paths.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique course ID |
+| `title` | `TEXT` | `NOT NULL` | Course title |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | URL-safe slug |
+| `short_description` | `TEXT` | `NOT NULL` | Summary for catalog cards |
+| `description` | `TEXT` | `NOT NULL` | Comprehensive curriculum overview |
+| `thumbnail_url` | `TEXT` | `NULLABLE` | Visual card thumbnail |
+| `category_id` | `UUID` | `NOT NULL REFERENCES public.course_categories(id) ON DELETE RESTRICT` | Domain classification |
+| `difficulty` | `course_difficulty` | `NOT NULL DEFAULT 'intermediate'` | Difficulty level |
+| `estimated_duration` | `INTEGER` | `NOT NULL DEFAULT 60, CHECK (estimated_duration > 0)` | Duration in minutes |
+| `status` | `course_status` | `NOT NULL DEFAULT 'draft'` | Publication lifecycle |
+| `created_by` | `UUID` | `NULLABLE REFERENCES public.profiles(id) ON DELETE SET NULL` | Author admin profile |
+| `published_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp when published |
+| `archived_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp when archived |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 11.4 Table: `public.course_modules`
+Curriculum subdivisions grouping related lessons in explicit order.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique module ID |
+| `course_id` | `UUID` | `NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE` | Parent course |
+| `title` | `TEXT` | `NOT NULL` | Module title |
+| `description` | `TEXT` | `NULLABLE` | Module learning objectives |
+| `position` | `INTEGER` | `NOT NULL DEFAULT 0, CHECK (position >= 0)` | Explicit sequence index |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 11.5 Table: `public.course_lessons`
+Atomic learning units containing technical instructional materials.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique lesson ID |
+| `module_id` | `UUID` | `NOT NULL REFERENCES public.course_modules(id) ON DELETE CASCADE` | Parent module |
+| `title` | `TEXT` | `NOT NULL` | Lesson title |
+| `slug` | `TEXT` | `NOT NULL` | Module-scoped slug |
+| `description` | `TEXT` | `NULLABLE` | Lesson summary |
+| `content` | `TEXT` | `NOT NULL DEFAULT ''` | Markdown instructional content |
+| `content_type` | `lesson_content_type` | `NOT NULL DEFAULT 'text'` | Media type |
+| `video_url` | `TEXT` | `NULLABLE` | Video embed URL |
+| `duration` | `INTEGER` | `NOT NULL DEFAULT 15, CHECK (duration > 0)` | Expected duration (mins) |
+| `position` | `INTEGER` | `NOT NULL DEFAULT 0, CHECK (position >= 0)` | Sequence position |
+| `is_preview` | `BOOLEAN` | `NOT NULL DEFAULT FALSE` | Free preview unlock flag |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 11.6 Table: `public.course_enrollments`
+Authoritative enrollment records linking active members to courses.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique enrollment ID |
+| `course_id` | `UUID` | `NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE` | Enrolled course |
+| `user_id` | `UUID` | `NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE` | Enrolled member |
+| `status` | `enrollment_status` | `NOT NULL DEFAULT 'active'` | active / completed / cancelled |
+| `enrolled_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Initial enrollment timestamp |
+| `completed_at` | `TIMESTAMPTZ` | `NULLABLE` | Course completion timestamp |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+#### Unique Constraint
+```sql
+CONSTRAINT uq_course_user_enrollment UNIQUE (course_id, user_id)
+```
+
+### 11.7 Table: `public.lesson_progress`
+Granular lesson completion telemetry per enrollment.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique progress ID |
+| `enrollment_id` | `UUID` | `NOT NULL REFERENCES public.course_enrollments(id) ON DELETE CASCADE` | Parent enrollment |
+| `lesson_id` | `UUID` | `NOT NULL REFERENCES public.course_lessons(id) ON DELETE CASCADE` | Completed lesson |
+| `completed` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Completion flag |
+| `completed_at` | `TIMESTAMPTZ` | `NULLABLE` | Completion timestamp |
+| `last_accessed_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last access timestamp |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+#### Unique Constraint
+```sql
+CONSTRAINT uq_enrollment_lesson_progress UNIQUE (enrollment_id, lesson_id)
+```
+
+### 11.8 Row-Level Security Policies
+1. **`course_categories` & `courses`**:
+   - `SELECT`: Published and archived courses visible to authenticated members. Admins can view all (including drafts).
+   - `INSERT / UPDATE / DELETE`: Admins only.
+2. **`course_modules` & `course_lessons`**:
+   - `SELECT`: Published course contents readable by authenticated members.
+   - `ALL`: Admins only.
+3. **`course_enrollments`**:
+   - `SELECT`: Members can view their own enrollments (`user_id = auth.uid()`). Admins can inspect all.
+   - `INSERT`: Active members can enroll (`user_id = auth.uid()`).
+   - `UPDATE`: System and members can update enrollment state.
+4. **`lesson_progress`**:
+   - `SELECT`: Members can view their own progress through enrollment ownership. Admins can inspect all.
+   - `INSERT / UPDATE`: Members can record progress for their active enrollments.
+
+
 
 

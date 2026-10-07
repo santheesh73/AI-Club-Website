@@ -14,7 +14,10 @@
 -- Include Milestone 6 events records
 \i seed_m6_events.sql
 
+-- Include Milestone 7 courses & learning records
+\i seed_m7_courses.sql
+
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 6: Events & Activities Platform.';
+    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 7: Courses & Learning Management Platform.';
 END $$;

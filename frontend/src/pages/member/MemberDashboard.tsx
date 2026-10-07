@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useMemberDashboard } from '@/features/membership';
 import { useRegisteredEvents } from '@/features/events';
+import { useMyCourses, ProgressBar } from '@/features/courses';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
@@ -15,11 +16,14 @@ import {
   ShieldCheck,
   AlertCircle,
   Calendar,
+  BookOpen,
+  PlayCircle,
 } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
   const { data, isLoading, error, refetch } = useMemberDashboard();
   const { upcoming: registeredEvents } = useRegisteredEvents();
+  const { stats: learningStats } = useMyCourses();
 
   if (isLoading) {
     return (
@@ -225,6 +229,99 @@ export const MemberDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Learning Progression & Continue Learning Section */}
+      <div className="p-6 rounded-card bg-surface border border-surface-border shadow-soft space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-ink-muted" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink font-mono">
+              Learning Academy & Coursework
+            </h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/member/courses/my" className="text-xs text-ink font-semibold hover:underline flex items-center gap-1">
+              <span>My Courses</span>
+            </Link>
+            <span className="text-surface-border text-xs">|</span>
+            <Link to="/member/courses" className="text-xs text-ink font-semibold hover:underline flex items-center gap-1">
+              <span>Course Catalog</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+
+        {learningStats?.continueLearning ? (
+          <div className="p-4 rounded-card-sm bg-canvas border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge variant="orange">Continue Learning</Badge>
+                <span className="text-xs font-mono text-ink-muted">
+                  {learningStats.continueLearning.courseTitle}
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-ink">
+                {learningStats.continueLearning.lessonTitle}
+              </h4>
+              <div className="w-48 pt-1">
+                <ProgressBar
+                  percentage={learningStats.continueLearning.progressPercentage}
+                  showLabel={true}
+                  size="sm"
+                />
+              </div>
+            </div>
+
+            <Link
+              to={`/member/learn/${learningStats.continueLearning.courseSlug}?lesson=${learningStats.continueLearning.lessonSlug}`}
+            >
+              <Button variant="primary" size="sm" className="whitespace-nowrap">
+                <PlayCircle className="h-3.5 w-3.5 mr-1" />
+                <span>Resume Lesson</span>
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="p-4 rounded-card-sm bg-canvas border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-ink">AI Engineering & Foundational Curriculum</h4>
+              <p className="text-xs text-ink-secondary">
+                {learningStats && learningStats.enrolledCount > 0
+                  ? `You are enrolled in ${learningStats.enrolledCount} course(s). ${learningStats.completedCount} completed.`
+                  : 'Explore structured courses on LLMs, Deep Learning, and Autonomous AI systems.'}
+              </p>
+            </div>
+            <Link to="/member/courses">
+              <Button variant="secondary" size="sm">
+                <span>Browse Courses</span>
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Learning Telemetry Grid */}
+        {learningStats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+            <div className="p-3 rounded-card-sm bg-canvas text-center">
+              <span className="text-[10px] text-ink-muted uppercase font-mono block">Enrolled</span>
+              <span className="text-lg font-bold font-mono text-ink">{learningStats.enrolledCount}</span>
+            </div>
+            <div className="p-3 rounded-card-sm bg-canvas text-center">
+              <span className="text-[10px] text-ink-muted uppercase font-mono block">In Progress</span>
+              <span className="text-lg font-bold font-mono text-accent-orange">{learningStats.inProgressCount}</span>
+            </div>
+            <div className="p-3 rounded-card-sm bg-canvas text-center">
+              <span className="text-[10px] text-ink-muted uppercase font-mono block">Completed</span>
+              <span className="text-lg font-bold font-mono text-accent-green">{learningStats.completedCount}</span>
+            </div>
+            <div className="p-3 rounded-card-sm bg-canvas text-center">
+              <span className="text-[10px] text-ink-muted uppercase font-mono block">Lessons Done</span>
+              <span className="text-lg font-bold font-mono text-ink">{learningStats.totalLessonsCompleted}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Upcoming Activities & Confirmed Registrations Block */}
       <div className="p-6 rounded-card bg-surface border border-surface-border shadow-soft space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-surface-border">
@@ -284,7 +381,22 @@ export const MemberDashboard: React.FC = () => {
       </div>
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Link
+          to="/member/courses"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <BookOpen className="h-5 w-5 text-accent-lavender group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Courses & Labs</h4>
+            <p className="text-xs text-ink-muted">Modular curriculums and learning workspaces.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>View Courses</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
         <Link
           to="/member/events"
           className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"

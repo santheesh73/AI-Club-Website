@@ -192,5 +192,48 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
     - `POST /api/v1/member/events/:eventId/register`: Reserves a seat. Atomically verifies open registration window, capacity availability, and prevents duplicate active reservations (`409 CONFLICT`).
     - `DELETE /api/v1/member/events/:eventId/registration`: Cancels reservation, transitions record status to `cancelled`, and frees up the seat immediately.
 
+---
+
+## 10. Courses & Learning Management Platform (Milestone 7)
+
+- **Architectural Principles**:
+  - **Active Membership Guard**: All member learning endpoints enforce active membership verification via `public.memberships`. Non-members or applicants are rejected with `403 FORBIDDEN`.
+  - **Content Gating Invariant**: Non-preview lesson content is protected and delivered exclusively to users with an active enrollment. Preview lessons (`is_preview = true`) are accessible without enrollment to allow members to inspect course suitability.
+  - **Explicit Positioning & Reordering**: Both modules and lessons maintain deterministic sequence ordering via integer `position` fields. Reordering is performed via dedicated transactional batch endpoints.
+  - **Server-Derived Progress Calculation**: Learning completion percentage is derived authoritatively as `(completedLessonsCount / totalLessonsCount) * 100`.
+  - **Automatic Course Completion**: When all lessons in a course are marked completed, the enrollment status automatically transitions from `'active'` to `'completed'`, `completedAt` timestamp is set, and a `COURSE_COMPLETED` audit log is emitted.
+  - **Resume Learning Pointer**: Resolves to the earliest incomplete lesson by `(module.position, lesson.position)`, enabling 1-click continuation.
+
+- **Endpoints**:
+  - **Public / Shared Catalog Endpoints**:
+    - `GET /api/v1/courses/categories`: Lists all available curriculum domain categories.
+  - **Member Learning Endpoints**:
+    - `GET /api/v1/member/courses`: Discovery catalog of published courses with category, difficulty, search, and pagination.
+    - `GET /api/v1/member/courses/enrolled`: Returns active member's enrolled courses with progress metrics.
+    - `GET /api/v1/member/courses/dashboard`: Personal learning telemetry (enrolled count, in progress, completed, total lessons completed, and resume learning spotlight).
+    - `GET /api/v1/member/courses/:slug`: Retrieves course details, full syllabus tree, and user enrollment status.
+    - `POST /api/v1/member/courses/:id/enroll`: Enrolls member in course (rejects duplicates with `409 CONFLICT`).
+    - `GET /api/v1/member/courses/:courseSlug/lessons/:lessonSlug`: Delivers lesson content and previous/next navigation pointers (gated by enrollment unless `isPreview`).
+    - `POST /api/v1/member/courses/:courseSlug/lessons/:lessonSlug/progress`: Records completion state and returns updated course progress.
+  - **Admin Course Management Endpoints**:
+    - `GET /api/v1/admin/courses`: Admin course listing with filters by category, difficulty, and status (including drafts).
+    - `POST /api/v1/admin/courses`: Creates course in `draft` or `published` status with slug generation.
+    - `GET /api/v1/admin/courses/:id`: Retrieves full course syllabus with modules and lessons for editing.
+    - `PUT /api/v1/admin/courses/:id`: Updates course metadata.
+    - `DELETE /api/v1/admin/courses/:id`: Deletes course.
+    - `POST /api/v1/admin/courses/:id/publish`: Transitions `draft` $\to$ `published`.
+    - `POST /api/v1/admin/courses/:id/unpublish`: Transitions `published` $\to$ `draft`.
+    - `POST /api/v1/admin/courses/:id/archive`: Transitions `published` $\to$ `archived`.
+    - `POST /api/v1/admin/courses/:id/modules`: Creates module in course.
+    - `PUT /api/v1/admin/courses/:courseId/modules/:moduleId`: Updates module.
+    - `DELETE /api/v1/admin/courses/:courseId/modules/:moduleId`: Deletes module (enforces `409 CONFLICT` if module contains lessons).
+    - `POST /api/v1/admin/courses/:id/modules/reorder`: Updates sequential positions of modules.
+    - `POST /api/v1/admin/courses/:courseId/modules/:moduleId/lessons`: Creates lesson in module.
+    - `PUT /api/v1/admin/courses/:courseId/modules/:moduleId/lessons/:lessonId`: Updates lesson content and preview flag.
+    - `DELETE /api/v1/admin/courses/:courseId/modules/:moduleId/lessons/:lessonId`: Deletes lesson.
+    - `POST /api/v1/admin/courses/:courseId/modules/:moduleId/lessons/reorder`: Updates lesson sequence.
+    - `GET /api/v1/admin/courses/:id/enrollments`: Inspects enrolled learner roster and progress telemetry.
+
+
 
 

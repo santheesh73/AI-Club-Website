@@ -30,6 +30,14 @@ import { AdminEventsPage } from '@/pages/admin/AdminEventsPage';
 import { AdminEventCreatePage } from '@/pages/admin/AdminEventCreatePage';
 import { AdminEventEditPage } from '@/pages/admin/AdminEventEditPage';
 import { AdminEventRegistrationsPage } from '@/pages/admin/AdminEventRegistrationsPage';
+import { MemberCoursesPage } from '@/pages/member/MemberCoursesPage';
+import { MemberCourseDetailPage } from '@/pages/member/MemberCourseDetailPage';
+import { MemberMyCoursesPage } from '@/pages/member/MemberMyCoursesPage';
+import { MemberLearningPage } from '@/pages/member/MemberLearningPage';
+import { AdminCoursesPage } from '@/pages/admin/AdminCoursesPage';
+import { AdminCourseCreatePage } from '@/pages/admin/AdminCourseCreatePage';
+import { AdminCourseEditPage } from '@/pages/admin/AdminCourseEditPage';
+import { AdminCourseEnrollmentsPage } from '@/pages/admin/AdminCourseEnrollmentsPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -140,16 +148,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="membership" element={<MemberMembershipPage />} />
         <Route path="application" element={<MemberApplicationPage />} />
         <Route path="assessment" element={<MemberAssessmentPage />} />
-        <Route
-          path="courses"
-          element={
-            <MilestonePlaceholder
-              title="Courses & Labs"
-              milestone="Milestone 6: Courses"
-              description="Interactive learning modules, video lectures, and code assignments."
-            />
-          }
-        />
+        <Route path="courses" element={<MemberCoursesPage />} />
+        <Route path="courses/my" element={<MemberMyCoursesPage />} />
+        <Route path="courses/:slug" element={<MemberCourseDetailPage />} />
         <Route path="events" element={<MemberEventsPage />} />
         <Route path="events/:slug" element={<MemberEventDetailPage />} />
         <Route
@@ -230,16 +231,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="events/new" element={<AdminEventCreatePage />} />
         <Route path="events/:id/edit" element={<AdminEventEditPage />} />
         <Route path="events/:id/registrations" element={<AdminEventRegistrationsPage />} />
-        <Route
-          path="courses"
-          element={
-            <MilestonePlaceholder
-              title="Course Management"
-              milestone="Milestone 10: Admin Platform"
-              description="Publish modules, syllabus management, and student progress oversight."
-            />
-          }
-        />
+        <Route path="courses" element={<AdminCoursesPage />} />
+        <Route path="courses/new" element={<AdminCourseCreatePage />} />
+        <Route path="courses/:id" element={<AdminCourseEditPage />} />
+        <Route path="courses/:id/enrollments" element={<AdminCourseEnrollmentsPage />} />
         <Route
           path="projects"
           element={
@@ -311,6 +306,16 @@ export const AppRoutes: React.FC = () => {
           }
         />
       </Route>
+
+      {/* ================= DISTRACTION-FREE LEARNING ROUTE ================= */}
+      <Route
+        path="/member/learn/:courseSlug"
+        element={
+          <RouteGuard requiredRole="member">
+            <MemberLearningPage />
+          </RouteGuard>
+        }
+      />
 
       {/* Fallback 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />

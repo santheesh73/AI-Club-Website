@@ -54,4 +54,8 @@ router.get('/members', (req, res, next) =>
 import { adminEventsRoutes } from '../events/events.routes';
 router.use('/events', adminEventsRoutes);
 
+// Milestone 7: Courses & Learning Management Oversight
+import { adminCoursesRoutes } from '../courses/courses.routes';
+router.use('/courses', adminCoursesRoutes);
+
 export const adminRoutes = router;

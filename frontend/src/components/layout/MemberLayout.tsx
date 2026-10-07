@@ -36,6 +36,7 @@ export const MemberLayout: React.FC = () => {
 
   const coreNavigation = [
     { name: 'Dashboard', href: '/member', icon: LayoutDashboard },
+    { name: 'Courses', href: '/member/courses', icon: BookOpen },
     { name: 'Events', href: '/member/events', icon: Calendar },
     { name: 'My Profile', href: '/member/profile', icon: User },
     { name: 'Membership', href: '/member/membership', icon: CreditCard },
@@ -44,7 +45,6 @@ export const MemberLayout: React.FC = () => {
   ];
 
   const upcomingNavigation = [
-    { name: 'Courses', href: '/member/courses', icon: BookOpen },
     { name: 'Projects', href: '/member/projects', icon: FolderGit2 },
     { name: 'Achievements', href: '/member/achievements', icon: Trophy },
     { name: 'AI Assistant', href: '/member/ai', icon: Sparkles },
