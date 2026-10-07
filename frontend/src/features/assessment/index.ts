@@ -1,4 +1,6 @@
-// AI CLUB - Feature Module: assessment
-// Architectural boundary established in Milestone 1. Feature logic to be implemented in designated milestone.
-export {};
-
+export * from './AssessmentTimer';
+export * from './QuestionCard';
+export * from './QuestionPalette';
+export * from './AutosaveIndicator';
+export * from './SubmitConfirmModal';
+export * from './useAssessment';

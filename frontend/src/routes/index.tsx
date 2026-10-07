@@ -12,6 +12,10 @@ import { LoginPage } from '@/pages/public/LoginPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { ProfilePage } from '@/pages/applicant/ProfilePage';
+import { ApplicantDashboard } from '@/pages/applicant/ApplicantDashboard';
+import { ApplicationPage } from '@/pages/applicant/ApplicationPage';
+import { AssessmentPage } from '@/pages/applicant/AssessmentPage';
+import { AssessmentResultPage } from '@/pages/applicant/AssessmentResultPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -101,46 +105,10 @@ export const AppRoutes: React.FC = () => {
           </RouteGuard>
         }
       >
-        <Route
-          index
-          element={
-            <MilestonePlaceholder
-              title="Applicant Status"
-              milestone="Milestone 3: Applicant Portal"
-              description="Track submission status, review rounds, and admission timeline."
-            />
-          }
-        />
-        <Route
-          path="application"
-          element={
-            <MilestonePlaceholder
-              title="Application Submission"
-              milestone="Milestone 3: Application Form"
-              description="Multi-step club application with academic profile and project portfolio."
-            />
-          }
-        />
-        <Route
-          path="assessment"
-          element={
-            <MilestonePlaceholder
-              title="25-Question MCQ Assessment"
-              milestone="Milestone 4: Assessment Engine"
-              description="Timed algorithmic and machine learning multiple-choice evaluation."
-            />
-          }
-        />
-        <Route
-          path="result"
-          element={
-            <MilestonePlaceholder
-              title="Assessment Results"
-              milestone="Milestone 4: Assessment Engine"
-              description="Scoring breakdown, percentile metrics, and admission status."
-            />
-          }
-        />
+        <Route index element={<ApplicantDashboard />} />
+        <Route path="application" element={<ApplicationPage />} />
+        <Route path="assessment" element={<AssessmentPage />} />
+        <Route path="result" element={<AssessmentResultPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 
