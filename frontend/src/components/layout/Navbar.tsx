@@ -13,8 +13,6 @@ export const Navbar: React.FC = () => {
     { label: 'About', path: '/about' },
     { label: 'Learn', path: '/learn' },
     { label: 'Events', path: '/events' },
-    { label: 'Projects', path: '/projects' },
-    { label: 'Community', path: '/community' },
   ];
 
   const handleSignOut = async () => {

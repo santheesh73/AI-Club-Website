@@ -29,7 +29,7 @@ export const LandingPage: React.FC = () => {
               Join Club
             </Button>
           </Link>
-          <Link to="/projects">
+          <Link to="/learn">
             <Button variant="outline" size="lg" className="px-8">
               Explore
             </Button>

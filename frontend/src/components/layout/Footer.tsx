@@ -21,11 +21,11 @@ export const Footer: React.FC = () => {
           <Link to="/about" className="hover:text-ink transition-colors">
             About
           </Link>
+          <Link to="/learn" className="hover:text-ink transition-colors">
+            Learn
+          </Link>
           <Link to="/events" className="hover:text-ink transition-colors">
             Events
-          </Link>
-          <Link to="/projects" className="hover:text-ink transition-colors">
-            Projects
           </Link>
           <a
             href="https://github.com/santheesh73/AI-Club-Website"
