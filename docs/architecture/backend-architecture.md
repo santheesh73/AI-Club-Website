@@ -99,3 +99,43 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
 - **Endpoints**:
   - `GET /api/v1/profile`: Returns the authenticated user's profile entity.
   - `PATCH /api/v1/profile`: Updates permitted academic, contact, and bio fields. Enforces `updateProfileSchema.body.strict()`, rejecting payloads that attempt to modify `role`, `id`, or `email`.
+
+---
+
+## 6. Applications & Assessment Engine (Milestone 3)
+
+- **Application Lifecycle**: Managed through `/api/v1/applications` (`POST /`, `GET /me`, `GET /me/status`).
+- **Profile Prerequisite**: `verifyProfileCompletion()` enforces valid academic credentials before an application can be created.
+- **Timed 25-MCQ Assessment**: Managed through `/api/v1/assessment`. Generates server-authoritative attempt windows with secure answer masking and atomic autosave.
+
+---
+
+## 7. Admin Control Center & Decision Engine (Milestone 4)
+
+- **Administrative Authorization**:
+  - All endpoints under `/api/v1/admin/*` are guarded by `authenticate` and `requireRole(['admin'])`.
+  - Admin role is authoritatively verified from the database `profiles` table to prevent client-side JWT spoofing or tampering.
+  - Non-admins attempting access receive `403 FORBIDDEN` (`ADMIN_ROLE_REQUIRED`).
+
+- **Application Review Endpoints**:
+  - `GET /api/v1/admin/dashboard/summary`: High-level metrics (total applications, approved, waitlisted, rejected, pending review, average score, pass rate).
+  - `GET /api/v1/admin/applications`: Searchable, filterable, sortable, paginated query of applicant dossiers.
+    - Search: multi-field against full name, email, register number, and application number.
+    - Filters: `status`, `department`.
+    - Sorting: Allowlist (`createdAt`, `submittedAt`, `assessmentScore`, `applicationNumber`, `fullName`) with `asc`/`desc`.
+    - Pagination: `page`, `pageSize` with boundary limits.
+  - `GET /api/v1/admin/applications/:id`: Detailed applicant dossier aggregating profile details, 25-MCQ assessment breakdown, current application status, and full audit trail.
+
+- **Decision Engine Actions**:
+  - `POST /api/v1/admin/applications/:id/approve`: Transitions candidate from `under_review` (or `test_completed`) to `approved`. Optional reviewer notes.
+  - `POST /api/v1/admin/applications/:id/waitlist`: Transitions candidate to `waitlisted`. Optional reviewer notes.
+  - `POST /api/v1/admin/applications/:id/reject`: Transitions candidate to `rejected`. **Mandates** a non-empty `rejectionReason` (validated via Zod and DB check constraint).
+
+- **State Transition Invariance & Anti-Tampering**:
+  - Applications in `draft` state cannot be reviewed or decided (`409 INVALID_APPLICATION_STATE`).
+  - Idempotency protection: Once an application has been decided, repeated decisions or conflicts return `409 APPLICATION_ALREADY_REVIEWED` or `409 INVALID_APPLICATION_STATE`.
+  - Strict Boundary: Approval in Milestone 4 transitions application status to `approved` and records an audit log. It does **NOT** create membership records or membership numbers (deferred strictly to Milestone 5).
+
+- **Operational Audit Service**:
+  - Every decision automatically logs an immutable event to `public.audit_logs` (`APPLICATION_APPROVED`, `APPLICATION_WAITLISTED`, `APPLICATION_REJECTED`) with actor ID, timestamp, and metadata.
+

@@ -74,3 +74,41 @@ Layouts provide persistent framing and semantic grouping for the four primary us
 - **Reactive Subscription**: Subscribes to `supabase.auth.onAuthStateChange` to synchronize state automatically across tab focus, token expiration, sign-in, and sign-out.
 - **Race Condition Prevention**: Holds `isLoading = true` until initial session check and linked profile fetch complete, preventing flashing of protected views.
 - **Error Sanitization**: Formats provider responses via `mapAuthError()`, insulating users from raw infrastructure errors.
+
+---
+
+## 7. Applicant Portal & Assessment Engine (Milestone 3)
+
+- **Application Hub (`/applicant/dashboard`)**: Displays real-time application timeline, current status pill, and next required steps.
+- **25-MCQ Assessment Interface (`/applicant/assessment/:attemptId`)**:
+  - Full-screen distraction-free testing environment.
+  - Question grid navigator with color-coded answered/unanswered states.
+  - Server-synchronized countdown timer with automatic force-submission on expiration.
+  - Immediate local selection feedback combined with atomic background autosave.
+
+---
+
+## 8. Admin Control Center & Review Portal (Milestone 4)
+
+- **Admin Layout (`AdminLayout.tsx`)**:
+  - Elevated visual identity ("AI CLUB CONTROL") with quick navigation to Overview, Applications, Members (M5 placeholder), Events, Settings, and direct Admin Sign Out.
+  - Responsive mobile drawer and desktop fixed sidebar.
+- **Admin Dashboard (`AdminDashboard.tsx` - `/admin`)**:
+  - High-level metric telemetry: Total Applications, Under Review, Approved, Waitlisted, Rejected.
+  - Academic performance indicators: Average 25-MCQ score and entrance pass percentage.
+  - Real-time recent applications feed with one-click navigation to candidate review dossiers.
+- **Applications Oversight Center (`AdminApplicationsPage.tsx` - `/admin/applications`)**:
+  - Instant multi-field search (debounced at 300ms) matching name, email, register number, and application number.
+  - Department and status filtering pills.
+  - Server-side sorting allowlist (Submission Date, Score, Application #, Name).
+  - Responsive layout (tabular view on desktop, detailed card layout on mobile).
+  - Clean pagination with page indicators and boundary disabling.
+- **Candidate Review Dossier (`AdminApplicationDetailPage.tsx` - `/admin/applications/:id`)**:
+  - Student Profile inspection: Contact, department, year, roll number, GitHub/LinkedIn/Portfolio links, skills, interests.
+  - Assessment performance breakdown: Score / 25, percentage, pass/fail status, duration, questions answered.
+  - Decision action bar:
+    - **Approve Candidate**: Launches `ApproveConfirmModal` with optional reviewer notes.
+    - **Waitlist Candidate**: Launches `WaitlistConfirmModal` with optional rationale.
+    - **Reject Candidate**: Launches `RejectReasonModal` with mandatory reason validation (disabled until $\ge 3$ characters typed).
+  - Immutable Audit History Trail: Chronological event timeline displaying decision timestamps, actor IDs, and reviewer comments.
+

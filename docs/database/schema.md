@@ -167,3 +167,56 @@ Stores autosaved student answers.
 ### 7.6 Security & Anti-Privilege Escalation Triggers
 - `trg_protect_application_security_fields`: Prevents non-service roles from updating application ownership, application number, or manually modifying score, passed status, or review fields.
 
+---
+
+## 8. Milestone 4 Schema (Admin Control Center, Review & Audit Engine)
+
+### 8.1 Enum Expansion & Constraints
+- `application_status`: Expanded to include `'waitlisted'` (in addition to `'draft'`, `'submitted'`, `'under_review'`, `'approved'`, `'rejected'`).
+- Check constraint `chk_applications_rejection_reason`:
+  ```sql
+  CHECK ((status != 'rejected') OR (rejection_reason IS NOT NULL AND length(trim(rejection_reason)) >= 3))
+  ```
+  Guarantees at the database level that no candidate can be placed into `rejected` state without an explicit explanation of at least 3 characters.
+
+### 8.2 Application Review Fields & Performance Indexes
+Added to `public.applications`:
+- `reviewed_by`: `UUID NULL REFERENCES public.profiles(id) ON DELETE SET NULL`
+- `admin_notes`: `TEXT NULL`
+- `rejection_reason`: `TEXT NULL`
+- New indexes for admin search, filtering, and sorting:
+  - `idx_applications_reviewed_by`: For admin reviewer auditing.
+  - `idx_applications_submitted_at`: For descending/ascending submission ordering.
+  - `idx_applications_assessment_score`: For score-based candidate rankings.
+
+### 8.3 Table: `public.audit_logs`
+Immutable, append-only operational audit log recording all administrative actions.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Unique log entry identifier |
+| `actor_id` | `UUID` | `NOT NULL, REFERENCES public.profiles(id)` | ID of the administrator executing the action |
+| `action` | `TEXT` | `NOT NULL` | Semantic event name (`APPLICATION_APPROVED`, etc.) |
+| `entity_type` | `TEXT` | `NOT NULL` | Entity category (`APPLICATION`, `PROFILE`, etc.) |
+| `entity_id` | `TEXT` | `NOT NULL` | ID of the target resource modified |
+| `metadata` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Structured event context (e.g. notes, reason) |
+| `ip_address` | `TEXT` | `NULLABLE` | Client IP address if provided |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Immutable log creation timestamp |
+
+### 8.4 Audit Log Immutability Protection
+An immutable database trigger `trg_prevent_audit_log_mutation` prevents any `UPDATE` or `DELETE` operations on `public.audit_logs`:
+```sql
+CREATE OR REPLACE FUNCTION prevent_audit_log_mutation()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'audit_logs entries are immutable and cannot be updated or deleted';
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 8.5 Row-Level Security for Audit Logs
+- Admins can read all audit logs:
+  `EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')` (SELECT)
+- Insertion is restricted to service roles and authenticated administrators.
+- Modifications and deletions are strictly rejected.
+
