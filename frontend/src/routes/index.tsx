@@ -99,8 +99,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="dashboard" element={<ApplicantDashboard />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="apply" element={<ApplicationPage />} />
+        <Route path="application" element={<ApplicationPage />} />
         <Route path="assessment" element={<AssessmentPage />} />
         <Route path="assessment/result" element={<AssessmentResultPage />} />
+        <Route path="result" element={<AssessmentResultPage />} />
       </Route>
 
       {/* ================= MEMBER PORTAL ROUTES ================= */}

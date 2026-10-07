@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { ProfileView } from '@/features/profile/ProfileView';
 import { ProfileEditForm } from '@/features/profile/ProfileEditForm';
 import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import type { UserProfile } from '@/types/user';
 
 export const ProfilePage: React.FC = () => {
@@ -51,13 +53,35 @@ export const ProfilePage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-ink">User Profile & Identity</h1>
-            <Badge variant="neutral">Milestone 2</Badge>
+            <Badge variant="neutral">Verified Student Identity</Badge>
           </div>
           <p className="text-xs text-ink-muted mt-1">
             Authoritative student credentials and personal AI innovation portfolio.
           </p>
         </div>
       </div>
+
+      {/* Prominent Next-Step Admissions Banner for Applicants */}
+      {profile.role === 'applicant' && (
+        <div className="p-5 sm:p-6 rounded-card-lg bg-surface border border-surface-border shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2">
+              <Badge variant="orange">Next Step in Admissions</Badge>
+              <h2 className="font-bold text-ink text-sm sm:text-base">
+                Take 25-MCQ Technical Assessment
+              </h2>
+            </div>
+            <p className="text-xs text-ink-muted leading-relaxed">
+              Your profile credentials are saved. Proceed to your official Applicant Dashboard to start your admission application and complete the 25-question timed assessment (30 mins, 60% pass threshold).
+            </p>
+          </div>
+          <Link to="/applicant/dashboard" className="shrink-0">
+            <Button size="md" className="shadow-subtle">
+              Go to Assessment Dashboard &rarr;
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {saveSuccess && (
         <div

@@ -70,6 +70,27 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                {profile?.role === 'applicant' && (
+                  <Link to="/applicant/dashboard">
+                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
+                      Assessment Dashboard &rarr;
+                    </Button>
+                  </Link>
+                )}
+                {profile?.role === 'member' && (
+                  <Link to="/member/dashboard">
+                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
+                      Member Portal &rarr;
+                    </Button>
+                  </Link>
+                )}
+                {profile?.role === 'admin' && (
+                  <Link to="/admin">
+                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
+                      Admin Center &rarr;
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/profile" className="flex items-center gap-2 group">
                   {profile?.avatarUrl ? (
                     <img
