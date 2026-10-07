@@ -30,8 +30,8 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     if (!supabaseAdmin) {
       // In local development/testing without live Supabase cloud connection
       if (process.env.NODE_ENV !== 'production') {
-        const isAdmin = token === 'admin-test-token';
-        const isUserB = token === 'user-b-token';
+        const isAdmin = token === 'admin-test-token' || token.startsWith('admin-');
+        const isUserB = token === 'user-b-token' || token.startsWith('user-b-');
 
         req.user = {
           id: isAdmin ? 'admin-user-id' : isUserB ? 'user-b-id' : 'user-a-id',
@@ -53,8 +53,22 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       return next(new AppError('Invalid or expired authentication session', 401, 'UNAUTHORIZED'));
     }
 
-    // Role is authoritative from user metadata or database profile
-    const userRole = (user.app_metadata?.role || user.user_metadata?.role || 'applicant') as AuthenticatedUser['role'];
+    // Role is authoritative from PostgreSQL profiles table
+    let userRole = (user.app_metadata?.role || user.user_metadata?.role || 'applicant') as AuthenticatedUser['role'];
+
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role) {
+        userRole = profile.role as AuthenticatedUser['role'];
+      }
+    } catch {
+      // Fall back to token metadata if profile lookup fails
+    }
 
     req.user = {
       id: user.id,

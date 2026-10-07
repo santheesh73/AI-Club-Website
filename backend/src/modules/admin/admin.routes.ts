@@ -1,19 +1,43 @@
 import { Router } from 'express';
-import { sendSuccess } from '../../utils/response';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { adminController } from './admin.controller';
 
 /**
  * AI CLUB - Module: admin
- * Architectural foundation established for Milestone 1.
- * Business endpoints will be attached during respective milestones.
+ * Milestone 4: Admin Control Center, Application Review & Decision Engine
  */
 const router = Router();
 
-router.get('/info', (_req, res) => {
-  sendSuccess(res, {
-    module: 'admin',
-    status: 'initialized',
-    milestone: 'Milestone 1 Architecture'
-  });
-});
+// Strict administrative authentication & authorization guard on all /admin routes
+router.use(authenticate);
+router.use(requireRole(['admin']));
+
+// Application Statistics & Control Center Overview
+router.get('/dashboard/summary', (req, res, next) =>
+  adminController.getDashboardSummary(req, res, next)
+);
+
+// Application Querying (Filtering, Search, Sorting, Pagination)
+router.get('/applications', (req, res, next) =>
+  adminController.getApplications(req, res, next)
+);
+
+// Individual Applicant Dossier Inspection
+router.get('/applications/:id', (req, res, next) =>
+  adminController.getApplicationDetail(req, res, next)
+);
+
+// Decision Endpoints
+router.post('/applications/:id/approve', (req, res, next) =>
+  adminController.approveApplication(req, res, next)
+);
+
+router.post('/applications/:id/waitlist', (req, res, next) =>
+  adminController.waitlistApplication(req, res, next)
+);
+
+router.post('/applications/:id/reject', (req, res, next) =>
+  adminController.rejectApplication(req, res, next)
+);
 
 export const adminRoutes = router;

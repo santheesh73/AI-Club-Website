@@ -4,7 +4,7 @@ import { supabaseAdmin } from '../../services/supabase';
 import type { UpdateProfileInput } from '../../validators/profile.validator';
 
 // In-memory store for local testing/standalone mode when Supabase is not attached
-const localMemoryProfiles: Map<string, Record<string, unknown>> = new Map();
+export const localMemoryProfiles: Map<string, Record<string, unknown>> = new Map();
 
 function formatProfileResponse(row: Record<string, unknown>) {
   return {
