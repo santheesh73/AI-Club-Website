@@ -23,6 +23,12 @@ import { notificationsRoutes } from './modules/notifications/notifications.route
 import { memberAnalyticsRoutes } from './modules/analytics/analytics.routes';
 import { adminRoutes } from './modules/admin/admin.routes';
 import { aiRoutes } from './modules/ai/ai.routes';
+import {
+  apiRateLimiter,
+  authRateLimiter,
+  assessmentRateLimiter,
+  aiRateLimiter,
+} from './middleware/rateLimit';
 
 const app = express();
 
@@ -39,11 +45,14 @@ app.use('/health', healthRoutes);
 // API Versioned routes (/api/v1/...)
 const v1Router = express.Router();
 
+// General API rate limiter across all endpoints
+v1Router.use(apiRateLimiter);
+
 v1Router.use('/health', healthRoutes);
-v1Router.use('/auth', authRoutes);
+v1Router.use('/auth', authRateLimiter, authRoutes);
 v1Router.use('/profile', profileRoutes);
 v1Router.use('/applications', applicationsRoutes);
-v1Router.use('/assessment', assessmentRoutes);
+v1Router.use('/assessment', assessmentRateLimiter, assessmentRoutes);
 v1Router.use('/membership', membershipRoutes);
 v1Router.use('/events', eventsRoutes);
 v1Router.use('/member/events', eventsRoutes);
@@ -59,7 +68,7 @@ v1Router.use('/notifications', notificationsRoutes);
 v1Router.use('/member/notifications', notificationsRoutes);
 v1Router.use('/member/analytics', memberAnalyticsRoutes);
 v1Router.use('/admin', adminRoutes);
-v1Router.use('/ai', aiRoutes);
+v1Router.use('/ai', aiRateLimiter, aiRoutes);
 
 app.use(`/api/${env.API_VERSION}`, v1Router);
 

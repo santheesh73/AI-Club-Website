@@ -1,63 +1,64 @@
 # AI CLUB — Premium AI Innovation Platform
 
-> **Milestone 1 — Foundation & Architecture**  
-> A production-grade, full-stack community and learning ecosystem for artificial intelligence engineers, researchers, and innovators.
+> **Milestone 10 — Production Hardening, Security, Testing, Deployment & Launch Readiness**  
+> A production-grade, full-stack community, education, and research ecosystem for artificial intelligence engineers, innovators, and academic scholars.
 
 ---
 
 ## 1. Executive Overview
 
-**AI CLUB** is an elite digital platform built for artificial intelligence students, builders, and research teams. The platform manages the entire lifecycle of members:
-- **Public Engagement**: Discover community initiatives, curriculum, projects, and events.
-- **Applicant Intake**: Multi-stage application workflow, candidate portfolios, and automated 25-question MCQ assessments.
-- **Member Workspace**: Personalized dashboard, interactive curriculum, project sprints, team formation, verifiable achievements, and AI learning guidance.
-- **Administrative Center**: Cohort admissions review, content management, event organization, member governance, system telemetry, and immutable audit logging.
-
-The system is designed with strict architectural separation between presentation (Frontend), business logic & verification (Backend), authoritative persistence (Supabase / PostgreSQL), and future AI agent workflows.
+**AI CLUB** is an enterprise-grade digital platform engineered for artificial intelligence builders, students, researchers, and campus innovators. The platform unifies the full membership lifecycle:
+- **Public Innovation Showcase**: Discover campus initiatives, published research projects, active curriculum, upcoming workshops, and verified member achievements.
+- **Applicant Intake & Assessment**: Multi-stage application workflow, candidate academic profiles, and an automated timed 25-MCQ assessment engine.
+- **Administrative Control Center**: Cohort application review queues, decision engine (approve/reject/waitlist), content management, member roster governance, system telemetry, and immutable audit logging.
+- **Member Workspace & Credentials**: Digital membership card with unique member IDs, interactive courses with syllabus progress tracking, event registration with capacity management, and personal project showcases.
+- **Intelligence & Analytics**: AI-powered personalized learning insights powered by Google Gemini, real-time in-app notification dispatch, and comprehensive club analytics.
+- **Production Hardened**: Zero-Trust security, PostgreSQL Row Level Security (RLS) on all tables, sliding-window rate limiting, Helmet CSP/HSTS headers, resilient Error Boundaries, and automated health telemetry.
 
 ---
 
 ## 2. Platform Architecture
 
 ```
-                    AI CLUB PLATFORM
-                           │
-          ┌────────────────┴────────────────┐
-          │                                 │
-   FRONTEND CLIENT                    ADMIN PORTAL
-   (React 18 + Vite + TS)            (React 18 + Vite + TS)
-          │                                 │
-          └────────────────┬────────────────┘
-                           │ HTTPS / JSON REST
-                           ▼
-                  API & SERVICE LAYER
-                           │
-                           ▼
-                    BACKEND SERVICE
-               (Node.js + Express + TS)
-                           │
-              ┌────────────┴────────────┐
-              │                         │
-      BUSINESS LOGIC               AI SERVICES
-      & AUTHORIZATION          (Guidance & Insights)
-              │
-              ▼ (Privileged Service-Role)
-         SUPABASE / POSTGRESQL
-              │
-       ┌──────┴───────┐
-       │              │
-   PostgreSQL       Storage
-       │ (Tables & Buckets)
-      RLS
-       │
-       ▼
-   AUTHORITATIVE PERSISTENCE
+                                  AI CLUB PLATFORM
+                                         │
+                  ┌──────────────────────┴──────────────────────┐
+                  │                                             │
+           FRONTEND CLIENT                               ADMIN PORTAL
+       (React 18 + Vite + TS)                       (React 18 + Vite + TS)
+                  │                                             │
+                  └──────────────────────┬──────────────────────┘
+                                         │ HTTPS / JSON REST
+                                         ▼
+                                API & SERVICE LAYER
+                                         │
+                                         ▼
+                                  BACKEND SERVICE
+                             (Node.js + Express + TS)
+                                         │
+                        ┌────────────────┴────────────────┐
+                        │                                 │
+                BUSINESS LOGIC                     AI SERVICES
+                & AUTHORIZATION               (Google Gemini API)
+                        │
+                        ▼ (Privileged Service-Role)
+                   SUPABASE / POSTGRESQL 15
+                        │
+                 ┌──────┴───────┐
+                 │              │
+             PostgreSQL      Storage
+                 │          (Avatars &
+                RLS       Project Media)
+                 │
+                 ▼
+             AUTHORITATIVE PERSISTENCE
 ```
 
 ### Architectural Guarantees
-- **Authoritative Database**: PostgreSQL is the single source of truth. Relational constraints and Row-Level Security (RLS) enforce data validity.
-- **Separation of Concerns**: The frontend controls user experience; the backend and database enforce authorization.
-- **Type Safety**: Strict TypeScript across frontend and backend, with runtime validation powered by Zod.
+- **Authoritative Database**: PostgreSQL 15 is the single source of truth. Check constraints, relational foreign keys, and Row-Level Security (RLS) enforce data validity.
+- **Zero-Trust Security**: Presentation never dictates authorization. Every backend route verifies identity, role (`applicant`, `member`, `admin`), and membership status.
+- **Rate-Limited Resiliency**: In-memory token bucket sliding window shields auth, assessment, AI, and reporting endpoints from abuse.
+- **Type Safety**: End-to-end strict TypeScript across frontend and backend, with runtime validation powered by Zod.
 - **Zero Secret Leaks**: Client bundles never contain backend service-role credentials.
 
 ---
@@ -67,11 +68,13 @@ The system is designed with strict architectural separation between presentation
 | Domain | Technologies |
 |---|---|
 | **Frontend** | React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, React Router v6 |
-| **Backend** | Node.js, Express, TypeScript, Zod, Helmet, CORS, Structured Logger |
+| **Backend** | Node.js, Express, TypeScript, Zod, Helmet, CORS, Winston Logger |
 | **Database & Auth** | Supabase, PostgreSQL 15, Row-Level Security (RLS), Supabase Auth |
+| **Object Storage** | Supabase Storage (`avatars`, `project-media` with RLS) |
+| **AI Intelligence** | Google Gemini API via official `@google/genai` SDK |
 | **Design System** | Warm editorial aesthetic (Ivory canvas `#FAF9F5`, high-contrast pill buttons, soft shadows) |
-| **Testing** | Vitest, Testing Library, Supertest |
-| **Tooling** | npm workspaces, tsx, ESLint |
+| **Testing** | Vitest, React Testing Library, Supertest (204 automated tests passing) |
+| **Tooling & Ops** | npm workspaces, tsx, ESLint, PM2, Docker, Supabase CLI |
 
 ---
 
@@ -87,8 +90,8 @@ AI-CLUB/
 │       ├── components/           # Component library
 │       │   ├── ui/               # Primitives (Button, Card, Input, Modal, Badge, Spinner, Skeleton, EmptyState)
 │       │   ├── layout/           # App layouts (PublicLayout, ApplicantLayout, MemberLayout, AdminLayout)
-│       │   └── shared/           # Cross-cutting components (ErrorBoundary, MilestonePlaceholder)
-│       ├── features/             # Domain modules (auth, profile, applications, courses, events, etc.)
+│       │   └── shared/           # Cross-cutting components (ErrorBoundary, RouteGuard)
+│       ├── features/             # Domain modules (auth, profile, applications, courses, events, projects, etc.)
 │       ├── pages/                # Route targets (public, applicant, member, admin)
 │       ├── routes/               # Route declarations and RouteGuard
 │       ├── hooks/                # Reusable React hooks
@@ -100,162 +103,164 @@ AI-CLUB/
 ├── backend/                      # Authoritative Node.js REST API service
 │   ├── src/
 │   │   ├── config/               # Environment loading and Zod validation
-│   │   ├── middleware/           # Security (Helmet, CORS), Auth, Validation, Request Logger, Error Handler
-│   │   ├── modules/              # Modular feature domains (auth, profile, applications, events, etc.)
+│   │   ├── middleware/           # Security (Helmet, CORS, RateLimit), Auth, RBAC, Validation, Error Handler
+│   │   ├── modules/              # Modular feature domains (auth, profile, applications, events, courses, etc.)
 │   │   ├── services/             # Authoritative Supabase client (service-role)
 │   │   ├── utils/                # Response formatters, AppError, structured logger
 │   │   ├── validators/           # Zod request validators
 │   │   └── server.ts             # Express server entry point
-│   └── tests/                    # Integration and smoke tests
+│   └── tests/                    # 148 automated unit and integration tests
 │
 ├── database/                     # PostgreSQL schema and Supabase configuration
 │   └── supabase/
 │       ├── config.toml           # Supabase CLI configuration
-│       ├── migrations/           # Version-controlled SQL migration scripts
-│       ├── functions/            # Edge functions
+│       ├── migrations/           # 10 Version-controlled SQL migration scripts (M1 through M10)
 │       └── seed/                 # Development seed data
 │
 ├── docs/                         # Comprehensive engineering documentation
 │   ├── architecture/             # System, frontend, and backend architecture specs
-│   ├── api/                      # API conventions, envelopes, and status codes
+│   ├── api/                      # API conventions, endpoints, status codes
 │   ├── database/                 # Schema strategy, enums, tables, and RLS policies
-│   ├── security/                 # Security model, threat boundaries, and token handling
+│   ├── security/                 # Security model, threat boundaries, and production security audit
+│   ├── deployment/               # Production deployment runbook
+│   ├── operations/               # Backup, disaster recovery, and incident response
 │   └── decisions/                # Architecture Decision Records (ADRs)
 │
 ├── .env.example                  # Template for all environment variables
-├── .gitignore                    # Comprehensive repository hygiene ignore list
-├── README.md                     # Project blueprint and onboarding guide
-└── package.json                  # Root monorepo workspace configuration
+├── package.json                  # Root monorepo workspace configuration
+└── README.md                     # Project blueprint and onboarding guide
 ```
 
 ---
 
-## 5. Getting Started & Development Setup
+## 5. Developer Onboarding & Local Setup Runbook
 
-### 5.1 Prerequisites
-- **Node.js**: `v20.x` or `v24.x` (LTS recommended)
-- **npm**: `v10.x` or `v11.x`
+Follow these 9 steps to run the complete AI CLUB stack locally.
+
+### Step 1: Prerequisites Check
+Ensure your environment meets these version requirements:
+- **Node.js**: `v20.x` or higher (LTS recommended)
+- **npm**: `v10.x` or higher
 - **Git**
 - Optional: [Supabase CLI](https://supabase.com/docs/guides/cli) for local database emulation
 
-### 5.2 Installation
-Clone the repository and install all workspace dependencies from the root:
-
+### Step 2: Clone the Repository
 ```bash
 git clone https://github.com/santheesh73/AI-Club-Website.git
-cd AIClub
+cd AI-Club-Website
+```
+
+### Step 3: Install All Workspace Dependencies
+Install dependencies across root, frontend, and backend with one command:
+```bash
 npm install
 ```
 
----
-
-## 6. Environment Configuration
-
+### Step 4: Configure Environment Variables
 Copy the template file to set up environment configurations:
-
 ```bash
 cp .env.example .env
 ```
+Fill in your Supabase credentials:
+- `SUPABASE_URL`: Your Supabase project URL (`https://<project-ref>.supabase.co`)
+- `SUPABASE_SERVICE_ROLE_KEY`: Service-role key for backend operations
+- `SUPABASE_JWT_SECRET`: JWT secret for token verification
+- `VITE_SUPABASE_URL`: Supabase project URL for frontend client
+- `VITE_SUPABASE_ANON_KEY`: Public anon key for frontend auth
+- `GEMINI_API_KEY`: Google Gemini API key for AI intelligence features
 
-### Environment Variable Guide
-
-#### Frontend Variables (Exposed to browser via `VITE_` prefix)
-```ini
-VITE_APP_NAME="AI CLUB"
-VITE_APP_ENV="development"
-VITE_API_BASE_URL="http://localhost:5000/api/v1"
-VITE_SUPABASE_URL="https://your-project.supabase.co"
-VITE_SUPABASE_ANON_KEY="your-public-anon-key"
-```
-
-#### Backend Variables (Server-side ONLY, never expose to browser)
-```ini
-NODE_ENV="development"
-PORT=5000
-HOST="0.0.0.0"
-API_VERSION="v1"
-CORS_ORIGIN="http://localhost:3000,http://localhost:5173"
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-backend-service-role-key"
-SUPABASE_JWT_SECRET="your-supabase-jwt-secret"
-LOG_LEVEL="info"
-```
-
----
-
-## 7. Running the Platform
-
-### Running Both Services Concurrently
-From the root directory:
+### Step 5: Database Setup & Migrations
+Apply all 10 migrations to your Supabase instance:
 ```bash
-# Terminal 1: Start Backend API
+# Using Supabase CLI (linked project)
+supabase link --project-ref <your-project-ref>
+supabase db push
+
+# Or apply manually via Supabase SQL Editor:
+# Execute database/supabase/migrations/20261006000001_foundation_schema.sql through 20261006000010_production_hardening_m10.sql in sequence.
+```
+
+### Step 6: Seed Development Data
+Optionally seed initial development questions and sample records:
+```bash
+# Execute in Supabase SQL Editor:
+database/supabase/seed/seed.sql
+```
+
+### Step 7: Run Automated Test Suites
+Run the entire test suite across frontend and backend:
+```bash
+# Run all tests across the monorepo (204 tests)
+npm test
+
+# Run frontend tests (56 tests)
+npm run test:frontend
+
+# Run backend tests (148 tests)
+npm run test:backend
+```
+
+### Step 8: Start Development Servers
+Run both backend and frontend concurrently:
+```bash
+# Start backend API (runs on http://localhost:5000)
 npm run dev:backend
 
-# Terminal 2: Start Frontend Application
+# Start frontend application (runs on http://localhost:5173)
 npm run dev:frontend
 ```
 
-### Local URLs:
-- **Frontend App**: `http://localhost:5173`
-- **Backend API**: `http://localhost:5000/api/v1`
-- **Backend Health Check**: `http://localhost:5000/health`
-
----
-
-## 8. Database Migrations & Supabase Setup
-
-Database migrations reside in `database/supabase/migrations/` and must be applied sequentially.
-
-### Using Local Supabase CLI
+### Step 9: Verify System Health
+Open your browser or run curl to test backend telemetry:
 ```bash
-# Start local Postgres, Auth, and Storage emulation
-supabase start
-
-# Apply all migrations to local database
-supabase db reset
+curl http://localhost:5000/health
 ```
-
-### Applying Migrations to Remote Supabase Project
-```bash
-# Link project
-supabase link --project-ref <your-project-ref>
-
-# Push pending migrations
-supabase db push
+Expected response:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "uptimeSeconds": 42.15,
+  "memory": { "heapUsedMB": 38.4, "rssMB": 72.1 },
+  "version": "v1"
+}
 ```
 
 ---
 
-## 9. Testing & Quality Verification
+## 6. Production Build & Deployment
 
-Run all test suites across frontend and backend:
-
+### Compile Both Workspaces
 ```bash
-# Run all tests across the monorepo
-npm run test
-
-# Run frontend unit & component tests
-npm run test:frontend
-
-# Run backend API smoke tests
-npm run test:backend
-
-# Build both applications for production
+# Build frontend and backend simultaneously
 npm run build
 ```
+- **Frontend Build**: Outputs optimized assets to `frontend/dist/`.
+- **Backend Build**: Compiles TypeScript to `backend/dist/`.
+
+For complete production server deployment, Nginx configurations, PM2 process management, and Docker instructions, see [Production Deployment Guide](file:///d:/Projects/AIClub/docs/deployment/production-deployment-guide.md).
+
+For backup policies, point-in-time recovery, and disaster response, see [Backup & Disaster Recovery Runbook](file:///d:/Projects/AIClub/docs/operations/backup-and-disaster-recovery.md).
+
+For full OWASP Top 10 evaluation and Row Level Security audits, see [Production Security Audit](file:///d:/Projects/AIClub/docs/security/production-security-audit.md).
 
 ---
 
-## 10. Platform Milestone Roadmap
+## 7. Platform Milestone Roadmap
 
-- [x] **Milestone 1 — Foundation & Architecture**: Monorepo layout, design system tokens, routing foundation, modular backend, health telemetry, Supabase schema baseline, and security model.
+- [x] **Milestone 1 — Foundation & Architecture**: Monorepo layout, warm editorial design system tokens, routing foundation, modular backend, health telemetry, Supabase schema baseline, and zero-trust security model.
 - [x] **Milestone 2 — Identity, Authentication & Profiles**: Supabase Auth integration, centralized AuthContext, session restoration, registration, login, logout, password recovery, protected routes, user profile schema with academic & portfolio attributes, Row-Level Security, backend verification, and anti-privilege escalation triggers.
-- [ ] **Milestone 3 — Applicant Experience & Intake**: Multi-step club application forms, academic profile enrichment, submission validation, and applicant status tracker.
-- [ ] **Milestone 4 — Assessment Engine**: 25-question MCQ timed assessment, automated grading algorithm, percentile calculation, result dashboard.
-- [ ] **Milestone 5 — Member Dashboard & Activation**: Member onboarding, verified membership status, sprint boards, and community workspace.
-- [ ] **Milestone 6 — Courses & Events**: Interactive curriculum modules, code exercises, event calendar, RSVPs, attendance tracking.
-- [ ] **Milestone 7 — Projects & Teams**: Cross-disciplinary AI project teams, sprint boards, repository links, submission reviews.
-- [ ] **Milestone 8 — Achievements & Notifications**: Verifiable badges, activity streaks, real-time alerts, multi-channel email dispatch.
-- [ ] **Milestone 9 — AI Experience**: Interactive AI learning assistant, automated code explainers, skill-gap analysis, personalized course recommendations.
-- [ ] **Milestone 10 — Admin Platform & Governance**: Administrative dashboard, applicant scoring queue, member roster management, event administration, audit logs.
+- [x] **Milestone 3 — Application & 25-MCQ Assessment Engine**: Multi-step club application forms, academic profile enrichment, timed 25-MCQ assessment engine, automated scoring, answer history, and candidate status tracking.
+- [x] **Milestone 4 — Admin Control Center & Decision Engine**: Comprehensive administrative dashboard, applicant scoring queue, review modal workflow, decision engine (approve/reject/waitlist), and immutable audit logs.
+- [x] **Milestone 5 — Membership Activation & Member Experience**: Approved applicant activation, secure membership records, unique member number generation (`AIC-YYYY-XXXX`), digital credential card, and member workspace.
+- [x] **Milestone 6 — Events & Activities Platform**: Full event lifecycle management, category filtering, capacity enforcement, waitlists, RSVP registration, attendance check-ins, and admin rosters.
+- [x] **Milestone 7 — Courses & Learning Management Platform**: Comprehensive course catalog, multi-module curriculum, rich lesson viewer, enrollment tracking, lesson completion progress, and certificate readiness.
+- [x] **Milestone 8 — Projects, Achievements & Community Showcase**: Cross-disciplinary AI project showcase, team member rosters, media galleries, verifiable member achievements, and admin moderation.
+- [x] **Milestone 9 — Notifications, AI Intelligence, Analytics & Engagement**: In-app notifications system, Google Gemini AI learning insights and project recommendations, user activity streak tracking, and platform-wide engagement telemetry.
+- [x] **Milestone 10 — Production Hardening, Security, Testing, Deployment & Launch Readiness**: Rate limiting, security headers, storage RLS policies, index optimizations, comprehensive error boundaries, zero-trust verification, automated testing (204 tests passing), disaster recovery runbooks, and launch clearance.
 
+---
+
+## 8. License & Governance
+
+Proprietary platform built for the **AI CLUB** student community and university research initiative. All rights reserved.

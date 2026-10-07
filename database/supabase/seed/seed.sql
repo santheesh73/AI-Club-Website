@@ -25,5 +25,5 @@
 
 DO $$
 BEGIN
-    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 9: Notifications, Analytics, AI Intelligence & Engagement Platform.';
+    RAISE NOTICE 'AI CLUB database seed initialized for Milestone 10: Production Hardening, Security & Launch Readiness.';
 END $$;

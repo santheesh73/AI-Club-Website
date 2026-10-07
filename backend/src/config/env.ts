@@ -19,6 +19,15 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().or(z.literal('')),
   SUPABASE_JWT_SECRET: z.string().optional().or(z.literal('')),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  RATE_LIMIT_WINDOW_MS: z
+    .string()
+    .default('900000')
+    .transform((val) => parseInt(val, 10)),
+  RATE_LIMIT_MAX_REQUESTS: z
+    .string()
+    .default('100')
+    .transform((val) => parseInt(val, 10)),
+  GEMINI_API_KEY: z.string().optional().or(z.literal('')),
 });
 
 const parsed = envSchema.safeParse(process.env);
