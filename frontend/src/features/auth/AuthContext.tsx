@@ -79,6 +79,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          if (normalizeEmail(parsed.email) === AUTHORIZED_ADMIN_EMAIL) {
+            parsed.role = 'admin';
+            localStorage.setItem(LOCAL_STORAGE_DEV_USER_KEY, JSON.stringify(parsed));
+          }
           setProfile(parsed);
           return parsed;
         } catch {
@@ -214,11 +218,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!isSupabaseConfigured) {
         // Local development sign-in fallback
         const derivedName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Applicant';
+        const isAdminEmail = normalizeEmail(email) === AUTHORIZED_ADMIN_EMAIL;
         const devUser: UserProfile = {
-          id: 'dev-user-001',
-          email,
-          fullName: derivedName,
-          role: 'applicant',
+          id: isAdminEmail ? '4ecc54e0-8d2b-4a55-919e-40108fbc8c8c' : 'dev-user-001',
+          email: normalizeEmail(email),
+          fullName: isAdminEmail ? 'AI CLUB Administrator' : derivedName,
+          role: isAdminEmail ? 'admin' : 'applicant',
           skills: ['TypeScript', 'Python'],
           interests: ['Deep Learning', 'Agent Architectures'],
           createdAt: new Date().toISOString(),
@@ -226,10 +231,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
         localStorage.setItem(LOCAL_STORAGE_DEV_USER_KEY, JSON.stringify(devUser));
         setProfile(devUser);
-        setUser({ id: devUser.id, email } as unknown as User);
-        setSession({ user: { id: devUser.id, email } } as unknown as Session);
+        setUser({ id: devUser.id, email: devUser.email } as unknown as User);
+        setSession({ user: { id: devUser.id, email: devUser.email } } as unknown as Session);
         setIsLoading(false);
-        return { success: true };
+        return { success: true, profile: devUser };
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({

@@ -2,12 +2,12 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
-import { LayoutDashboard, FileText, CheckSquare, Award, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, CheckSquare, Award, User, LogOut, Shield, ArrowRight } from 'lucide-react';
 
 export const ApplicantLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isAdmin } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,6 +69,14 @@ export const ApplicantLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Link to="/admin">
+                <Button variant="primary" size="sm" className="bg-ink text-canvas hover:bg-ink-muted">
+                  <Shield className="h-3.5 w-3.5 mr-1" />
+                  <span>Admin Center</span>
+                </Button>
+              </Link>
+            )}
             <div className="hidden sm:flex flex-col text-right">
               <span className="text-xs font-medium text-ink leading-tight">
                 {profile?.fullName || 'Applicant'}
@@ -87,6 +95,15 @@ export const ApplicantLayout: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {isAdmin && (
+        <div className="bg-surface-muted border-b border-surface-border px-6 py-2 text-center text-xs text-ink-muted flex items-center justify-center gap-2">
+          <span>You are viewing the Applicant Portal as Administrator.</span>
+          <Link to="/admin" className="font-semibold text-ink underline hover:text-ink-secondary flex items-center gap-1">
+            Open Admin Control Center <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
 
       {/* Mobile Navigation bar */}
       <div className="md:hidden border-b border-surface-border bg-surface px-4 py-2 overflow-x-auto flex items-center gap-1">

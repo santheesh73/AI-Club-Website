@@ -37,7 +37,7 @@ export const LoginPage: React.FC = () => {
     }
 
     const userEmail = email.trim().toLowerCase();
-    const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL && result.profile?.role === 'admin';
+    const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL;
     const isMember = result.profile?.role === 'member';
 
     // Role-based authoritative navigation
