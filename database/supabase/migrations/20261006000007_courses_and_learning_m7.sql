@@ -47,7 +47,7 @@ END $$;
 
 -- 2. Create Course Categories Table
 CREATE TABLE IF NOT EXISTS public.course_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   slug TEXT NOT NULL UNIQUE,
   description TEXT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS public.course_categories (
 
 -- 3. Create Courses Table
 CREATE TABLE IF NOT EXISTS public.courses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   short_description TEXT NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.courses (
 
 -- 4. Create Course Modules Table
 CREATE TABLE IF NOT EXISTS public.course_modules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS public.course_modules (
 
 -- 5. Create Course Lessons Table
 CREATE TABLE IF NOT EXISTS public.course_lessons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id UUID NOT NULL REFERENCES public.course_modules(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   slug TEXT NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS public.course_lessons (
 
 -- 6. Create Course Enrollments Table
 CREATE TABLE IF NOT EXISTS public.course_enrollments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE RESTRICT,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   status enrollment_status NOT NULL DEFAULT 'active',
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.course_enrollments (
 
 -- 7. Create Lesson Progress Table
 CREATE TABLE IF NOT EXISTS public.lesson_progress (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   enrollment_id UUID NOT NULL REFERENCES public.course_enrollments(id) ON DELETE CASCADE,
   lesson_id UUID NOT NULL REFERENCES public.course_lessons(id) ON DELETE CASCADE,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
