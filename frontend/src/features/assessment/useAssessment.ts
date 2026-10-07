@@ -27,11 +27,37 @@ export function useAssessment(applicationId?: string) {
     try {
       const res = await assessmentApi.startAssessment(applicationId);
       if (res.success && res.data) {
-        setAttempt(res.data);
-        setAnswers(res.data.answers || {});
+        const raw = res.data as any;
+        const normalizedAttempt: AssessmentAttempt = {
+          id: raw.id || raw.attemptId,
+          applicationId: raw.applicationId,
+          userId: raw.userId || '',
+          startedAt: raw.startedAt,
+          expiresAt: raw.expiresAt,
+          submittedAt: raw.submittedAt || null,
+          score: raw.score ?? null,
+          percentage: raw.percentage ?? null,
+          passed: raw.passed ?? null,
+          totalQuestions: raw.totalQuestions || raw.questionCount || raw.questions?.length || 0,
+          status: (raw.status?.toLowerCase() === 'submitted' ? 'completed' : raw.status?.toLowerCase() || 'in_progress') as any,
+          remainingSeconds: raw.remainingSeconds ?? 1800,
+          questions: (raw.questions || []).map((q: any) => ({
+            id: q.id,
+            category: q.category,
+            difficulty: q.difficulty,
+            questionText: q.questionText,
+            optionA: q.optionA || q.options?.A || '',
+            optionB: q.optionB || q.options?.B || '',
+            optionC: q.optionC || q.options?.C || '',
+            optionD: q.optionD || q.options?.D || '',
+          })),
+          answers: raw.answers || raw.savedAnswers || {},
+        };
+        setAttempt(normalizedAttempt);
+        setAnswers(normalizedAttempt.answers);
         // If already completed or expired, load the result
-        if (res.data.status === 'completed' || res.data.status === 'expired') {
-          const resResult = await assessmentApi.getResult(res.data.id);
+        if (normalizedAttempt.status === 'completed' || normalizedAttempt.status === 'expired') {
+          const resResult = await assessmentApi.getResult(normalizedAttempt.id);
           if (resResult.success && resResult.data) {
             setResult(resResult.data);
           }

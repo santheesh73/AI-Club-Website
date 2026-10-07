@@ -15,7 +15,16 @@ export function useApplication() {
       const response = await applicationApi.getApplicationStatus();
       if (response.success && response.data) {
         setStatusData(response.data);
-        setApplication(response.data.application);
+        if (response.data.application) {
+          setApplication(response.data.application);
+        } else if (response.data.hasApplication) {
+          const myApp = await applicationApi.getMyApplication();
+          if (myApp.success && myApp.data) {
+            setApplication(myApp.data);
+          }
+        } else {
+          setApplication(null);
+        }
       } else if (!response.success) {
         setError(response.error.message || 'Failed to load application status');
       }

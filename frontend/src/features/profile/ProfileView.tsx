@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -54,9 +56,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit }) => 
             </div>
           </div>
 
-          <Button onClick={onEdit} variant="outline" size="sm" className="shrink-0">
-            Edit Profile
-          </Button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button onClick={onEdit} variant="outline" size="sm">
+              Edit Profile
+            </Button>
+            {profile.role === 'applicant' && (
+              <Link to="/applicant/assessment">
+                <Button variant="primary" size="sm">
+                  <span>Take Assessment</span>
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </Card>
 

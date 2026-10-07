@@ -75,11 +75,18 @@ export const ProfilePage: React.FC = () => {
               Your profile credentials are saved. Proceed to your official Applicant Dashboard to start your admission application and complete the 25-question timed assessment (30 mins, 60% pass threshold).
             </p>
           </div>
-          <Link to="/applicant/dashboard" className="shrink-0">
-            <Button size="md" className="shadow-subtle">
-              Go to Assessment Dashboard &rarr;
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <Link to="/applicant/assessment">
+              <Button size="md" variant="primary" className="shadow-subtle">
+                Take Assessment Now &rarr;
+              </Button>
+            </Link>
+            <Link to="/applicant/dashboard">
+              <Button size="md" variant="outline">
+                Applicant Dashboard
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

@@ -9,6 +9,10 @@ export interface SafeQuestionDto {
   questionText: string;
   category: string;
   difficulty: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
   options: {
     A: string;
     B: string;
@@ -49,17 +53,23 @@ export interface AttemptRecord {
 }
 
 export interface AssessmentResultDto {
+  id?: string;
   applicationId: string;
   applicationNumber: string;
   attemptId: string;
-  status: 'SUBMITTED' | 'EXPIRED';
+  status: 'SUBMITTED' | 'EXPIRED' | 'completed';
   score: number;
   maxScore: number;
   percentage: number;
   passed: boolean;
   correctCount: number;
+  totalCorrect?: number;
   wrongCount: number;
+  totalWrong?: number;
   unansweredCount: number;
+  totalUnanswered?: number;
+  totalQuestions?: number;
+  startedAt?: string;
   submittedAt: string;
   applicationStatus: 'under_review';
   notice: string;
@@ -96,6 +106,10 @@ export class AssessmentService {
       questionText: q.questionText,
       category: q.category,
       difficulty: q.difficulty,
+      optionA: q.optionA,
+      optionB: q.optionB,
+      optionC: q.optionC,
+      optionD: q.optionD,
       options: {
         A: q.optionA,
         B: q.optionB,
@@ -269,16 +283,25 @@ export class AssessmentService {
     }
 
     const safeQuestions = selected.map((q) => this.toSafeDto(q));
+    const remainingSeconds = Math.max(
+      0,
+      Math.floor((new Date(newAttempt.expiresAt).getTime() - Date.now()) / 1000)
+    );
 
     return {
+      id: newAttempt.id,
       attemptId: newAttempt.id,
       applicationId,
-      status: newAttempt.status,
+      userId: newAttempt.userId,
+      status: 'in_progress',
       questionCount: safeQuestions.length,
+      totalQuestions: safeQuestions.length,
       durationSeconds: newAttempt.durationSeconds,
+      remainingSeconds,
       startedAt: newAttempt.startedAt,
       expiresAt: newAttempt.expiresAt,
       questions: safeQuestions,
+      answers: {},
       savedAnswers: {},
     };
   }
@@ -363,15 +386,25 @@ export class AssessmentService {
       .filter((q): q is InternalQuestionRecord => Boolean(q))
       .map((q) => this.toSafeDto(q));
 
+    const remainingSeconds = Math.max(
+      0,
+      Math.floor((new Date(attempt.expiresAt).getTime() - Date.now()) / 1000)
+    );
+
     return {
+      id: attempt.id,
       attemptId: attempt.id,
       applicationId: attempt.applicationId,
-      status: attempt.status,
+      userId: attempt.userId,
+      status: attempt.status === 'SUBMITTED' ? 'completed' : attempt.status === 'EXPIRED' ? 'expired' : 'in_progress',
       questionCount: safeQuestions.length,
+      totalQuestions: safeQuestions.length,
       durationSeconds: attempt.durationSeconds,
+      remainingSeconds,
       startedAt: attempt.startedAt,
       expiresAt: attempt.expiresAt,
       questions: safeQuestions,
+      answers: savedAnswersMap,
       savedAnswers: savedAnswersMap,
     };
   }
@@ -648,17 +681,23 @@ export class AssessmentService {
     });
 
     return {
+      id: attempt.id,
+      attemptId: attempt.id,
       applicationId: attempt.applicationId,
       applicationNumber: appNumber,
-      attemptId: attempt.id,
-      status: 'SUBMITTED',
+      status: 'completed',
       score,
       maxScore: assessmentConfig.maxScore,
       percentage,
       passed,
       correctCount,
+      totalCorrect: correctCount,
       wrongCount,
+      totalWrong: wrongCount,
       unansweredCount,
+      totalUnanswered: unansweredCount,
+      totalQuestions: attempt.questionIds.length,
+      startedAt: attempt.startedAt,
       submittedAt,
       applicationStatus: 'under_review',
       notice:

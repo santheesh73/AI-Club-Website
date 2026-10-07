@@ -47,6 +47,11 @@ export async function getMyApplicationStatus(req: Request, res: Response, next: 
         res,
         {
           hasApplication: false,
+          application: null,
+          profileComplete: true,
+          missingFields: [],
+          canStartAssessment: false,
+          assessmentStatus: 'not_started',
           status: 'NOT_STARTED',
         },
         200,
@@ -54,13 +59,30 @@ export async function getMyApplicationStatus(req: Request, res: Response, next: 
       );
     }
 
+    const canStartAssessment =
+      application.status === 'test_required' ||
+      application.status === 'test_in_progress' ||
+      application.status === 'draft';
+
+    const assessmentStatus =
+      application.status === 'test_completed' || application.status === 'under_review'
+        ? 'completed'
+        : application.status === 'test_in_progress'
+        ? 'in_progress'
+        : 'not_started';
+
     return sendSuccess(
       res,
       {
         hasApplication: true,
+        application,
         applicationId: application.id,
         applicationNumber: application.applicationNumber,
         status: application.status,
+        profileComplete: true,
+        missingFields: [],
+        canStartAssessment,
+        assessmentStatus,
         assessmentScore: application.assessmentScore,
         assessmentPercentage: application.assessmentPercentage,
         assessmentPassed: application.assessmentPassed,

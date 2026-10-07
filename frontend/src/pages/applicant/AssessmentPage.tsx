@@ -26,7 +26,21 @@ export const AssessmentPage: React.FC = () => {
     application,
     isLoading: appLoading,
     error: appError,
+    createApplication,
   } = useApplication();
+
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const handleQuickInitialize = async () => {
+    setIsInitializing(true);
+    setInitError(null);
+    const res = await createApplication();
+    setIsInitializing(false);
+    if (!res.success) {
+      setInitError(res.error || 'Failed to initialize application.');
+    }
+  };
 
   const applicationId = application?.id;
 
@@ -88,14 +102,37 @@ export const AssessmentPage: React.FC = () => {
         <AlertCircle className="h-10 w-10 text-accent-orange mx-auto" />
         <h2 className="text-lg font-semibold text-ink">Application Required</h2>
         <p className="text-xs text-ink-muted leading-relaxed">
-          You must create an official club application before taking the 25-MCQ entrance assessment.
+          An official application record (AIC-2026-XXXXXX) is required to access the 25-MCQ technical assessment.
         </p>
-        <Link to="/applicant">
-          <Button variant="primary">
-            <span>Go to Applicant Portal</span>
-            <ArrowRight className="h-4 w-4 ml-1.5" />
+        {initError && (
+          <p className="text-xs text-red-500 bg-red-50 p-2.5 rounded-cardSm border border-red-200">
+            {initError}
+          </p>
+        )}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Button
+            variant="primary"
+            onClick={handleQuickInitialize}
+            disabled={isInitializing}
+          >
+            {isInitializing ? (
+              <>
+                <Spinner size="sm" className="mr-2" />
+                <span>Initializing Exam...</span>
+              </>
+            ) : (
+              <>
+                <span>Start Assessment Questions</span>
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </>
+            )}
           </Button>
-        </Link>
+          <Link to="/applicant/dashboard">
+            <Button variant="outline">
+              <span>View Dashboard</span>
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }

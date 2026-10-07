@@ -25,7 +25,12 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    // Prevent double /api/v1 prefix if both baseUrl and endpoint include it
+    let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    if (this.baseUrl.endsWith('/api/v1') && cleanEndpoint.startsWith('/api/v1/')) {
+      cleanEndpoint = cleanEndpoint.slice('/api/v1'.length);
+    }
+    const url = `${this.baseUrl}${cleanEndpoint}`;
     const token = await this.getAuthToken();
 
     const headers = new Headers(options.headers || {});
