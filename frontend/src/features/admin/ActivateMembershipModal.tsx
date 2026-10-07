@@ -82,7 +82,7 @@ export const ActivateMembershipModal: React.FC<ActivateMembershipModalProps> = (
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Admitted to 2026 Core AI cohort. Outstanding machine learning project demonstration."
+              placeholder="e.g. Admitted to 2026 Core AI cohort. Outstanding machine learning capstone submission."
               rows={3}
               className="w-full px-3 py-2 text-xs rounded-card-sm border border-surface-border bg-canvas text-ink focus:outline-none focus:ring-1 focus:ring-ink"
               disabled={isSubmitting}

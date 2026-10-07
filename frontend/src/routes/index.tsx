@@ -6,7 +6,9 @@ import { MemberLayout } from '@/components/layout/MemberLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { RouteGuard } from '@/routes/RouteGuard';
 import { LandingPage } from '@/pages/public/LandingPage';
-import { MilestonePlaceholder } from '@/components/shared/MilestonePlaceholder';
+import { AboutPage } from '@/pages/public/AboutPage';
+import { LearnPage } from '@/pages/public/LearnPage';
+import { EventsPage } from '@/pages/public/EventsPage';
 
 import { LoginPage } from '@/pages/public/LoginPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
@@ -19,6 +21,10 @@ import { AssessmentResultPage } from '@/pages/applicant/AssessmentResultPage';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
 import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
 import { AdminApplicationDetailPage } from '@/pages/admin/AdminApplicationDetailPage';
+import { AdminMembersPage } from '@/pages/admin/AdminMembersPage';
+import { AdminAnnouncementsPage } from '@/pages/admin/AdminAnnouncementsPage';
+import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
+import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { MemberDashboard } from '@/pages/member/MemberDashboard';
 import { MemberMembershipPage } from '@/pages/member/MemberMembershipPage';
 import { MemberProfilePage } from '@/pages/member/MemberProfilePage';
@@ -48,6 +54,7 @@ import { AdminCommunityPage } from '@/pages/admin/AdminCommunityPage';
 import { MemberNotificationsPage } from '@/pages/member/MemberNotificationsPage';
 import { MemberActivityPage } from '@/pages/member/MemberActivityPage';
 import { MemberLearningAnalyticsPage } from '@/pages/member/MemberLearningAnalyticsPage';
+import { MemberAiPage } from '@/pages/member/MemberAiPage';
 import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
 import { AdminIntelligencePage } from '@/pages/admin/AdminIntelligencePage';
@@ -58,64 +65,28 @@ export const AppRoutes: React.FC = () => {
       {/* ================= PUBLIC & AUTH ROUTES ================= */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/about"
-          element={
-            <MilestonePlaceholder
-              title="About AI CLUB"
-              milestone="Milestone 2: Public Experience"
-              description="Platform mission, leadership, research ethos, and community charter."
-            />
-          }
-        />
-        <Route
-          path="/learn"
-          element={
-            <MilestonePlaceholder
-              title="Learning Curriculum"
-              milestone="Milestone 2: Public Experience"
-              description="Curriculum pathways, foundational courses, and technical workshops."
-            />
-          }
-        />
-        <Route
-          path="/events"
-          element={
-            <MilestonePlaceholder
-              title="Community Events"
-              milestone="Milestone 2: Public Experience"
-              description="Keynotes, hackathons, engineering seminars, and community meetups."
-            />
-          }
-        />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/learn" element={<LearnPage />} />
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/projects" element={<CommunityProjectsPage />} />
         <Route path="/community" element={<CommunityProjectsPage />} />
         <Route path="/community/projects" element={<CommunityProjectsPage />} />
         <Route path="/community/projects/:slug" element={<ProjectDetailPage />} />
-        <Route
-          path="/join"
-          element={
-            <MilestonePlaceholder
-              title="Join AI CLUB"
-              milestone="Milestone 3: Applicant Flow"
-              description="Membership admission intake, qualifications, and registration portal."
-            />
-          }
-        />
+        <Route path="/join" element={<Navigate to="/register" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
           path="/profile"
           element={
-            <RouteGuard requiredRole="authenticated">
+            <RouteGuard>
               <ProfilePage />
             </RouteGuard>
           }
         />
       </Route>
 
-      {/* ================= APPLICANT ROUTES ================= */}
+      {/* ================= APPLICANT FLOW ROUTES ================= */}
       <Route
         path="/applicant"
         element={
@@ -125,13 +96,14 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<ApplicantDashboard />} />
-        <Route path="application" element={<ApplicationPage />} />
-        <Route path="assessment" element={<AssessmentPage />} />
-        <Route path="result" element={<AssessmentResultPage />} />
+        <Route path="dashboard" element={<ApplicantDashboard />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="apply" element={<ApplicationPage />} />
+        <Route path="assessment" element={<AssessmentPage />} />
+        <Route path="assessment/result" element={<AssessmentResultPage />} />
       </Route>
 
-      {/* ================= MEMBER ROUTES ================= */}
+      {/* ================= MEMBER PORTAL ROUTES ================= */}
       <Route
         path="/member"
         element={
@@ -141,36 +113,24 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<MemberDashboard />} />
+        <Route path="dashboard" element={<MemberDashboard />} />
         <Route path="profile" element={<MemberProfilePage />} />
         <Route path="membership" element={<MemberMembershipPage />} />
         <Route path="application" element={<MemberApplicationPage />} />
         <Route path="assessment" element={<MemberAssessmentPage />} />
-        <Route path="courses" element={<MemberCoursesPage />} />
-        <Route path="courses/my" element={<MemberMyCoursesPage />} />
-        <Route path="courses/:slug" element={<MemberCourseDetailPage />} />
         <Route path="events" element={<MemberEventsPage />} />
-        <Route path="events/:slug" element={<MemberEventDetailPage />} />
+        <Route path="events/:id" element={<MemberEventDetailPage />} />
+        <Route path="courses" element={<MemberCoursesPage />} />
+        <Route path="courses/:slug" element={<MemberCourseDetailPage />} />
+        <Route path="my-courses" element={<MemberMyCoursesPage />} />
         <Route path="projects" element={<MemberProjectsPage />} />
         <Route path="projects/new" element={<MemberProjectCreatePage />} />
         <Route path="projects/:id/edit" element={<MemberProjectEditPage />} />
-        <Route
-          path="community"
-          element={<CommunityProjectsPage />}
-        />
         <Route path="achievements" element={<MemberAchievementsPage />} />
         <Route path="notifications" element={<MemberNotificationsPage />} />
         <Route path="activity" element={<MemberActivityPage />} />
         <Route path="learning" element={<MemberLearningAnalyticsPage />} />
-        <Route
-          path="ai"
-          element={
-            <MilestonePlaceholder
-              title="AI Learning Assistant"
-              milestone="Milestone 9: AI Experience"
-              description="Personalized learning guidance, code explainers, and skill gap analysis."
-            />
-          }
-        />
+        <Route path="ai" element={<MemberAiPage />} />
       </Route>
 
       {/* ================= ADMIN ROUTES ================= */}
@@ -185,16 +145,7 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<AdminDashboard />} />
         <Route path="applications" element={<AdminApplicationsPage />} />
         <Route path="applications/:id" element={<AdminApplicationDetailPage />} />
-        <Route
-          path="members"
-          element={
-            <MilestonePlaceholder
-              title="Member Management"
-              milestone="Milestone 10: Admin Platform"
-              description="Cohort enrollment, role permissions, and active member roster."
-            />
-          }
-        />
+        <Route path="members" element={<AdminMembersPage />} />
         <Route path="events" element={<AdminEventsPage />} />
         <Route path="events/new" element={<AdminEventCreatePage />} />
         <Route path="events/:id/edit" element={<AdminEventEditPage />} />
@@ -206,39 +157,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="projects" element={<AdminCommunityPage />} />
         <Route path="community" element={<AdminCommunityPage />} />
         <Route path="achievements" element={<AdminCommunityPage />} />
-        <Route
-          path="announcements"
-          element={
-            <MilestonePlaceholder
-              title="Announcements"
-              milestone="Milestone 10: Admin Platform"
-              description="Broadcast announcements to public, applicants, or active members."
-            />
-          }
-        />
+        <Route path="announcements" element={<AdminAnnouncementsPage />} />
         <Route path="notifications" element={<AdminNotificationsPage />} />
         <Route path="analytics" element={<AdminAnalyticsPage />} />
         <Route path="intelligence" element={<AdminIntelligencePage />} />
-        <Route
-          path="audit-logs"
-          element={
-            <MilestonePlaceholder
-              title="Security & Audit Logs"
-              milestone="Milestone 10: Admin Platform"
-              description="Immutable administrative action logs and security events."
-            />
-          }
-        />
-        <Route
-          path="settings"
-          element={
-            <MilestonePlaceholder
-              title="System Settings"
-              milestone="Milestone 10: Admin Platform"
-              description="Platform parameters, intake cycles, and integration configurations."
-            />
-          }
-        />
+        <Route path="audit-logs" element={<AdminAuditLogsPage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
       </Route>
 
       {/* ================= DISTRACTION-FREE LEARNING ROUTE ================= */}

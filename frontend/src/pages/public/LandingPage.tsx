@@ -75,7 +75,7 @@ export const LandingPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-xs text-ink-muted border-t border-surface-border pt-4">
-                Team formation &bull; Sprint cycles &bull; Showcase demos
+                Team formation &bull; Sprint cycles &bull; Project showcases
               </div>
             </CardContent>
           </Card>
@@ -105,7 +105,7 @@ export const LandingPage: React.FC = () => {
             <h3 className="text-2xl font-bold text-ink">Authoritative Standards & Merit Intake</h3>
             <p className="text-sm text-ink-muted max-w-2xl leading-relaxed">
               Membership intake is guided by an objective 25-MCQ technical assessment followed by administrative review. 
-              Our community is grounded in demonstrable skills, active research collaboration, and peer-reviewed project delivery.
+              Our community is grounded in verified technical skills, active research collaboration, and peer-reviewed project delivery.
             </p>
           </div>
         </div>

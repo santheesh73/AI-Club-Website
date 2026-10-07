@@ -194,11 +194,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       if (!isSupabaseConfigured) {
-        // Local development demo sign-in
+        // Local development sign-in fallback
+        const derivedName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Applicant';
         const devUser: UserProfile = {
           id: 'dev-user-001',
           email,
-          fullName: 'Demo Applicant',
+          fullName: derivedName,
           role: 'applicant',
           skills: ['TypeScript', 'Python'],
           interests: ['Deep Learning', 'Agent Architectures'],
@@ -247,7 +248,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       if (!isSupabaseConfigured) {
-        // Local development demo sign-up
+        // Local development sign-up fallback
         const devUser: UserProfile = {
           id: 'dev-user-' + Date.now(),
           email: email.trim(),

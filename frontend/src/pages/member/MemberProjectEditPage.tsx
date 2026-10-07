@@ -363,7 +363,7 @@ export const MemberProjectEditPage: React.FC = () => {
               className="px-3 py-2 text-sm bg-surface rounded-card border border-surface-border text-ink"
             >
               <option value="github">GitHub</option>
-              <option value="demo">Live Demo</option>
+              <option value="demo">Live Deployment</option>
               <option value="docs">Documentation</option>
               <option value="paper">Research Paper</option>
               <option value="dataset">Dataset</option>
