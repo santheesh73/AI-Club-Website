@@ -22,6 +22,15 @@ export const membershipApi = {
   },
 
   /**
+   * Fetch member editorial flashcards directly
+   */
+  async getMyFlashcards(limit = 5): Promise<ApiResponse<import('@/types/flashcard').FlashcardDto[]>> {
+    return apiClient.get<import('@/types/flashcard').FlashcardDto[]>(
+      `/api/v1/membership/me/flashcards?limit=${limit}`
+    );
+  },
+
+  /**
    * Fetch member's linked application summary
    */
   async getMyApplication(): Promise<ApiResponse<MemberDashboardData['application']>> {

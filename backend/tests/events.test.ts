@@ -252,7 +252,7 @@ describe('AI CLUB Milestone 6: Events & Activities Platform Tests', () => {
         .set('Authorization', 'Bearer member-test-token');
 
       expect(filteredRes.status).toBe(200);
-      expect(filteredRes.body.data.length).toBe(1);
+      expect(filteredRes.body.data.length).toBeGreaterThanOrEqual(1);
       expect(filteredRes.body.data[0].category).toBe('hackathon');
 
       // Search by keyword

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMemberDashboard } from '@/features/membership';
 import { useRegisteredEvents } from '@/features/events';
 import { useMyCourses, ProgressBar } from '@/features/courses';
+import { DashboardFlashcard } from '@/features/dashboard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
@@ -106,6 +107,9 @@ export const MemberDashboard: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Member Editorial Spotlight / Flashcard Carousel */}
+      <DashboardFlashcard flashcards={data.flashcards} />
 
       {/* Your Journey Timeline */}
       <div className="p-6 sm:p-8 rounded-card-lg bg-surface border border-surface-border shadow-soft space-y-6">

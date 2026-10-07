@@ -34,4 +34,8 @@ router.get('/me/assessment', authenticate, (req, res, next) =>
   membershipController.getMyAssessment(req, res, next)
 );
 
+router.get('/me/flashcards', authenticate, (req, res, next) =>
+  membershipController.getMyFlashcards(req, res, next)
+);
+
 export const membershipRoutes = router;

@@ -5,12 +5,14 @@ import { auditService } from '../admin/audit.service';
 import { notificationsService } from '../notifications/notifications.service';
 import {
   MembershipRecord,
+  MembershipStatus,
   MemberDashboardData,
   MemberListItemDto,
 } from './membership.types';
 import { localMemoryApplications } from '../applications/applications.service';
 import { localMemoryAttempts } from '../assessment/assessment.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
+import { flashcardService } from '../dashboard/flashcard.service';
 
 // In-memory store for fallback / local testing mode
 const localMemberships = new Map<string, MembershipRecord>();
@@ -492,6 +494,8 @@ export class MembershipService {
       }
     }
 
+    const flashcards = await flashcardService.getMemberFlashcards(userId, 5);
+
     return {
       profile: profileData,
       membership: {
@@ -503,6 +507,7 @@ export class MembershipService {
       },
       application: applicationData,
       assessment: assessmentData,
+      flashcards,
     };
   }
 
@@ -585,6 +590,60 @@ export class MembershipService {
       page,
       pageSize,
     };
+  }
+
+  /**
+   * Update membership status (suspend, revoke, activate, expire)
+   */
+  async updateMembershipStatus(
+    id: string,
+    status: MembershipStatus,
+    _reason?: string
+  ): Promise<MembershipRecord> {
+    if (supabaseAdmin && isUuid(id)) {
+      const { data, error } = await supabaseAdmin
+        .from('memberships')
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+          ...(status === 'suspended' ? { suspended_at: new Date().toISOString() } : {}),
+          ...(status === 'revoked' ? { revoked_at: new Date().toISOString() } : {}),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw new AppError('Failed to update membership status', 500, 'UPDATE_FAILED');
+      }
+
+      return {
+        id: data.id,
+        userId: data.user_id,
+        applicationId: data.application_id,
+        memberNumber: data.member_number,
+        status: data.status,
+        joinedAt: data.joined_at,
+        activatedAt: data.activated_at,
+        activatedBy: data.activated_by || null,
+        suspendedAt: data.suspended_at || null,
+        revokedAt: data.revoked_at || null,
+        expiresAt: data.expires_at || null,
+        metadata: data.metadata || {},
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+    }
+
+    const local = localMemberships.get(id);
+    if (!local) {
+      throw new AppError('Membership not found', 404, 'MEMBERSHIP_NOT_FOUND');
+    }
+
+    local.status = status;
+    local.updatedAt = new Date().toISOString();
+    localMemberships.set(id, local);
+    return local;
   }
 }
 
