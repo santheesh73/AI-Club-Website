@@ -103,7 +103,7 @@ export const authRateLimiter = createRateLimiter({
 
 export const assessmentRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 120,
   message: 'Assessment submission rate limit exceeded. Please wait a moment.',
 });
 
