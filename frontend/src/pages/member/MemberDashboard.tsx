@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useMemberDashboard } from '@/features/membership';
+import { useRegisteredEvents } from '@/features/events';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
@@ -13,10 +14,12 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
+  Calendar,
 } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
   const { data, isLoading, error, refetch } = useMemberDashboard();
+  const { upcoming: registeredEvents } = useRegisteredEvents();
 
   if (isLoading) {
     return (
@@ -222,8 +225,80 @@ export const MemberDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Upcoming Activities & Confirmed Registrations Block */}
+      <div className="p-6 rounded-card bg-surface border border-surface-border shadow-soft space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-ink-muted" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink font-mono">
+              Upcoming Club Activities
+            </h3>
+          </div>
+          <Link to="/member/events" className="text-xs text-ink font-semibold hover:underline flex items-center gap-1">
+            <span>Explore All Events</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {registeredEvents && registeredEvents.length > 0 ? (
+          <div className="space-y-3">
+            <p className="text-xs text-ink-muted">Your next confirmed event attendance:</p>
+            <div className="p-4 rounded-card-sm bg-canvas border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="success">Confirmed RSVP</Badge>
+                  <span className="text-xs font-mono text-ink-muted">
+                    {new Date(registeredEvents[0].startAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-ink">{registeredEvents[0].title}</h4>
+                <p className="text-xs text-ink-secondary">{registeredEvents[0].shortDescription}</p>
+              </div>
+              <Link to={`/member/events/${registeredEvents[0].slug}`}>
+                <Button variant="outline" size="sm" className="whitespace-nowrap">
+                  <span>View Details</span>
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 rounded-card-sm bg-canvas border border-surface-border text-center space-y-2">
+            <p className="text-xs font-medium text-ink">No Registered Upcoming Activities</p>
+            <p className="text-xs text-ink-muted max-w-md mx-auto">
+              Check out the active workshop series and collaborative hackathons scheduled for this term.
+            </p>
+            <div className="pt-2">
+              <Link to="/member/events">
+                <Button variant="outline" size="sm">
+                  <span>Browse Events Catalog</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+        <Link
+          to="/member/events"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <Calendar className="h-5 w-5 text-accent-green group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Club Events</h4>
+            <p className="text-xs text-ink-muted">Workshops, hackathons, and research symposiums.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>Browse Events</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
         <Link
           to="/member/membership"
           className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"

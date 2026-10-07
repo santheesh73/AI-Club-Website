@@ -14,54 +14,40 @@ const mockDashboardData: MemberDashboardData = {
     id: 'user-m5-test-01',
     email: 'member.test@aiclub.internal',
     fullName: 'Nikesh Sundaram',
-    role: 'member',
     department: 'Artificial Intelligence & Data Science',
     year: 3,
     section: 'A',
     registerNumber: 'REG-2026-9901',
     createdAt: '2026-09-01T10:00:00Z',
-    updatedAt: '2026-10-06T12:00:00Z',
     skills: ['PyTorch', 'TypeScript', 'FastAPI'],
     interests: ['Deep Learning', 'Computer Vision'],
   },
   membership: {
     id: 'mem-m5-test-01',
-    userId: 'user-m5-test-01',
-    applicationId: 'app-m5-test-01',
     memberNumber: 'AIC-2026-0042',
     status: 'active',
     joinedAt: '2026-10-06T12:00:00Z',
     activatedAt: '2026-10-06T12:00:00Z',
-    activatedBy: 'admin-user-01',
-    createdAt: '2026-10-06T12:00:00Z',
-    updatedAt: '2026-10-06T12:00:00Z',
   },
   application: {
     id: 'app-m5-test-01',
-    userId: 'user-m5-test-01',
     applicationNumber: 'AIC-2026-000042',
-    academicYear: '2026-2027',
+    academicYear: 2026,
     status: 'approved',
     submittedAt: '2026-10-01T10:00:00Z',
     reviewedAt: '2026-10-06T11:30:00Z',
-    reviewedBy: 'admin-user-01',
-    createdAt: '2026-10-01T09:00:00Z',
-    updatedAt: '2026-10-06T11:30:00Z',
   },
   assessment: {
     id: 'attempt-m5-test-01',
-    userId: 'user-m5-test-01',
-    applicationId: 'app-m5-test-01',
     score: 23,
     percentage: 92,
+    passed: true,
     totalQuestions: 25,
     correctCount: 23,
     wrongCount: 2,
     unansweredCount: 0,
     durationSeconds: 1140,
-    isPassed: true,
     submittedAt: '2026-10-02T15:30:00Z',
-    createdAt: '2026-10-02T15:10:00Z',
   },
 };
 
@@ -183,7 +169,7 @@ describe('AI CLUB Milestone 5: Membership & Member Experience Tests', () => {
 
       expect(screen.getByText(/Admissions Application History/i)).toBeInTheDocument();
       expect(screen.getByText('AIC-2026-000042')).toBeInTheDocument();
-      expect(screen.getByText('2026-2027')).toBeInTheDocument();
+      expect(screen.getByText('2026')).toBeInTheDocument();
     });
   });
 

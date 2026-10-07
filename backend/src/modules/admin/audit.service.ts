@@ -17,6 +17,13 @@ const mockAuditLogs: AuditLogEntry[] = [];
 
 export class AuditService {
   /**
+   * Reset local audit logs (testing helper)
+   */
+  public resetLocalState(): void {
+    mockAuditLogs.length = 0;
+  }
+
+  /**
    * Append an immutable audit record
    */
   async createLog(params: {

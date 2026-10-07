@@ -164,4 +164,33 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
   - Handled by `authenticate` and `requireRole(['member', 'admin'])`.
   - Guarantees non-members cannot read member telemetry even if authenticated as applicants.
 
+---
+
+## 9. Events & Activities Platform (Milestone 6)
+
+- **Architectural Principles**:
+  - **Identity Boundary**: Strictly consumes Milestone 5 active memberships (`public.memberships`). Applicants receive `403 FORBIDDEN`.
+  - **Server-Authoritative Capacity**: Race-condition protected seat reservations. Over-registration is prevented at the database layer through serializable transactions and count verification.
+  - **Strict State Lifecycle**: Events originate as `DRAFT`, transition to `PUBLISHED` upon admin action, progress to `ONGOING` during runtime, and terminate as `COMPLETED` or `CANCELLED`.
+  - **Cancellation Integrity**: Administrative cancellations mandate an audited `cancellationReason`. Cancelled events instantly freeze further registrations.
+  - **Private Meeting Links**: Unlocked and served exclusively to members holding an active verified registration pass.
+
+- **Endpoints**:
+  - **Admin Management Endpoints**:
+    - `POST /api/v1/admin/events`: Creates an event record (default `draft`, or direct `published`). Validates that `endAt > startAt`, `registrationCloseAt > registrationOpenAt`, and `registrationCloseAt <= startAt`.
+    - `GET /api/v1/admin/events`: Filterable, searchable, paginated list of all events including draft states.
+    - `GET /api/v1/admin/events/:id`: Detailed event inspection with full audit information.
+    - `PATCH /api/v1/admin/events/:id`: Edits event attributes (forbidden once completed or cancelled).
+    - `POST /api/v1/admin/events/:id/publish`: Transitions `draft` $\to$ `published`.
+    - `POST /api/v1/admin/events/:id/cancel`: Transitions to `cancelled` with required explanation.
+    - `GET /api/v1/admin/events/:id/registrations`: Returns the full attendee roster with student details, member numbers, registration times, and attendance statuses.
+
+  - **Member Event Endpoints**:
+    - `GET /api/v1/member/events`: Discovery catalog displaying published events, occupancy percentages, remaining seats, and registration status of the authenticated member.
+    - `GET /api/v1/member/events/registered`: Retrieves member's personal registrations partitioned into upcoming and past events.
+    - `GET /api/v1/member/events/:slug`: Resolves event by human-friendly URL slug, dynamically unveiling `meetingUrl` for confirmed registrants.
+    - `POST /api/v1/member/events/:eventId/register`: Reserves a seat. Atomically verifies open registration window, capacity availability, and prevents duplicate active reservations (`409 CONFLICT`).
+    - `DELETE /api/v1/member/events/:eventId/registration`: Cancels reservation, transitions record status to `cancelled`, and frees up the seat immediately.
+
+
 

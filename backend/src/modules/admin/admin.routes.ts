@@ -50,4 +50,8 @@ router.get('/members', (req, res, next) =>
   membershipController.getMembersList(req, res, next)
 );
 
+// Milestone 6: Events Management & Registrations Oversight
+import { adminEventsRoutes } from '../events/events.routes';
+router.use('/events', adminEventsRoutes);
+
 export const adminRoutes = router;

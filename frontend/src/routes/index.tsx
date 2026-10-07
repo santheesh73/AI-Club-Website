@@ -24,6 +24,12 @@ import { MemberMembershipPage } from '@/pages/member/MemberMembershipPage';
 import { MemberProfilePage } from '@/pages/member/MemberProfilePage';
 import { MemberApplicationPage } from '@/pages/member/MemberApplicationPage';
 import { MemberAssessmentPage } from '@/pages/member/MemberAssessmentPage';
+import { MemberEventsPage } from '@/pages/member/MemberEventsPage';
+import { MemberEventDetailPage } from '@/pages/member/MemberEventDetailPage';
+import { AdminEventsPage } from '@/pages/admin/AdminEventsPage';
+import { AdminEventCreatePage } from '@/pages/admin/AdminEventCreatePage';
+import { AdminEventEditPage } from '@/pages/admin/AdminEventEditPage';
+import { AdminEventRegistrationsPage } from '@/pages/admin/AdminEventRegistrationsPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -144,16 +150,8 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path="events"
-          element={
-            <MilestonePlaceholder
-              title="Member Events"
-              milestone="Milestone 6: Events"
-              description="Exclusive member hackathons, research seminars, and RSVP tracking."
-            />
-          }
-        />
+        <Route path="events" element={<MemberEventsPage />} />
+        <Route path="events/:slug" element={<MemberEventDetailPage />} />
         <Route
           path="projects"
           element={
@@ -228,16 +226,10 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path="events"
-          element={
-            <MilestonePlaceholder
-              title="Event Management"
-              milestone="Milestone 10: Admin Platform"
-              description="Create, schedule, and manage club events and attendance."
-            />
-          }
-        />
+        <Route path="events" element={<AdminEventsPage />} />
+        <Route path="events/new" element={<AdminEventCreatePage />} />
+        <Route path="events/:id/edit" element={<AdminEventEditPage />} />
+        <Route path="events/:id/registrations" element={<AdminEventRegistrationsPage />} />
         <Route
           path="courses"
           element={

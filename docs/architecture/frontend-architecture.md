@@ -133,4 +133,38 @@ Layouts provide persistent framing and semantic grouping for the four primary us
   - Validates that routes under `/member/*` require both an authenticated session and verified member status (`role === 'member' || role === 'admin'`).
   - Non-members are safely redirected to `/applicant` or `/login`.
 
+---
+
+## 10. Events & Activities Experience (Milestone 6)
+
+- **Member Experience**:
+  - **Events Catalog (`/member/events` - `MemberEventsPage.tsx`)**:
+    - Timeline toggling: `Upcoming Events` vs `Past Activities`.
+    - Category filtering chips (`All`, `Workshops`, `Hackathons`, `Tech Talks`, `Bootcamps`, `Webinars`).
+    - Real-time event search matching title, description, and keywords.
+    - Responsive grid of `EventCard` components detailing date, time, location/online status, speaker, capacity progress, and registration badges.
+  - **Event Dossier & Action Page (`/member/events/:slug` - `MemberEventDetailPage.tsx`)**:
+    - Detailed event breakdown: Full agenda, prerequisites, equipment requirements, and speaker credentials.
+    - Dynamic Capacity Tracker: Visual progress bar displaying registered headcount vs maximum venue capacity.
+    - Real-time Registration Action: Instant seat allocation backed by membership validation.
+    - Seat Release / Cancellation: Allows members to cancel reservations with immediate seat return to the available pool.
+    - Unlocked Online Conference Access: Displays `meetingUrl` video room links exclusively to confirmed attendees.
+  - **Member Dashboard Integration (`/member` - `MemberDashboard.tsx`)**:
+    - Dedicated "Upcoming Club Activities & Registered Events" module embedded directly into the member home portal.
+
+- **Admin Control Experience**:
+  - **Events Oversight Center (`/admin/events` - `AdminEventsPage.tsx`)**:
+    - Comprehensive table and card views of club programming across all lifecycles (`draft`, `published`, `ongoing`, `completed`, `cancelled`).
+    - Status filtering, search, and direct actions (`Publish`, `Cancel with Reason`, `Edit`, `View Attendees`).
+    - Publication Confirmation Modal (`EventPublishModal.tsx`).
+    - Cancellation Modal requiring mandatory reason entry (`EventCancelModal.tsx`).
+  - **Event Creator Studio (`/admin/events/new` - `AdminEventCreatePage.tsx`)**:
+    - Structured editor for schedules, capacity, mode (physical, online, hybrid), venue, meeting links, prerequisites, and taxonomy tags.
+    - Client-side pre-validation verifying chronologically valid date ranges before API dispatch.
+  - **Event Editor (`/admin/events/:id/edit` - `AdminEventEditPage.tsx`)**:
+    - Safe modification of event descriptions, venues, and capacity limits (read-only for completed/cancelled events).
+  - **Attendee Roster Management (`/admin/events/:id/registrations` - `AdminEventRegistrationsPage.tsx`)**:
+    - Live seat roster detailing member names, student IDs, registration timestamps, and attendance verification status.
+
+
 

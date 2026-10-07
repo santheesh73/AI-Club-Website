@@ -35,8 +35,8 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, activeInM4: true },
     { name: 'Applications', href: '/admin/applications', icon: FileText, activeInM4: true },
-    { name: 'Members', href: '/admin/members', icon: Users, activeInM4: false },
-    { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: false },
+    { name: 'Members', href: '/admin/members', icon: Users, activeInM4: true },
+    { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: true },
     { name: 'Courses', href: '/admin/courses', icon: BookOpen, activeInM4: false },
     { name: 'Projects', href: '/admin/projects', icon: FolderGit2, activeInM4: false },
     { name: 'Achievements', href: '/admin/achievements', icon: Award, activeInM4: false },

@@ -315,4 +315,134 @@ Authoritative membership records linking students to active club induction.
   `EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')` (ALL)
 - **Mutation Guard**: Direct client `INSERT`, `UPDATE`, `DELETE` are disallowed for regular members.
 
+---
+
+## 10. Milestone 6 Events & Activities Schema
+
+### 10.1 Enums
+```sql
+CREATE TYPE event_category AS ENUM (
+  'workshop',
+  'hackathon',
+  'tech_talk',
+  'webinar',
+  'competition',
+  'meetup',
+  'bootcamp',
+  'other'
+);
+
+CREATE TYPE event_status AS ENUM (
+  'draft',
+  'published',
+  'ongoing',
+  'completed',
+  'cancelled'
+);
+
+CREATE TYPE event_mode AS ENUM (
+  'physical',
+  'online',
+  'hybrid'
+);
+
+CREATE TYPE event_eligibility AS ENUM (
+  'public',
+  'members_only',
+  'admin_only'
+);
+
+CREATE TYPE registration_status AS ENUM (
+  'registered',
+  'cancelled',
+  'attended',
+  'no_show'
+);
+```
+
+### 10.2 Table: `public.events`
+Authoritative master store for all club gatherings, hackathons, and technical bootcamps.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique event ID |
+| `title` | `TEXT` | `NOT NULL, CHECK (char_length(trim(title)) >= 3 AND char_length(title) <= 255)` | Event title |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | URL-safe slug |
+| `short_description`| `TEXT` | `NOT NULL, CHECK (char_length(trim(short_description)) >= 5 AND char_length(short_description) <= 300)` | Card summary |
+| `description` | `TEXT` | `NOT NULL, CHECK (char_length(trim(description)) >= 10)` | Markdown long description |
+| `category` | `event_category` | `NOT NULL DEFAULT 'workshop'` | Category classification |
+| `event_mode` | `event_mode` | `NOT NULL DEFAULT 'physical'` | Physical, online, or hybrid |
+| `location` | `TEXT` | `NULLABLE` | Physical venue or hall |
+| `is_online` | `BOOLEAN` | `NOT NULL DEFAULT FALSE` | Flag for online availability |
+| `meeting_url` | `TEXT` | `NULLABLE` | Private URL (unlocked only upon verified registration) |
+| `cover_image_url` | `TEXT` | `NULLABLE` | Optional event banner image URL |
+| `start_at` | `TIMESTAMPTZ` | `NOT NULL` | Event start time |
+| `end_at` | `TIMESTAMPTZ` | `NOT NULL` | Event conclusion time |
+| `registration_open_at` | `TIMESTAMPTZ` | `NOT NULL` | Opening of the registration window |
+| `registration_close_at`| `TIMESTAMPTZ` | `NOT NULL` | Closing of the registration window |
+| `capacity` | `INTEGER` | `NULLABLE, CHECK (capacity IS NULL OR capacity > 0)` | Maximum attendee seat limit |
+| `eligibility` | `event_eligibility` | `NOT NULL DEFAULT 'members_only'` | Eligibility restriction |
+| `status` | `event_status` | `NOT NULL DEFAULT 'draft'` | Current lifecycle state |
+| `speaker` | `TEXT` | `NULLABLE` | Speaker name or affiliation |
+| `organizer` | `TEXT` | `NULLABLE` | Organizing club division |
+| `requirements` | `TEXT` | `NULLABLE` | Prerequisites / hardware requirements |
+| `tags` | `TEXT[]` | `NOT NULL DEFAULT '{}'` | Taxonomy and indexing tags |
+| `created_by` | `UUID` | `NULLABLE REFERENCES public.profiles(id) ON DELETE SET NULL` | Author admin ID |
+| `published_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp when published |
+| `cancelled_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp when cancelled |
+| `cancellation_reason` | `TEXT` | `NULLABLE` | Mandatory explanation for cancellation |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record last updated timestamp |
+
+#### Temporal Constraints
+```sql
+CONSTRAINT chk_event_end_after_start
+  CHECK (end_at > start_at),
+CONSTRAINT chk_event_reg_close_after_open
+  CHECK (registration_close_at > registration_open_at),
+CONSTRAINT chk_event_reg_close_before_start
+  CHECK (registration_close_at <= start_at)
+```
+
+### 10.3 Table: `public.event_registrations`
+Authoritative join model linking verified members with event seat allocations.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT uuid_generate_v4()` | Unique registration ID |
+| `event_id` | `UUID` | `NOT NULL REFERENCES public.events(id) ON DELETE CASCADE` | Registered event reference |
+| `user_id` | `UUID` | `NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE` | Registered member profile reference |
+| `status` | `registration_status`| `NOT NULL DEFAULT 'registered'` | Current registration status |
+| `registered_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Timestamp of seat reservation |
+| `cancelled_at` | `TIMESTAMPTZ` | `NULLABLE` | Timestamp of cancellation if cancelled |
+| `metadata` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Extensible audit & check-in data |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record last updated timestamp |
+
+#### Partial Unique Index
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_registration_per_event_user
+  ON public.event_registrations(event_id, user_id)
+  WHERE (status = 'registered');
+```
+*Guarantees a member can hold at most ONE active registration at a time for any given event, while permitting audit retention of previously cancelled reservations and subsequent re-registrations.*
+
+### 10.4 Concurrency & Capacity Invariant
+Seat capacity enforcement is strictly server-authoritative. When registering, transactions check:
+1. Event exists and is in `published` or `ongoing` status.
+2. Registration window is active (`NOW() >= registration_open_at AND NOW() <= registration_close_at AND NOW() < start_at`).
+3. Active registrations count `< capacity` (if capacity is non-null).
+4. Cancellation releases the seat immediately for waiting members.
+
+### 10.5 Row-Level Security Policies
+1. **`public.events`**:
+   - `SELECT`: Anyone authenticated can read `published`, `ongoing`, or `completed` events (`status IN ('published', 'ongoing', 'completed')`).
+   - `ALL`: Admins have full access to drafts and can mutate records (`EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')`).
+2. **`public.event_registrations`**:
+   - `SELECT`: Members can read their own registrations (`user_id = auth.uid()`).
+   - `INSERT`: Active members can register for published events (`user_id = auth.uid()`).
+   - `UPDATE`: Members can cancel their own active registrations (`user_id = auth.uid()`).
+   - `ALL`: Admins have full access to inspect rosters and update attendance statuses.
+
+
 

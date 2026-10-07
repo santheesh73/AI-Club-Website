@@ -45,6 +45,7 @@ v1Router.use('/applications', applicationsRoutes);
 v1Router.use('/assessment', assessmentRoutes);
 v1Router.use('/membership', membershipRoutes);
 v1Router.use('/events', eventsRoutes);
+v1Router.use('/member/events', eventsRoutes);
 v1Router.use('/courses', coursesRoutes);
 v1Router.use('/projects', projectsRoutes);
 v1Router.use('/teams', teamsRoutes);
