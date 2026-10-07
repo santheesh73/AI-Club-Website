@@ -212,6 +212,51 @@ Layouts provide persistent framing and semantic grouping for the four primary us
   - **Learner Enrollment Roster (`/admin/courses/:id/enrollments` - `AdminCourseEnrollmentsPage.tsx`)**:
     - Real-time roster of enrolled members with member number, department, enrollment status (`active` / `completed`), completed lesson count, progress percentage, and last activity timestamps.
 
+---
 
+## 12. Projects, Achievements & Community Showcase Experience (Milestone 8)
 
+- **Community Showcase Experience**:
+  - **Showcase Discovery Catalog (`/community/projects` - `CommunityProjectsPage.tsx`)**:
+    - Filter bar with category selector, search query input, and quick tech stack badges.
+    - Responsive grid of `ProjectCard` components displaying thumbnail previews, category pills, title, summary, tech badges, contributor count, and featured star badges.
+    - Clear distinction between Public and Members Only tags.
+    - Empty state handling with quick reset filters.
+  - **Project Dossier Page (`/community/projects/:slug` - `ProjectDetailPage.tsx`)**:
+    - Comprehensive technical project view with title, category, author info, published date, and status pills.
+    - Media showcase gallery with full-resolution screenshot viewer and video demos.
+    - Interactive external action links: "View Source / GitHub", "Live Demonstration", "Research Paper", and documentation.
+    - Contributors grid with member profile badges and role descriptions.
+    - Markdown-rendered project overview and technical architecture description.
+    - "Report Inappropriate Content" CTA opening `ProjectReportModal.tsx` for logged-in members.
+    - Quick "Edit Project" button shown exclusively to the project owner.
 
+- **Member Projects Workspace**:
+  - **Member Portfolio Hub (`/member/projects` - `MemberProjectsPage.tsx`)**:
+    - Member's project overview with status tabs: All, Published, Drafts, Archived.
+    - Metrics row: Total Projects, Published Showcase, Active Drafts, Community Reach.
+    - Quick actions on cards: "Edit", "Publish", "Archive", "View Dossier".
+    - "Submit New Project" CTA linking to Creator Studio.
+  - **Project Creator Studio (`/member/projects/new` - `MemberProjectCreatePage.tsx`)**:
+    - Guided form with title, category, short summary, detailed description, cover image URL, visibility selector (`public` vs `members_only`), and multi-select technology tags.
+    - Sub-resources: Dynamic link manager (GitHub, Live URL, Docs) and initial contributor selector.
+    - Single-click "Save Draft" or "Publish to Showcase".
+  - **Project Editor Studio (`/member/projects/:id/edit` - `MemberProjectEditPage.tsx`)**:
+    - Ownership-guarded editing suite.
+    - Tabbed or sectioned interface: Core Details, Tech Stack, External Links, Media Gallery, and Contributor Roster.
+    - Status management: Publish draft, archive project, or restore.
+  - **Member Achievements Hub (`/member/achievements` - `MemberAchievementsPage.tsx`)**:
+    - Gamified achievement showroom partitioned by category (Milestone, Technical, Community, Leadership).
+    - Status metrics: Earned badges, total points, locked badges, completion percentage.
+    - `AchievementCard` with unlock date, rarity badge, point value, and claim status.
+    - `AchievementModal.tsx` displaying verification credentials, proof URL, and claim actions.
+  - **Member Dashboard & Profile Integration**:
+    - `MemberDashboard.tsx` features a dedicated "Project Portfolio & Showcase" block highlighting active drafts and published work.
+    - `MemberProfilePage.tsx` displays earned achievement badges and showcased projects.
+
+- **Admin Moderation & Spotlight Experience**:
+  - **Community Moderation Dashboard (`/admin/community` - `AdminCommunityPage.tsx`)**:
+    - Platform telemetry: Total Projects, Open Reports, Featured Projects.
+    - Tab navigation: "Report Queue" and "All Projects".
+    - Report review queue: reporter info, reason, violation category, project preview, and one-click actions: "Dismiss" or "Resolve & Hide Content".
+    - Project management table: Toggle featured status, quick inspect dossier, and hide project with modal reason (`ProjectHideModal.tsx`).

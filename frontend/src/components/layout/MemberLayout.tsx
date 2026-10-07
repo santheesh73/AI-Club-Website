@@ -38,6 +38,8 @@ export const MemberLayout: React.FC = () => {
     { name: 'Dashboard', href: '/member', icon: LayoutDashboard },
     { name: 'Courses', href: '/member/courses', icon: BookOpen },
     { name: 'Events', href: '/member/events', icon: Calendar },
+    { name: 'Projects', href: '/member/projects', icon: FolderGit2 },
+    { name: 'Achievements', href: '/member/achievements', icon: Trophy },
     { name: 'My Profile', href: '/member/profile', icon: User },
     { name: 'Membership', href: '/member/membership', icon: CreditCard },
     { name: 'Application', href: '/member/application', icon: FileText },
@@ -45,8 +47,6 @@ export const MemberLayout: React.FC = () => {
   ];
 
   const upcomingNavigation = [
-    { name: 'Projects', href: '/member/projects', icon: FolderGit2 },
-    { name: 'Achievements', href: '/member/achievements', icon: Trophy },
     { name: 'AI Assistant', href: '/member/ai', icon: Sparkles },
   ];
 

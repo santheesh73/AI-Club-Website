@@ -574,6 +574,149 @@ CONSTRAINT uq_enrollment_lesson_progress UNIQUE (enrollment_id, lesson_id)
    - `SELECT`: Members can view their own progress through enrollment ownership. Admins can inspect all.
    - `INSERT / UPDATE`: Members can record progress for their active enrollments.
 
+---
+
+## 12. Milestone 8 Schema (Projects, Achievements & Community Showcase)
+
+Established in migration `20261006000008_projects_achievements_m8.sql`.
+
+### 12.1 Enums
+- `project_status`: `'draft' | 'published' | 'archived' | 'hidden'`
+- `project_visibility`: `'public' | 'members_only'`
+- `project_link_type`: `'github' | 'demo' | 'docs' | 'paper' | 'dataset' | 'video' | 'other'`
+- `project_media_type`: `'image' | 'video' | 'document'`
+- `achievement_status`: `'published' | 'hidden' | 'archived'`
+- `report_target_type`: `'project' | 'achievement'`
+- `report_reason`: `'inappropriate' | 'spam' | 'copyright' | 'misleading' | 'abuse' | 'other'`
+- `report_status`: `'open' | 'under_review' | 'resolved' | 'dismissed'`
+
+### 12.2 Table: `public.project_categories`
+Classification taxonomy for projects (AI/ML, Web Systems, Robotics, etc.).
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Category ID |
+| `name` | `TEXT` | `NOT NULL UNIQUE` | Category display title |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | URL-safe slug |
+| `description` | `TEXT` | `NULLABLE` | Description of domain |
+| `icon` | `TEXT` | `NULLABLE` | Visual icon identifier |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 12.3 Table: `public.technologies`
+Curated index of programming languages, libraries, and infrastructure tools.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Technology ID |
+| `name` | `TEXT` | `NOT NULL UNIQUE` | Tech name |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | URL-safe slug |
+| `category` | `TEXT` | `NOT NULL DEFAULT 'other'` | Language, framework, tool |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+
+### 12.4 Table: `public.projects`
+Core repository record representing student innovations, architectures, and prototypes.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Unique project ID |
+| `owner_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Creator/Owner identity |
+| `title` | `TEXT` | `NOT NULL` | Project title |
+| `slug` | `TEXT` | `NOT NULL UNIQUE` | Collision-resistant URL slug |
+| `short_description` | `TEXT` | `NOT NULL` | Teaser description |
+| `description` | `TEXT` | `NOT NULL` | Full architectural overview |
+| `category_id` | `UUID` | `NOT NULL REFERENCES public.project_categories(id) ON DELETE RESTRICT` | Domain category |
+| `status` | `project_status` | `NOT NULL DEFAULT 'draft'` | draft / published / archived / hidden |
+| `visibility` | `project_visibility` | `NOT NULL DEFAULT 'public'` | public / members_only |
+| `cover_image_url` | `TEXT` | `NULLABLE` | Header banner image |
+| `published_at` | `TIMESTAMPTZ` | `NULLABLE` | Publish timestamp |
+| `archived_at` | `TIMESTAMPTZ` | `NULLABLE` | Archive timestamp |
+| `hidden_at` | `TIMESTAMPTZ` | `NULLABLE` | Moderation hide timestamp |
+| `hidden_reason` | `TEXT` | `NULLABLE` | Moderation hide rationale |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 12.5 Relational Mappings & Sub-tables
+- **`public.project_technologies`**: Many-to-many junction (`project_id`, `technology_id`) with `UNIQUE(project_id, technology_id)`.
+- **`public.project_contributors`**: Project team roster (`project_id`, `user_id`, `role`) with `UNIQUE(project_id, user_id)`.
+- **`public.project_links`**: External repository and demo URLs (`project_id`, `label`, `url`, `link_type`, `position`) with `CHECK (url ~* '^https?://')`.
+- **`public.project_media`**: Screenshots and diagrams (`project_id`, `media_url`, `media_type`, `alt_text`, `position`).
+
+### 12.6 Table: `public.achievements`
+Verified credentials, hackathon awards, and research milestones claimed by active members.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Unique achievement ID |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Member identity |
+| `category_id` | `UUID` | `NOT NULL REFERENCES public.achievement_categories(id) ON DELETE RESTRICT` | Category |
+| `title` | `TEXT` | `NOT NULL` | Award/credential title |
+| `description` | `TEXT` | `NOT NULL` | Summary of achievement |
+| `issuer` | `TEXT` | `NOT NULL` | Issuing organization |
+| `issued_at` | `DATE` | `NOT NULL DEFAULT CURRENT_DATE` | Date achieved |
+| `credential_url` | `TEXT` | `NULLABLE` | Verification hyperlink |
+| `credential_id` | `TEXT` | `NULLABLE` | Serial/Credential ID |
+| `status` | `achievement_status` | `NOT NULL DEFAULT 'published'` | published / hidden / archived |
+| `hidden_at` | `TIMESTAMPTZ` | `NULLABLE` | Moderation timestamp |
+| `hidden_reason` | `TEXT` | `NULLABLE` | Moderation rationale |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+### 12.7 Table: `public.featured_projects`
+Curated showcase spotlights managed by club administrators.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Feature entry ID |
+| `project_id` | `UUID` | `NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE UNIQUE` | Featured project |
+| `position` | `INTEGER` | `NOT NULL DEFAULT 1` | Display order rank |
+| `featured_from` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Feature start date |
+| `featured_until` | `TIMESTAMPTZ` | `NULLABLE` | Optional feature expiration |
+| `created_by` | `UUID` | `NULLABLE REFERENCES auth.users(id)` | Admin actor |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Timestamp |
+
+### 12.8 Table: `public.reports`
+Community misconduct and copyright claim reports.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Report ticket ID |
+| `reporter_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Reporter identity |
+| `target_type` | `report_target_type` | `NOT NULL` | project / achievement |
+| `target_id` | `TEXT` | `NOT NULL` | Target entity identifier |
+| `reason` | `report_reason` | `NOT NULL` | Violation categorization |
+| `description` | `TEXT` | `NOT NULL` | Reporter explanation |
+| `status` | `report_status` | `NOT NULL DEFAULT 'open'` | open / under_review / resolved / dismissed |
+| `resolved_at` | `TIMESTAMPTZ` | `NULLABLE` | Resolution timestamp |
+| `resolved_by` | `UUID` | `NULLABLE REFERENCES auth.users(id)` | Resolving admin actor |
+| `admin_notes` | `TEXT` | `NULLABLE` | Resolution rationale |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Filing timestamp |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Last update timestamp |
+
+#### Spam-Prevention Partial Index
+```sql
+CREATE UNIQUE INDEX idx_one_open_report_per_target_user 
+ON public.reports(reporter_id, target_type, target_id) 
+WHERE (status IN ('open', 'under_review'));
+```
+
+### 12.9 Row-Level Security Policies
+1. **Public Discovery (`projects`, `project_technologies`, `project_links`, `project_media`)**:
+   - `SELECT`: Published projects with `visibility = 'public'` visible to all. Active members can additionally inspect `visibility = 'members_only'`. Owners and contributors can inspect their own projects. Admins can inspect all.
+2. **Project Authoring & Mutation**:
+   - `INSERT`: Strictly active members (`public.is_active_member() = true`).
+   - `UPDATE / DELETE`: Owner of the project (`owner_id = auth.uid()`) or admin.
+3. **Contributors & Links**:
+   - `INSERT / UPDATE / DELETE`: Project owner or admin.
+4. **Achievements**:
+   - `SELECT`: Published achievements visible to all. Owners and admins can view hidden/archived items.
+   - `INSERT`: Active members only.
+   - `UPDATE / DELETE`: Owner or admin.
+5. **Reports**:
+   - `INSERT`: Authenticated users.
+   - `SELECT`: Reporter can view own filed reports. Admins can view all reports.
+   - `UPDATE`: Admins only.
+
 
 
 

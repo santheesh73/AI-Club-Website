@@ -111,3 +111,13 @@ export function requireRole(allowedRoles: Array<'applicant' | 'member' | 'admin'
     next();
   };
 }
+
+export async function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+  return authenticate(req, res, () => {
+    next();
+  });
+}

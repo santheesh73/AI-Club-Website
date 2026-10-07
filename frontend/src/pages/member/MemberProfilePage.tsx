@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { useMembership } from '@/features/membership';
 import { ProfileView } from '@/features/profile/ProfileView';
@@ -12,6 +13,9 @@ import {
   Lock,
   Edit3,
   CheckCircle2,
+  FolderGit2,
+  Trophy,
+  ArrowRight,
 } from 'lucide-react';
 import type { UserProfile } from '@/types/user';
 
@@ -146,6 +150,41 @@ export const MemberProfilePage: React.FC = () => {
       ) : (
         <ProfileView profile={profile} onEdit={() => setIsEditing(true)} />
       )}
+
+      {/* Community Showcase & Accreditations Link Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <Link
+          to="/member/projects"
+          className="p-4 rounded-card bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent-lavender-subtle text-accent-lavender-dark flex items-center justify-center font-bold">
+              <FolderGit2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-ink">My Showcase Projects</h4>
+              <p className="text-xs text-ink-muted">Manage your public AI models and repositories.</p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-1 transition-all" />
+        </Link>
+
+        <Link
+          to="/member/achievements"
+          className="p-4 rounded-card bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent-orange-subtle text-accent-orange-dark flex items-center justify-center font-bold">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-ink">Verified Credentials</h4>
+              <p className="text-xs text-ink-muted">Display certifications, hackathon awards, and papers.</p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-1 transition-all" />
+        </Link>
+      </div>
     </div>
   );
 };

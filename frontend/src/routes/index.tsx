@@ -38,6 +38,13 @@ import { AdminCoursesPage } from '@/pages/admin/AdminCoursesPage';
 import { AdminCourseCreatePage } from '@/pages/admin/AdminCourseCreatePage';
 import { AdminCourseEditPage } from '@/pages/admin/AdminCourseEditPage';
 import { AdminCourseEnrollmentsPage } from '@/pages/admin/AdminCourseEnrollmentsPage';
+import { MemberProjectsPage } from '@/pages/member/MemberProjectsPage';
+import { MemberProjectCreatePage } from '@/pages/member/MemberProjectCreatePage';
+import { MemberProjectEditPage } from '@/pages/member/MemberProjectEditPage';
+import { MemberAchievementsPage } from '@/pages/member/MemberAchievementsPage';
+import { CommunityProjectsPage } from '@/pages/community/CommunityProjectsPage';
+import { ProjectDetailPage } from '@/pages/community/ProjectDetailPage';
+import { AdminCommunityPage } from '@/pages/admin/AdminCommunityPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -75,26 +82,10 @@ export const AppRoutes: React.FC = () => {
             />
           }
         />
-        <Route
-          path="/projects"
-          element={
-            <MilestonePlaceholder
-              title="Showcase Projects"
-              milestone="Milestone 2: Public Experience"
-              description="Open-source AI repositories, applied research systems, and student builds."
-            />
-          }
-        />
-        <Route
-          path="/community"
-          element={
-            <MilestonePlaceholder
-              title="AI Community"
-              milestone="Milestone 2: Public Experience"
-              description="Members directory, mentor network, and ecosystem partners."
-            />
-          }
-        />
+        <Route path="/projects" element={<CommunityProjectsPage />} />
+        <Route path="/community" element={<CommunityProjectsPage />} />
+        <Route path="/community/projects" element={<CommunityProjectsPage />} />
+        <Route path="/community/projects/:slug" element={<ProjectDetailPage />} />
         <Route
           path="/join"
           element={
@@ -153,36 +144,14 @@ export const AppRoutes: React.FC = () => {
         <Route path="courses/:slug" element={<MemberCourseDetailPage />} />
         <Route path="events" element={<MemberEventsPage />} />
         <Route path="events/:slug" element={<MemberEventDetailPage />} />
-        <Route
-          path="projects"
-          element={
-            <MilestonePlaceholder
-              title="Active Projects"
-              milestone="Milestone 7: Projects & Teams"
-              description="Collaborative AI repositories, sprint boards, and deliverables."
-            />
-          }
-        />
+        <Route path="projects" element={<MemberProjectsPage />} />
+        <Route path="projects/new" element={<MemberProjectCreatePage />} />
+        <Route path="projects/:id/edit" element={<MemberProjectEditPage />} />
         <Route
           path="community"
-          element={
-            <MilestonePlaceholder
-              title="Member Network"
-              milestone="Milestone 7: Community"
-              description="Connect with fellow AI club members, peer reviews, and discussion channels."
-            />
-          }
+          element={<CommunityProjectsPage />}
         />
-        <Route
-          path="achievements"
-          element={
-            <MilestonePlaceholder
-              title="Achievements & Badges"
-              milestone="Milestone 8: Achievements"
-              description="Earned milestones, verified credentials, and activity streak records."
-            />
-          }
-        />
+        <Route path="achievements" element={<MemberAchievementsPage />} />
         <Route
           path="notifications"
           element={
@@ -235,26 +204,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="courses/new" element={<AdminCourseCreatePage />} />
         <Route path="courses/:id" element={<AdminCourseEditPage />} />
         <Route path="courses/:id/enrollments" element={<AdminCourseEnrollmentsPage />} />
-        <Route
-          path="projects"
-          element={
-            <MilestonePlaceholder
-              title="Project Oversight"
-              milestone="Milestone 10: Admin Platform"
-              description="Approve team proposals, track milestones, and showcase highlights."
-            />
-          }
-        />
-        <Route
-          path="achievements"
-          element={
-            <MilestonePlaceholder
-              title="Achievement Rules"
-              milestone="Milestone 10: Admin Platform"
-              description="Define achievement criteria, point allocations, and badges."
-            />
-          }
-        />
+        <Route path="projects" element={<AdminCommunityPage />} />
+        <Route path="community" element={<AdminCommunityPage />} />
+        <Route path="achievements" element={<AdminCommunityPage />} />
         <Route
           path="announcements"
           element={

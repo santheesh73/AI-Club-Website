@@ -234,6 +234,50 @@ Environment variables are validated on startup using Zod in `src/config/env.ts`.
     - `POST /api/v1/admin/courses/:courseId/modules/:moduleId/lessons/reorder`: Updates lesson sequence.
     - `GET /api/v1/admin/courses/:id/enrollments`: Inspects enrolled learner roster and progress telemetry.
 
+---
 
+## 11. Projects, Achievements & Community Showcase Platform (Milestone 8)
 
+- **Architectural Principles**:
+  - **Active Membership Guard**: Creation of projects (`/api/v1/member/projects`) and claiming achievements (`/api/v1/member/achievements/claim`) strictly requires an authenticated user with an active membership record in `public.memberships` (`status = 'active'`). Approved applicants who have not yet activated membership are rejected with `403 FORBIDDEN`.
+  - **Dual-Mode Discovery Gating**: Public discovery (`GET /api/v1/projects`) exposes published projects with `visibility = 'public'` to unauthenticated visitors. Authenticated members can also view projects marked `visibility = 'members_only'`. Hidden projects (`status = 'hidden'`) are strictly filtered out from public and member discovery.
+  - **Ownership Mutation Invariant**: All mutation endpoints for projects (`PUT /api/v1/member/projects/:id`, `DELETE /api/v1/member/projects/:id`, `POST /api/v1/member/projects/:id/publish`, contributor/link/media management) strictly enforce that `project.owner_id === req.user.id`. Non-owner members attempting to modify another member's project receive `403 FORBIDDEN`.
+  - **Collision-Resistant Slugs**: Project slugs are generated server-authoritatively from the title (`slugify(title)`) with automatic incremental collision handling (`title-2`, `title-3`) if conflicts exist.
+  - **Report Spam & Duplicate Prevention**: Reports table enforces a partial unique index `(reporter_id, target_type, target_id) WHERE (status IN ('open', 'under_review'))`. Members cannot submit duplicate reports against the same target while an existing report is active (`409 CONFLICT`).
+  - **Admin Moderation & Audit Logging**: Admins can hide any project (`POST /api/v1/admin/projects/:id/hide`), restore hidden projects (`POST /api/v1/admin/projects/:id/restore`), feature/unfeature projects, and resolve moderation reports (`POST /api/v1/admin/community/reports/:id/resolve`). Every moderation action writes an immutable audit record to `public.audit_logs`.
 
+- **Endpoints**:
+  - **Public / Shared Showcase Endpoints**:
+    - `GET /api/v1/projects/categories`: Returns project taxonomy categories.
+    - `GET /api/v1/projects/technologies`: Returns technology tags/stacks.
+    - `GET /api/v1/projects/featured`: Returns spotlight featured projects.
+    - `GET /api/v1/projects`: Public & member discovery catalog with search, category, technology, and pagination.
+    - `GET /api/v1/projects/:slug`: Detailed project dossier with contributors, links, media, and technologies.
+  - **Member Project Workspace Endpoints**:
+    - `GET /api/v1/member/projects`: Returns authenticated member's own projects (all statuses: `draft`, `published`, `archived`, `hidden`).
+    - `POST /api/v1/member/projects`: Creates a new project in `draft` status (requires active membership).
+    - `GET /api/v1/member/projects/:id`: Retrieves member's project for editing.
+    - `PUT /api/v1/member/projects/:id`: Updates project metadata (enforces ownership).
+    - `DELETE /api/v1/member/projects/:id`: Soft-deletes/archives member's project (enforces ownership).
+    - `POST /api/v1/member/projects/:id/publish`: Transitions `draft` $\to$ `published` (enforces ownership).
+    - `POST /api/v1/member/projects/:id/archive`: Transitions `published` $\to$ `archived` (enforces ownership).
+    - `POST /api/v1/member/projects/:id/contributors`: Adds or invites contributor (enforces ownership).
+    - `DELETE /api/v1/member/projects/:id/contributors/:contributorId`: Removes contributor (enforces ownership).
+    - `POST /api/v1/member/projects/:id/links`: Adds external project link (GitHub, live demo, paper).
+    - `DELETE /api/v1/member/projects/:id/links/:linkId`: Removes external project link.
+    - `POST /api/v1/member/projects/:id/media`: Adds media item (screenshot, demo embed).
+    - `DELETE /api/v1/member/projects/:id/media/:mediaId`: Removes media item.
+    - `POST /api/v1/member/projects/:id/report`: Reports project for moderation review (rate/duplicate-limited).
+  - **Achievements Endpoints**:
+    - `GET /api/v1/achievements/categories`: Returns achievement categories.
+    - `GET /api/v1/achievements`: Returns achievement catalog.
+    - `GET /api/v1/member/achievements`: Returns member's earned and available achievements with unlock metrics.
+    - `POST /api/v1/member/achievements/claim`: Claims an open achievement or requests verification.
+  - **Admin Moderation & Community Endpoints**:
+    - `GET /api/v1/admin/community/stats`: Platform-wide showcase telemetry (projects, reports, featured count).
+    - `GET /api/v1/admin/community/reports`: Listing of moderation reports with status filtering.
+    - `POST /api/v1/admin/community/reports/:id/resolve`: Resolves or dismisses a moderation report.
+    - `POST /api/v1/admin/projects/:id/hide`: Moderates a project by setting status to `hidden` with reason.
+    - `POST /api/v1/admin/projects/:id/restore`: Restores a hidden project back to `published`.
+    - `POST /api/v1/admin/projects/:id/feature`: Spotlights a project into the featured showcase.
+    - `DELETE /api/v1/admin/projects/:id/feature`: Removes project from featured showcase.

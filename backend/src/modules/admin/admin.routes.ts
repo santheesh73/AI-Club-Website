@@ -58,4 +58,11 @@ router.use('/events', adminEventsRoutes);
 import { adminCoursesRoutes } from '../courses/courses.routes';
 router.use('/courses', adminCoursesRoutes);
 
+// Milestone 8: Projects, Achievements & Community Moderation
+import { adminProjectsRoutes } from '../projects/projects.routes';
+import { adminAchievementsRoutes } from '../achievements/achievements.routes';
+router.use('/projects', adminProjectsRoutes);
+router.use('/community', adminProjectsRoutes);
+router.use('/achievements', adminAchievementsRoutes);
+
 export const adminRoutes = router;

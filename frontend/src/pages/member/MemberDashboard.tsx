@@ -18,6 +18,8 @@ import {
   Calendar,
   BookOpen,
   PlayCircle,
+  FolderGit2,
+  Trophy,
 } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
@@ -381,7 +383,37 @@ export const MemberDashboard: React.FC = () => {
       </div>
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Link
+          to="/member/projects"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <FolderGit2 className="h-5 w-5 text-accent-lavender group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Projects & Showcase</h4>
+            <p className="text-xs text-ink-muted">Build, publish, and showcase AI repositories and applications.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>Manage Projects</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
+        <Link
+          to="/member/achievements"
+          className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
+        >
+          <div className="space-y-2">
+            <Trophy className="h-5 w-5 text-accent-orange group-hover:text-ink transition-colors" />
+            <h4 className="text-sm font-bold text-ink">Credentials & Honors</h4>
+            <p className="text-xs text-ink-muted">Display verified industry certifications, hackathon awards, and papers.</p>
+          </div>
+          <div className="pt-4 flex items-center gap-1 text-xs font-semibold text-ink group-hover:translate-x-1 transition-transform">
+            <span>View Achievements</span>
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </Link>
+
         <Link
           to="/member/courses"
           className="p-5 rounded-card-sm bg-surface border border-surface-border shadow-subtle hover:border-ink transition-all group flex flex-col justify-between"
