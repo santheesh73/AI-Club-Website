@@ -12,7 +12,12 @@ import { logger } from '../utils/logger';
 
 let clientInstance: SupabaseClient | null = null;
 
-if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+if (
+  env.SUPABASE_URL &&
+  env.SUPABASE_SERVICE_ROLE_KEY &&
+  !process.env.VITEST &&
+  process.env.NODE_ENV !== 'test'
+) {
   try {
     clientInstance = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {

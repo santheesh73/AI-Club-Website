@@ -20,6 +20,28 @@ describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /one-click demo login/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /demo member/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /demo applicant/i })).toBeInTheDocument();
+  });
+
+  it('LoginPage auto-fills admin credentials when quick-fill button is clicked', () => {
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <LoginPage />
+        </AuthProvider>
+      </BrowserRouter>
+    );
+
+    const autoFillBtn = screen.getByRole('button', { name: /admin@aiclub.internal/i });
+    fireEvent.click(autoFillBtn);
+
+    const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
+    const passInput = screen.getByLabelText(/^password/i) as HTMLInputElement;
+
+    expect(emailInput.value).toBe('admin@aiclub.internal');
+    expect(passInput.value).toBe('password123');
   });
 
   it('RegisterPage displays validation errors when passwords do not match', () => {
