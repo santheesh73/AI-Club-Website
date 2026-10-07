@@ -24,12 +24,14 @@ import {
 } from 'lucide-react';
 
 import { NotificationBell } from '@/features/notifications';
+import { getContextualHomePath } from '@/utils/navigation';
 
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, signOut, isAdmin } = useAuth();
+  const { profile, signOut, isAdmin, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const homeTarget = getContextualHomePath(isAuthenticated, profile, isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,8 +88,8 @@ export const AdminLayout: React.FC = () => {
       {/* Desktop Admin Sidebar */}
       <aside className="w-64 border-r border-surface-border bg-surface p-6 flex-col justify-between hidden md:flex flex-shrink-0">
         <div className="space-y-6">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-ink text-canvas font-bold flex items-center justify-center">
+          <Link to={homeTarget} className="flex items-center gap-3 group">
+            <div className="h-9 w-9 rounded-xl bg-ink text-canvas font-bold flex items-center justify-center group-hover:scale-105 transition-transform">
               AI
             </div>
             <div>
@@ -165,10 +167,10 @@ export const AdminLayout: React.FC = () => {
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <div className="flex items-center gap-2">
+            <Link to={homeTarget} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <span className="text-sm font-semibold text-ink">AI CLUB CONTROL</span>
               <span className="text-xs text-ink-muted hidden sm:inline">• Administrative Console</span>
-            </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">

@@ -1,13 +1,15 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
+import { getContextualHomePath } from '@/utils/navigation';
 import { Button } from '@/components/ui/Button';
 import { LayoutDashboard, FileText, CheckSquare, Award, User, LogOut, Shield, ArrowRight } from 'lucide-react';
 
 export const ApplicantLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, signOut, isAdmin } = useAuth();
+  const { profile, signOut, isAdmin, isAuthenticated } = useAuth();
+  const homeTarget = getContextualHomePath(isAuthenticated, profile, isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
@@ -27,7 +29,7 @@ export const ApplicantLayout: React.FC = () => {
       <header className="sticky top-0 z-30 border-b border-surface-border bg-surface/90 backdrop-blur-md px-6 py-3.5">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2.5">
+            <Link to={homeTarget} className="flex items-center gap-2.5 group">
               <div className="h-8 w-8 rounded-lg bg-ink text-canvas text-xs flex items-center justify-center font-bold">
                 AI
               </div>

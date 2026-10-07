@@ -2,12 +2,14 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth';
+import { getContextualHomePath } from '@/utils/navigation';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, profile, signOut, isAdmin } = useAuth();
   const isLandingPage = location.pathname === '/';
+  const homeTarget = getContextualHomePath(isAuthenticated, profile, isAdmin);
 
   const navLinks = [
     { label: 'About', path: '/about' },
@@ -35,7 +37,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 w-full border-b border-surface-border bg-canvas/80 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to={homeTarget} className="flex items-center gap-3 group">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-canvas font-bold text-lg tracking-wider group-hover:scale-105 transition-transform">
             AI
           </div>

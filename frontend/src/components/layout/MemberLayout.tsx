@@ -25,13 +25,15 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { NotificationBell } from '@/features/notifications';
+import { getContextualHomePath } from '@/utils/navigation';
 
 export const MemberLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, isAdmin, isAuthenticated } = useAuth();
   const { membership } = useMembership();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const homeTarget = getContextualHomePath(isAuthenticated, profile, isAdmin);
 
   const handleSignOut = async () => {
     await signOut();
@@ -63,7 +65,7 @@ export const MemberLayout: React.FC = () => {
       <aside className="w-64 border-r border-surface-border bg-surface p-6 flex flex-col justify-between hidden lg:flex flex-shrink-0">
         <div className="space-y-6">
           {/* Brand & Identity */}
-          <Link to="/member" className="flex items-center gap-3 group">
+          <Link to={homeTarget} className="flex items-center gap-3 group">
             <div className="h-10 w-10 rounded-xl bg-ink text-canvas font-bold flex items-center justify-center tracking-wider text-sm shadow-subtle group-hover:scale-105 transition-transform">
               AI
             </div>
