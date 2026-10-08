@@ -7,7 +7,6 @@ import {
   FileText,
   Users,
   Calendar,
-  BookOpen,
   FolderGit2,
   Award,
   Megaphone,
@@ -71,7 +70,6 @@ export const AdminLayout: React.FC = () => {
     { name: 'Question Bank', href: '/admin/assessment', icon: HelpCircle, activeInM4: true },
     { name: 'Members', href: '/admin/members', icon: Users, activeInM4: true },
     { name: 'Events', href: '/admin/events', icon: Calendar, activeInM4: true },
-    { name: 'Courses', href: '/admin/courses', icon: BookOpen, activeInM4: true },
     { name: 'External Courses', href: '/admin/external-courses', icon: ExternalLink, activeInM4: true },
     { name: 'Projects', href: '/admin/projects', icon: FolderGit2, activeInM4: true },
 
