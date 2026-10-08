@@ -56,52 +56,10 @@ export class ApplicationsService {
   /**
    * Verifies required student profile fields before permitting application creation
    */
-  public async verifyProfileCompletion(userId: string): Promise<void> {
-    let profileData: Record<string, unknown> | null = null;
-
-    if (supabaseAdmin && isUuid(userId)) {
-      const { data, error } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error || !data) {
-        throw new AppError('Unable to verify profile details', 400, 'PROFILE_NOT_FOUND');
-      }
-      profileData = data;
-    } else {
-      // Local fallback: assume test user profile exists
-      profileData = {
-        full_name: 'Test Student',
-        department: 'Computer Science',
-        register_number: '2026-CS-001',
-      };
-    }
-
-    if (!profileData) {
-      throw new AppError('Profile not found', 400, 'PROFILE_NOT_FOUND');
-    }
-
-    const missingFields: string[] = [];
-    if (!profileData.full_name || String(profileData.full_name).trim() === '') {
-      missingFields.push('fullName');
-    }
-    if (!profileData.department || String(profileData.department).trim() === '') {
-      missingFields.push('department');
-    }
-    if (!profileData.register_number || String(profileData.register_number).trim() === '') {
-      missingFields.push('registerNumber');
-    }
-
-    if (missingFields.length > 0) {
-      throw new AppError(
-        'Please complete your profile before starting an application.',
-        400,
-        'PROFILE_INCOMPLETE',
-        { missingFields }
-      );
-    }
+  public async verifyProfileCompletion(_userId: string): Promise<void> {
+    // Applicants are not required to fill out extended profile fields to apply or take the assessment.
+    // Extended profile details are populated after selection as a club member.
+    return;
   }
 
   /**

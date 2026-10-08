@@ -554,7 +554,7 @@ export const AdminAssessmentPage: React.FC = () => {
                             : 'neutral'
                         }
                       >
-                        {q.status.toUpperCase()}
+                        {(q.status || 'draft').toUpperCase()}
                       </Badge>
                       {q.source === 'AI_GENERATED' ? (
                         <Badge variant="lavender">AI Generated</Badge>

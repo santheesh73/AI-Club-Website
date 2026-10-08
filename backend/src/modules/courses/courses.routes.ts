@@ -44,7 +44,7 @@ router.get(
 );
 
 router.get(
-  '/dashboard/stats',
+  ['/dashboard', '/dashboard/stats'],
   authenticate,
   requireRole(['member', 'admin']),
   (req, res, next) => {

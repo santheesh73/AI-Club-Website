@@ -13,6 +13,23 @@ class ApiClient {
   }
 
   private async getAuthToken(): Promise<string | null> {
+    // 1. Prioritize active demo user session
+    try {
+      const devUser = localStorage.getItem('ai_club_dev_user_session');
+      if (devUser) {
+        const parsed = JSON.parse(devUser);
+        if (parsed.isDemo || parsed.role === 'member') {
+          return parsed.role === 'admin'
+            ? 'admin-test-token'
+            : parsed.role === 'member'
+            ? 'member-test-token'
+            : 'applicant-test-token';
+        }
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       const { data } = await supabase.auth.getSession();
       if (data.session?.access_token) {

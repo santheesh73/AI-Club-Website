@@ -8,6 +8,7 @@ import type {
   CreateExternalCourseDto,
   UpdateExternalCourseDto,
   AdminExternalCourseStatsDto,
+  ExtractedCoursePreviewDto,
 } from '@/types/externalCourses';
 
 export const externalCoursesApi = {
@@ -133,6 +134,20 @@ export const externalCoursesApi = {
    */
   async verifyExternalCourse(id: string): Promise<ApiResponse<{ course: ExternalCourseDto; message: string }>> {
     return apiClient.post<{ course: ExternalCourseDto; message: string }>(`/api/v1/admin/external-courses/${id}/verify`, {});
+  },
+
+  /**
+   * Admin: Extract official course page metadata from URL
+   */
+  async extractCourseDetails(url: string): Promise<ApiResponse<ExtractedCoursePreviewDto>> {
+    return apiClient.post<ExtractedCoursePreviewDto>('/api/v1/admin/external-courses/extract', { url });
+  },
+
+  /**
+   * Admin: Publish an existing course draft
+   */
+  async publishExternalCourse(id: string): Promise<ApiResponse<{ course: ExternalCourseDto; message: string }>> {
+    return apiClient.post<{ course: ExternalCourseDto; message: string }>(`/api/v1/admin/external-courses/${id}/publish`, {});
   },
 
   /**

@@ -1,98 +1,30 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Link } from 'react-router-dom';
 
-export const LearnPage: React.FC = () => {
-  const learningTracks = [
-    {
-      title: 'Track 1: Mathematical & Algorithmic Foundations',
-      description: 'Master linear algebra, multivariate calculus, probability distributions, and core optimization routines for machine learning.',
-      topics: ['Matrix Decomposition & SVD', 'Gradient Descent Variants', 'Convex Optimization', 'Statistical Estimation & MLE'],
-      level: 'Foundational',
-    },
-    {
-      title: 'Track 2: Deep Learning & Computer Vision',
-      description: 'Architect, train, and validate convolutional networks, vision transformers, and multimodal perception pipelines.',
-      topics: ['CNN Architectures (ResNet, ConvNeXt)', 'Vision Transformers (ViT)', 'Object Detection (YOLOv8)', 'Segmentation & Latent Models'],
-      level: 'Intermediate',
-    },
-    {
-      title: 'Track 3: Generative AI & Large Language Models',
-      description: 'Understand attention mechanisms, autoregressive generation, parameter-efficient fine-tuning (LoRA), and retrieval-augmented generation (RAG).',
-      topics: ['Scaled Dot-Product Attention', 'Hugging Face & PyTorch Ecosystem', 'LoRA & QLoRA Quantization', 'Vector Databases & LangChain'],
-      level: 'Advanced',
-    },
-    {
-      title: 'Track 4: Production MLOps & Autonomous Agents',
-      description: 'Deploy models into high-throughput production infrastructure, implement telemetry, and orchestrate multi-agent workflows.',
-      topics: ['FastAPI & Triton Inference Server', 'Docker & GPU Containerization', 'LangGraph Multi-Agent Systems', 'Model Monitoring & Drift Detection'],
-      level: 'Advanced',
-    },
-  ];
+const learningTracks = [
+  { title: 'Mathematical foundations', startingPoint: 'For learners building their understanding of the maths behind machine learning.', outcome: 'Explore how vectors, probability, and optimization help describe and train models.', topics: ['Linear algebra', 'Probability and statistics', 'Gradient descent', 'Optimization'] },
+  { title: 'Deep learning and computer vision', startingPoint: 'For learners familiar with core machine learning concepts.', outcome: 'Understand how neural networks learn patterns and how vision models work with images.', topics: ['Neural networks', 'Convolutional networks', 'Vision transformers', 'Detection and segmentation'] },
+  { title: 'Generative AI and language models', startingPoint: 'For learners ready to explore attention and modern language models.', outcome: 'Explore how language models generate text and how retrieval and fine-tuning adapt their behavior.', topics: ['Attention mechanisms', 'Language model fundamentals', 'Retrieval-augmented generation', 'Parameter-efficient fine-tuning'] },
+  { title: 'Deployment and AI agents', startingPoint: 'For learners interested in taking a model beyond an experiment.', outcome: 'Explore serving models, monitoring their behavior, and connecting them with tools.', topics: ['Inference APIs', 'Containers', 'Model monitoring', 'Agent workflows'] },
+];
 
-  return (
-    <div className="max-w-6xl mx-auto px-6 sm:px-8 py-16 space-y-16">
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <Badge variant="neutral">Curriculum Overview</Badge>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink">
-          The AI CLUB Learning Tracks
-        </h1>
-        <p className="text-lg text-ink-secondary leading-relaxed">
-          Our internal curriculum takes students from core algorithmic principles to deploying frontier models in production.
-          Active members receive access to full interactive lessons, code laboratories, and compute environments.
-        </p>
-      </div>
-
-      {/* Tracks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {learningTracks.map((track) => (
-          <Card key={track.title} className="shadow-subtle hover:shadow-elevated transition-shadow flex flex-col justify-between">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant={track.level === 'Foundational' ? 'neutral' : track.level === 'Intermediate' ? 'lavender' : 'orange'}>
-                  {track.level}
-                </Badge>
-              </div>
-              <CardTitle className="text-xl">{track.title}</CardTitle>
-              <CardDescription className="text-sm leading-relaxed mt-2">
-                {track.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-t border-surface-border pt-3">
-                <div className="text-xs font-semibold text-ink uppercase tracking-wider mb-2">Key Modules</div>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-ink-muted">
-                  {track.topics.map((t) => (
-                    <li key={t} className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-ink/40" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* CTA Box */}
-      <div className="rounded-card-lg bg-surface border border-surface-border p-8 sm:p-10 shadow-soft text-center space-y-4">
-        <h2 className="text-2xl font-bold text-ink">Unlock Member Learning Workspaces</h2>
-        <p className="text-sm text-ink-muted max-w-xl mx-auto">
-          Pass the 25-MCQ admission assessment to join AI CLUB cohorts, collaborate with peer engineering teams, and earn verified certifications.
-        </p>
-        <div className="pt-2 flex justify-center gap-4">
-          <Link to="/register">
-            <Button size="lg" className="shadow-elevated">Apply to AI CLUB</Button>
-          </Link>
-          <Link to="/projects">
-            <Button variant="outline" size="lg">Explore Member Projects</Button>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
+export const LearnPage: React.FC = () => (
+  <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20">
+    <header className="max-w-3xl">
+      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance">Find your starting point in AI.</h1>
+      <p className="mt-6 text-lg text-ink-secondary leading-relaxed">These tracks describe the club’s curriculum, from mathematical foundations to deploying models. Choose a direction that fits what you know and what you want to explore.</p>
+      <p className="mt-4 text-ink-secondary">This is a curriculum overview. Course content is available through the member learning workspace.</p>
+    </header>
+    <section aria-label="Learning tracks" className="mt-12 sm:mt-16">
+      {learningTracks.map((track) => <article key={track.title} className="border-t border-surface-border py-8 sm:py-10 grid md:grid-cols-[1fr_1.2fr] gap-5 md:gap-12">
+        <div><h2 className="text-2xl font-semibold tracking-tight">{track.title}</h2><p className="mt-3 text-ink-secondary leading-relaxed">{track.startingPoint}</p></div>
+        <div><p className="text-ink-secondary leading-relaxed">{track.outcome}</p><h3 className="mt-4 text-sm font-semibold">Topics to explore</h3><ul className="mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-2 list-disc pl-5 text-sm text-ink-secondary">{track.topics.map((topic) => <li key={topic}>{topic}</li>)}</ul></div>
+      </article>)}
+    </section>
+    <section aria-labelledby="learning-next-step" className="mt-6 rounded-xl bg-canvas-alt p-6 sm:p-10">
+      <h2 id="learning-next-step" className="text-2xl sm:text-3xl font-bold tracking-tight">Put an idea into practice</h2>
+      <p className="mt-4 max-w-2xl text-ink-secondary leading-relaxed">Look at published member projects to see how ideas become working examples. To use the member workspace, apply for membership through the assessment and administrative review process.</p>
+      <div className="mt-6 flex flex-wrap gap-4"><Link to="/community/projects" className="public-action">Explore projects</Link><Link to="/register" className="public-action-secondary">Apply to join</Link></div>
+    </section>
+  </div>
+);

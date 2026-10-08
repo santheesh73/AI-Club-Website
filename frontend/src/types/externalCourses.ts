@@ -64,6 +64,8 @@ export interface ExternalCourseDto {
   rating?: number;
   isActive: boolean;
   status: 'draft' | 'published' | 'archived';
+  publishedAt?: string;
+  extractionMetadata?: Record<string, unknown>;
   lastVerifiedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -114,6 +116,7 @@ export interface CreateExternalCourseDto {
   priceType?: 'free' | 'paid' | 'freemium' | 'subscription';
   rating?: number;
   status?: 'draft' | 'published' | 'archived';
+  extractionMetadata?: Record<string, unknown>;
 }
 
 export interface UpdateExternalCourseDto extends Partial<CreateExternalCourseDto> {
@@ -126,4 +129,43 @@ export interface AdminExternalCourseStatsDto {
   archived: number;
   byProvider: Record<string, number>;
   byCategory: Record<string, number>;
+}
+
+export interface ExtractedCourseMetadataDto {
+  title: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  category: CourseCategory | null;
+  difficulty: ExternalCourseDifficulty | null;
+  skills: string[];
+  duration?: string | null;
+  priceType?: 'free' | 'paid' | 'freemium' | 'subscription' | null;
+  rating?: number | null;
+  externalCourseId?: string | null;
+}
+
+export interface ExtractedCoursePreviewDto {
+  success: boolean;
+  sourceUrl: string;
+  canonicalUrl: string;
+  provider: CourseProviderKey;
+  providerDisplayName: string;
+  metadata: ExtractedCourseMetadataDto;
+  extraction: {
+    titleSource: string;
+    descriptionSource: string;
+    imageSource: string;
+    categorySource?: string;
+    difficultySource?: string;
+    skillsSource?: string;
+    providerSource: string;
+  };
+  isDuplicate: boolean;
+  existingCourse?: {
+    id: string;
+    title: string;
+    provider: string;
+    status: string;
+    officialUrl: string;
+  } | null;
 }

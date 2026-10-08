@@ -4,211 +4,65 @@ import { useAuth } from '@/features/auth';
 import { useApplication, ApplicationTimeline, ApplicationCard } from '@/features/applications';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import {
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-  HelpCircle,
-  Sparkles,
-  ArrowRight,
-  ShieldAlert,
-} from 'lucide-react';
 
 export const ApplicantDashboard: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const { application, statusData, isLoading, error, createApplication, refreshStatus } =
-    useApplication();
+  const { application, statusData, isLoading, error, createApplication, refreshStatus } = useApplication();
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-
-  const handleStartApplication = async () => {
+  const [isReady, setIsReady] = useState(false);
+  const handleStart = async () => {
+    if (!isReady || isCreating) return;
     setIsCreating(true);
     setCreateError(null);
-    const res = await createApplication();
+    const result = await createApplication();
     setIsCreating(false);
-    if (res.success && res.data) {
-      navigate('/applicant/application');
-    } else {
-      setCreateError(res.error || 'Failed to initialize application.');
-    }
+    if (result.success && result.data) navigate('/applicant/assessment');
+    else setCreateError(result.error || 'We could not create your application. Please try again.');
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
-        <Spinner size="lg" label="Loading application status..." />
-        <p className="text-xs text-ink-muted">Retrieving applicant record...</p>
-      </div>
-    );
-  }
-
-  const profileComplete = statusData?.profileComplete ?? false;
-  const missingFields = statusData?.missingFields ?? [];
-  const hasApp = statusData?.hasApplication ?? false;
-  const canStartAssessment = statusData?.canStartAssessment ?? false;
+  if (isLoading) return <div className="flex min-h-[40vh] items-center justify-center"><Spinner size="lg" label="Loading your application" /></div>;
+  const hasApp = statusData?.hasApplication ?? Boolean(application);
   const assessmentStatus = statusData?.assessmentStatus ?? 'not_started';
+  const canStart = statusData?.canStartAssessment ?? false;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Welcome Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-card-lg bg-surface border border-surface-border shadow-soft">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-canvas-alt border border-surface-border text-xs font-mono text-ink-secondary">
-            <Sparkles className="h-3.5 w-3.5 text-accent-lavender" />
-            <span>AI Innovation Community Intake</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
-            Welcome, {profile?.fullName || 'Applicant'}
-          </h1>
-          <p className="text-sm text-ink-muted max-w-xl">
-            This portal manages your entrance progression, technical assessment, and admission review for the AI CLUB cohort.
-          </p>
-        </div>
-
-        {hasApp && (
-          <div className="flex items-center gap-2 self-start md:self-center">
-            <Link to="/applicant/application">
-              <Button variant="outline" size="sm">
-                <FileText className="h-4 w-4 mr-1.5" />
-                <span>Application Details</span>
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Global Error Banner if any */}
-      {(error || createError) && (
-        <div className="p-4 rounded-card-sm bg-red-50 border border-red-200 text-sm text-red-700 flex items-start gap-3">
-          <ShieldAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-semibold">Notice</p>
-            <p className="text-xs mt-0.5">{error || createError}</p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => refreshStatus()}>
-            Retry
-          </Button>
-        </div>
+    <div className="max-w-4xl space-y-8">
+      <header className="space-y-3">
+        <h1 className="text-3xl font-bold tracking-tight">Welcome, {profile?.fullName || 'Applicant'}</h1>
+        <p className="max-w-2xl text-ink-secondary">Apply for club membership when you're ready. Your account also lets you RSVP to public events without taking this assessment.</p>
+        <Link to="/events" className="inline-flex min-h-11 items-center font-medium underline underline-offset-4">Explore public events</Link>
+      </header>
+      {(error || createError) && <div role="alert" className="space-y-3 rounded-xl bg-red-50 p-4 text-red-800">
+        <p>{error || createError}</p><Button variant="outline" onClick={refreshStatus}>Retry application status</Button>
+      </div>}
+      <section aria-labelledby="assessment-preparation" className="space-y-5 border-t border-surface-border pt-6">
+        <h2 id="assessment-preparation" className="text-2xl font-semibold">Before you start the membership assessment</h2>
+        <p className="max-w-2xl text-sm leading-relaxed text-ink-secondary">Set aside uninterrupted time and use a reliable connection. The timer starts when you open the assessment after choosing to begin.</p>
+        <dl className="grid gap-5 sm:grid-cols-3">
+          <div><dt className="text-sm text-ink-secondary">Format</dt><dd className="mt-1 font-semibold">25 multiple-choice questions</dd></div>
+          <div><dt className="text-sm text-ink-secondary">Time limit</dt><dd className="mt-1 font-semibold">30 minutes</dd></div>
+          <div><dt className="text-sm text-ink-secondary">Passing threshold</dt><dd className="mt-1 font-semibold">60% (15 out of 25)</dd></div>
+        </dl>
+        <ul className="max-w-2xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-secondary">
+          <li>There is one attempt per application. Review the learning tracks before you begin.</li>
+          <li>Answers are saved as you work. Refreshing the page does not restart the timer.</li>
+          <li>Passing sends your application for administrative review; membership requires approval and activation.</li>
+        </ul>
+        <Link to="/learn" className="inline-flex min-h-11 items-center font-medium underline underline-offset-4">Review learning tracks</Link>
+      </section>
+      {hasApp && application ? <ApplicationCard application={application} canStartAssessment={canStart} assessmentStatus={assessmentStatus} /> : (
+        <section className="space-y-5 border-t border-surface-border pt-6">
+          <h2 className="text-xl font-semibold">Ready to apply?</h2>
+          <label className="flex min-h-11 max-w-2xl cursor-pointer items-start gap-3 text-sm leading-relaxed">
+            <input type="checkbox" checked={isReady} onChange={event => setIsReady(event.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-ink" />
+            <span>I have read the assessment rules and have 30 minutes available.</span>
+          </label>
+          <Button onClick={handleStart} disabled={!isReady || Boolean(error) || isCreating} isLoading={isCreating} className="min-h-11">Start membership assessment</Button>
+          <p className="text-sm text-ink-secondary">This creates your application and opens the timed assessment.</p>
+        </section>
       )}
-
-      {/* Incomplete Profile Alert */}
-      {!profileComplete && (
-        <div className="p-5 rounded-card bg-accent-orange-subtle/50 border border-accent-orange/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-accent-orange flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-accent-orange-dark">
-                Profile Incomplete
-              </h3>
-              <p className="text-xs text-ink-secondary">
-                To initiate a club application, your academic credentials must be filled:{' '}
-                <span className="font-medium text-accent-orange-dark">
-                  {missingFields.join(', ') || 'Register number, department, year, skills'}
-                </span>
-                .
-              </p>
-            </div>
-          </div>
-          <Link to="/profile" className="flex-shrink-0">
-            <Button variant="primary" size="sm">
-              <span>Complete Profile</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </Link>
-        </div>
-      )}
-
-      {/* Active Application or Application CTA */}
-      {hasApp && application ? (
-        <ApplicationCard
-          application={application}
-          canStartAssessment={canStartAssessment}
-          assessmentStatus={assessmentStatus}
-        />
-      ) : (
-        <div className="p-8 rounded-card-lg bg-surface border border-surface-border shadow-soft space-y-6">
-          <div className="max-w-xl space-y-2">
-            <div className="h-10 w-10 rounded-xl bg-ink text-canvas flex items-center justify-center font-bold">
-              <FileText className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-ink">Begin Your AI CLUB Application</h2>
-            <p className="text-sm text-ink-muted leading-relaxed">
-              Applying gives you an official application identifier (`AIC-YYYY-XXXXXX`) and grants access to the server-administered 25-Question MCQ Assessment.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-4 rounded-card-sm bg-canvas-alt border border-surface-border space-y-1.5">
-              <span className="text-xs font-mono font-semibold text-ink">Step 1: Application</span>
-              <p className="text-xs text-ink-muted">Generates official candidate registration record.</p>
-            </div>
-            <div className="p-4 rounded-card-sm bg-canvas-alt border border-surface-border space-y-1.5">
-              <span className="text-xs font-mono font-semibold text-ink">Step 2: 25-MCQ Exam</span>
-              <p className="text-xs text-ink-muted">30-minute timed evaluation covering AI, Python & Math.</p>
-            </div>
-            <div className="p-4 rounded-card-sm bg-canvas-alt border border-surface-border space-y-1.5">
-              <span className="text-xs font-mono font-semibold text-ink">Step 3: Committee Review</span>
-              <p className="text-xs text-ink-muted">Submissions enter committee queue for final admissions.</p>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleStartApplication}
-              isLoading={isCreating}
-              disabled={!profileComplete || isCreating}
-            >
-              <span>Start Official Application</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Lifecycle Timeline */}
-      <ApplicationTimeline
-        profileComplete={profileComplete}
-        hasApplication={hasApp}
-        applicationStatus={application?.status}
-        assessmentStatus={assessmentStatus}
-      />
-
-      {/* Assessment Guidelines & Policies */}
-      <div className="p-6 rounded-card bg-surface border border-surface-border shadow-soft space-y-4">
-        <div className="flex items-center gap-2">
-          <HelpCircle className="h-5 w-5 text-ink-muted" />
-          <h3 className="text-base font-semibold text-ink">Assessment Policies & Format</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-ink-muted leading-relaxed">
-          <div className="space-y-2 p-4 rounded-card-sm bg-canvas-alt/50 border border-surface-border">
-            <h4 className="font-semibold text-ink flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-accent-green" />
-              Examination Parameters
-            </h4>
-            <ul className="space-y-1 list-disc list-inside">
-              <li>Exactly 25 multiple choice questions randomly sampled from question pool.</li>
-              <li>30-minute strictly enforced server countdown timer.</li>
-              <li>Answers are automatically synchronized and autosaved to database.</li>
-              <li>Question order and selected answers persist seamlessly across page refresh.</li>
-            </ul>
-          </div>
-          <div className="space-y-2 p-4 rounded-card-sm bg-canvas-alt/50 border border-surface-border">
-            <h4 className="font-semibold text-ink flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-accent-lavender" />
-              Evaluation & Admission Rules
-            </h4>
-            <ul className="space-y-1 list-disc list-inside">
-              <li>Strictly one attempt per candidate application.</li>
-              <li>Scoring is computed authoritatively on the server; pass mark is 60% (15/25).</li>
-              <li>Passing assessment moves application to `UNDER_REVIEW`.</li>
-              <li>Passing does NOT automatically approve membership; final admission is by committee review.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      {hasApp && <ApplicationTimeline hasApplication={hasApp} applicationStatus={application?.status} assessmentStatus={assessmentStatus} />}
     </div>
   );
 };

@@ -36,6 +36,7 @@ describe('AI CLUB: Gemini MCQ Generation System Master Tests', () => {
       });
 
       expect(res.questions.length).toBe(5);
+      expect(res.provider).toBe('google-gemini-offline');
       expect(res.provider).toBeDefined();
       expect(res.model).toBeDefined();
 

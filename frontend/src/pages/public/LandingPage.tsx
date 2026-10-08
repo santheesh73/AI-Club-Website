@@ -1,206 +1,113 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { ArrowRight, CalendarDays } from 'lucide-react';
+import { communityApi } from '@/services/communityApi';
+import { eventsApi } from '@/services/eventsApi';
+import type { ProjectCardDto } from '@/types/community';
+import { isPublicEventDto, type PublicEventDto } from '@/types/events';
 
 export const LandingPage: React.FC = () => {
-  const heroTrackRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [projects, setProjects] = useState<ProjectCardDto[]>([]);
+  const [event, setEvent] = useState<PublicEventDto | null>(null);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState(false);
+  const [eventsError, setEventsError] = useState(false);
+  const [projectsAttempt, setProjectsAttempt] = useState(0);
+  const [eventsAttempt, setEventsAttempt] = useState(0);
 
   useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          if (heroTrackRef.current) {
-            const rect = heroTrackRef.current.getBoundingClientRect();
-            const totalScrollable = rect.height - window.innerHeight;
-            if (totalScrollable > 0) {
-              const currentScroll = -rect.top;
-              const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
-              setScrollProgress(progress);
-            }
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
+    let active = true;
+    setProjectsLoading(true);
+    setProjectsError(false);
+    const load = async () => {
+      try {
+        const response = await communityApi.getProjects({ visibility: 'public', status: 'published', pageSize: 3 });
+        if (!response.success || !response.data || !Array.isArray(response.data.items)) throw new Error('Projects unavailable');
+        if (active) setProjects(response.data.items.filter((project) => project.visibility === 'public' && project.status === 'published').slice(0, 3));
+      } catch { if (active) setProjectsError(true); }
+      finally { if (active) setProjectsLoading(false); }
     };
+    void load();
+    return () => { active = false; };
+  }, [projectsAttempt]);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Phase 1: SIET zooms out into the distance (scale 1.0 -> 0.28, opacity 1.0 -> 0)
-  const pSiet = Math.min(1, scrollProgress / 0.45);
-  const sietScale = 1 - pSiet * 0.72;
-  const sietOpacity = scrollProgress < 0.18 ? 1 : Math.max(0, 1 - (scrollProgress - 0.18) / 0.25);
-  const sietBlur = pSiet * 5;
-
-  // Phase 2: Current Hero Section appears (scale 0.88 -> 1.0, translateY 32 -> 0, opacity 0 -> 1)
-  const pHero = Math.min(1, Math.max(0, (scrollProgress - 0.32) / 0.48));
-  const heroOpacity = pHero;
-  const heroScale = 0.88 + pHero * 0.12;
-  const heroTranslateY = 32 * (1 - pHero);
-  const heroPointerEvents = pHero > 0.6 ? 'auto' : 'none';
+  useEffect(() => {
+    let active = true;
+    setEventsLoading(true);
+    setEventsError(false);
+    const load = async () => {
+      try {
+        const response = await eventsApi.getPublicEvents({ timeline: 'upcoming' });
+        if (!response.success || !Array.isArray(response.data) || !response.data.every(isPublicEventDto)) throw new Error('Events unavailable');
+        const next = response.data.filter((item) => item.eligibility === 'public' && item.status === 'published' && new Date(item.startAt).getTime() > Date.now()).sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())[0];
+        if (active) setEvent(next || null);
+      } catch { if (active) setEventsError(true); }
+      finally { if (active) setEventsLoading(false); }
+    };
+    void load();
+    return () => { active = false; };
+  }, [eventsAttempt]);
 
   return (
-    <div className="w-full">
-      {/* Scroll-Driven Hero Sequence Track */}
-      <div ref={heroTrackRef} className="relative h-[220vh] w-full">
-        <div className="sticky top-20 h-[calc(100vh-5rem)] min-h-[580px] w-full flex items-center justify-center overflow-hidden">
-          {/* Layer 1: SIET Alone */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none transition-transform duration-75 ease-out"
-            style={{
-              transform: `scale(${sietScale}) translateZ(0)`,
-              opacity: sietOpacity,
-              filter: `blur(${sietBlur}px)`,
-              willChange: 'transform, opacity, filter',
-            }}
-          >
-            <div className="relative flex flex-col items-center justify-center px-4">
-              {/* Subtle ambient radial glow */}
-              <div className="absolute -inset-20 bg-gradient-to-tr from-accent-blue/15 via-lavender/20 to-accent-green/15 blur-3xl rounded-full opacity-70 pointer-events-none" />
-
-              <h1 className="relative text-7xl sm:text-9xl md:text-[13rem] lg:text-[17rem] font-black tracking-[0.2em] uppercase text-ink leading-none font-sans drop-shadow-sm">
-                SIET
-              </h1>
-
-              {/* Minimal Scroll Cue */}
-              <div
-                className="mt-10 sm:mt-12 flex flex-col items-center gap-2 transition-opacity duration-300"
-                style={{ opacity: Math.max(0, 1 - scrollProgress * 6) }}
-              >
-                <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.3em] uppercase text-ink-muted">
-                  Scroll to explore
-                </span>
-                <ChevronDown className="h-4 w-4 text-ink-muted animate-bounce" />
-              </div>
-            </div>
-          </div>
-
-          {/* Layer 2: Current Hero Section */}
-          <div
-            className="w-full max-w-7xl px-6 sm:px-8 text-center space-y-8 transition-all duration-75 ease-out"
-            style={{
-              transform: `scale(${heroScale}) translateY(${heroTranslateY}px) translateZ(0)`,
-              opacity: heroOpacity,
-              pointerEvents: heroPointerEvents as React.CSSProperties['pointerEvents'],
-              willChange: 'transform, opacity',
-            }}
-          >
-            <div className="inline-flex items-center gap-2">
-              <Badge variant="success">Platform Online</Badge>
-              <span className="text-xs text-ink-muted">AI Innovation Platform</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-ink max-w-4xl mx-auto leading-[1.08]">
-              Where elite builders engineer the frontier of AI.
-            </h1>
-
-            <p className="max-w-2xl mx-auto text-lg sm:text-xl text-ink-secondary leading-relaxed">
-              AI CLUB is a dedicated collective for students, researchers, and innovators creating production-grade artificial intelligence systems.
-            </p>
-
-            {/* STRICT REQUIREMENT: Only two CTA buttons on the entire landing page: Explore and Join Club */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <Link to="/register">
-                <Button size="lg" className="px-8 shadow-elevated">
-                  Join Club
-                </Button>
-              </Link>
-              <Link to="/learn">
-                <Button variant="outline" size="lg" className="px-8">
-                  Explore
-                </Button>
-              </Link>
-            </div>
-          </div>
+    <div className="mx-auto max-w-7xl px-6 sm:px-8">
+      <section className="py-16 sm:py-24 lg:py-28 max-w-4xl">
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] text-balance">Learn AI.<br />Build it together.</h1>
+        <p className="mt-6 max-w-2xl text-lg sm:text-xl text-ink-secondary leading-relaxed">AI CLUB brings students together to explore artificial intelligence, work on projects, and share what they learn.</p>
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          <Link to="/register" className="public-action">Join Club <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
+          <Link to="/learn" className="public-action-secondary">Explore</Link>
         </div>
-      </div>
+        <p className="mt-6 text-sm text-ink-secondary">AI CLUB · SIET</p>
+      </section>
 
-      {/* Main Page Content */}
-      <div className="space-y-24 py-16 md:py-24">
-        {/* Pillars / Feature Grid */}
-        <section className="mx-auto max-w-7xl px-6 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <Badge variant="neutral">The Collective Pillars</Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-ink">
-              A comprehensive lifecycle for AI engineers
-            </h2>
-            <p className="text-ink-muted text-sm sm:text-base">
-              From algorithmic fundamentals to collaborative open research and real-world deployment.
-            </p>
-          </div>
+      <section aria-labelledby="projects-heading" className="border-t border-surface-border py-12 sm:py-16">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+          <div><h2 id="projects-heading" className="text-3xl font-bold tracking-tight">See what members are building</h2><p className="mt-3 text-ink-secondary max-w-2xl">Explore published projects from the club’s public catalogue.</p></div>
+          <Link to="/community/projects" className="public-text-link">Browse projects <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
+        </div>
+        <div aria-live="polite" aria-busy={projectsLoading}>
+          {projectsLoading ? <p className="py-6 text-ink-secondary" role="status">Loading member projects…</p> : projectsError ? <div className="py-6"><p role="alert">We couldn’t load the projects. Please try again.</p><button type="button" className="public-text-link underline mt-2" onClick={() => setProjectsAttempt((value) => value + 1)}>Retry projects</button></div> : projects.length === 0 ? <p className="py-6 text-ink-secondary">No public projects have been published yet. Explore the learning tracks to find a place to start.</p> : <div className="grid md:grid-cols-3 gap-8">
+            {projects.map((project) => <article key={project.id} className="min-w-0">
+              {project.coverImageUrl && <img src={project.coverImageUrl} alt="" loading="lazy" className="w-full aspect-[16/10] object-cover rounded-xl mb-4" />}
+              <h3 className="text-xl font-semibold"><Link to={`/community/projects/${encodeURIComponent(project.slug)}`} className="hover:underline underline-offset-4">{project.title}</Link></h3>
+              <p className="mt-3 text-ink-secondary leading-relaxed">{project.shortDescription}</p>
+              <p className="mt-4 text-sm text-ink-secondary">By {project.owner.fullName}</p>
+              <Link to={`/community/projects/${encodeURIComponent(project.slug)}`} className="public-text-link mt-2">View project <span className="sr-only">{project.title}</span><ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
+            </article>)}
+          </div>}
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="hover:shadow-elevated transition-shadow duration-300">
-              <CardHeader>
-                <Badge variant="lavender" className="w-fit mb-3">Learn</Badge>
-                <CardTitle>Rigorous Curriculum</CardTitle>
-                <CardDescription>
-                  Hands-on courses spanning modern deep learning, LLM architectures, and autonomous agent systems.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xs text-ink-muted border-t border-surface-border pt-4">
-                  Structured pathways &bull; Practical labs &bull; Code reviews
-                </div>
-              </CardContent>
-            </Card>
+      <section aria-labelledby="activities-heading" className="border-t border-surface-border py-12 sm:py-16">
+        <h2 id="activities-heading" className="text-3xl font-bold tracking-tight">A place to learn, build, and ask questions</h2>
+        <div className="grid md:grid-cols-3 gap-8 mt-8">
+          <div><h3 className="text-xl font-semibold">Learn</h3><p className="mt-3 text-ink-secondary leading-relaxed">Find your starting point in the curriculum, from mathematical foundations to language models.</p><Link to="/learn" className="public-text-link mt-3">Explore learning tracks</Link></div>
+          <div><h3 className="text-xl font-semibold">Build</h3><p className="mt-3 text-ink-secondary leading-relaxed">Turn an idea into a project. Explore published work and the approaches members used.</p><Link to="/community/projects" className="public-text-link mt-3">See member projects</Link></div>
+          <div><h3 className="text-xl font-semibold">Research</h3><p className="mt-3 text-ink-secondary leading-relaxed">Look beyond a model’s output: ask how it works, what the evidence shows, and where it falls short.</p><Link to="/about" className="public-text-link mt-3">Get to know the club</Link></div>
+        </div>
+      </section>
 
-            <Card className="hover:shadow-elevated transition-shadow duration-300">
-              <CardHeader>
-                <Badge variant="success" className="w-fit mb-3">Build</Badge>
-                <CardTitle>Production Systems</CardTitle>
-                <CardDescription>
-                  Cross-disciplinary teams shipping full-stack machine learning applications and real user platforms.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xs text-ink-muted border-t border-surface-border pt-4">
-                  Team formation &bull; Sprint cycles &bull; Project showcases
-                </div>
-              </CardContent>
-            </Card>
+      <section aria-labelledby="event-heading" className="border-t border-surface-border py-12 sm:py-16">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6"><h2 id="event-heading" className="text-3xl font-bold tracking-tight">Next public event</h2><Link to="/events" className="public-text-link">All events <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link></div>
+        <div aria-live="polite" aria-busy={eventsLoading}>
+          {eventsLoading ? <p role="status" className="text-ink-secondary">Loading the next event…</p> : eventsError ? <div><p role="alert">We couldn’t load upcoming events. Please try again.</p><button type="button" className="public-text-link underline mt-2" onClick={() => setEventsAttempt((value) => value + 1)}>Retry events</button></div> : !event ? <p className="text-ink-secondary">No upcoming public events are listed right now. Check the events page for future announcements.</p> : <article className="rounded-xl bg-canvas-alt p-6 sm:p-8 flex flex-col md:flex-row justify-between gap-6">
+            <div className="max-w-2xl"><p className="flex items-center gap-2 text-sm text-ink-secondary"><CalendarDays className="h-4 w-4" aria-hidden="true" /><time dateTime={event.startAt}>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZoneName: undefined }).format(new Date(event.startAt))}</time></p><h3 className="mt-3 text-2xl font-semibold">{event.title}</h3><p className="mt-3 text-ink-secondary leading-relaxed">{event.shortDescription}</p><p className="mt-3 text-sm text-ink-secondary">Public event · An account is needed to RSVP</p></div>
+            <Link to={`/events/${encodeURIComponent(event.slug)}`} className="public-action self-start">View event</Link>
+          </article>}
+        </div>
+      </section>
 
-            <Card className="hover:shadow-elevated transition-shadow duration-300">
-              <CardHeader>
-                <Badge variant="orange" className="w-fit mb-3">Research</Badge>
-                <CardTitle>Frontier Discovery</CardTitle>
-                <CardDescription>
-                  Reading groups, benchmark evaluations, and empirical exploration of cutting-edge AI methodologies.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xs text-ink-muted border-t border-surface-border pt-4">
-                  Paper seminars &bull; Reproducibility studies &bull; Publications
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Platform Architecture & Innovation Overview */}
-        <section className="mx-auto max-w-5xl px-6 sm:px-8">
-          <div className="rounded-card-lg bg-surface border border-surface-border p-8 sm:p-10 shadow-soft">
-            <div className="space-y-3">
-              <Badge variant="neutral">Club Foundation</Badge>
-              <h3 className="text-2xl font-bold text-ink">Authoritative Standards & Merit Intake</h3>
-              <p className="text-sm text-ink-muted max-w-2xl leading-relaxed">
-                Membership intake is guided by an objective 25-MCQ technical assessment followed by administrative review. 
-                Our community is grounded in verified technical skills, active research collaboration, and peer-reviewed project delivery.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
+      <section aria-labelledby="joining-heading" className="border-t border-surface-border py-12 sm:py-16">
+        <h2 id="joining-heading" className="text-3xl font-bold tracking-tight">How joining works</h2>
+        <p className="mt-3 max-w-2xl text-ink-secondary leading-relaxed">Club membership and public event attendance are separate. You can RSVP to a public event with an account; membership includes an assessment and review.</p>
+        <ol className="mt-8 grid md:grid-cols-3 gap-8 list-decimal list-inside">
+          <li className="font-semibold">Create your account<p className="font-normal text-ink-secondary leading-relaxed mt-3">Register with your name, email, and a password.</p></li>
+          <li className="font-semibold">Take the assessment<p className="font-normal text-ink-secondary leading-relaxed mt-3">Read the assessment instructions before starting. Your application follows the club’s assessment process.</p></li>
+          <li className="font-semibold">Follow your application<p className="font-normal text-ink-secondary leading-relaxed mt-3">View your result and application status while the administration reviews membership.</p></li>
+        </ol>
+        <Link to="/register" className="public-action mt-8">Apply to join</Link>
+      </section>
     </div>
   );
 };

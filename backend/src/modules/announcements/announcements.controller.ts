@@ -39,7 +39,8 @@ export class AnnouncementsController {
         return next(new AppError('Authentication required', 401, 'UNAUTHORIZED'));
       }
 
-      const { title, content, priority, audience, status, expiresAt } = req.body;
+      const { title, content, priority, status, expiresAt } = req.body;
+      const audience = req.body.audience || req.body.targetAudience || 'all';
       if (!title || !content) {
         return next(new AppError('Title and content are required', 400, 'BAD_REQUEST'));
       }

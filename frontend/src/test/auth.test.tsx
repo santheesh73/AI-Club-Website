@@ -35,7 +35,7 @@ describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
     const emailInput = screen.getByLabelText(/email address/i);
     const passInput = screen.getByLabelText(/^password/i);
     const confirmInput = screen.getByLabelText(/confirm password/i);
-    const submitBtn = screen.getByRole('button', { name: /create platform account/i });
+    const submitBtn = screen.getByRole('button', { name: /create account/i });
 
     fireEvent.change(nameInput, { target: { value: 'Ada Lovelace' } });
     fireEvent.change(emailInput, { target: { value: 'ada@example.com' } });

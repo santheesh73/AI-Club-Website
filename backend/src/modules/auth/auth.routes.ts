@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { sendSuccess, AppError } from '../../utils/response';
 import { supabaseAdmin } from '../../services/supabase';
 import { logger } from '../../utils/logger';
+import { localMemoryApplications } from '../applications/applications.service';
 
 /**
  * AI CLUB - Module: auth
@@ -106,6 +107,19 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
         { onConflict: 'id' }
       );
 
+      // Auto-create application record so applicant can directly enter assessment
+      try {
+        await supabaseAdmin.from('applications').upsert(
+          {
+            user_id: userId,
+            status: 'test_required',
+          },
+          { onConflict: 'user_id' }
+        );
+      } catch (appErr) {
+        logger.warn('Failed to auto-create application record during signup:', { error: appErr });
+      }
+
       return sendSuccess(
         res,
         {
@@ -119,10 +133,20 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       );
     } else {
       // Local dev standby mode
+      const devId = `dev-${Date.now()}`;
+      localMemoryApplications.set(devId, {
+        id: `app-${devId}`,
+        userId: devId,
+        applicationNumber: `AIC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+        status: 'test_required',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       return sendSuccess(
         res,
         {
-          userId: `dev-${Date.now()}`,
+          userId: devId,
           email,
           role: 'applicant',
           message: 'Account registered successfully in local standby mode.',

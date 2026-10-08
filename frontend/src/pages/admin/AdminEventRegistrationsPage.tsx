@@ -80,7 +80,7 @@ export const AdminEventRegistrationsPage: React.FC = () => {
                 {event.title} — Attendee Roster
               </h1>
               <Badge variant={event.status === 'published' ? 'success' : 'neutral'}>
-                {event.status.toUpperCase()}
+                {(event.status || 'published').toUpperCase()}
               </Badge>
             </div>
             <p className="text-xs text-ink-muted mt-0.5">
@@ -146,7 +146,7 @@ export const AdminEventRegistrationsPage: React.FC = () => {
                       <td className="py-3.5 px-4 text-ink-secondary">{attendee.department || 'Not Specified'}</td>
                       <td className="py-3.5 px-4">
                         <Badge variant={attendee.status === 'registered' ? 'success' : 'neutral'}>
-                          {attendee.status.toUpperCase()}
+                          {(attendee.status || 'registered').toUpperCase()}
                         </Badge>
                       </td>
                       <td className="py-3.5 px-4 text-right font-mono text-ink-muted text-[11px]">

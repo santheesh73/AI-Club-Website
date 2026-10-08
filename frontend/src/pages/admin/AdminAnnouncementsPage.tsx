@@ -10,7 +10,8 @@ interface Announcement {
   title: string;
   content: string;
   priority: string;
-  targetAudience: string;
+  targetAudience?: string;
+  audience?: string;
   status: string;
   createdAt: string;
 }
@@ -28,37 +29,82 @@ export const AdminAnnouncementsPage: React.FC = () => {
   const fetchAnnouncements = () => {
     setLoading(true);
     apiClient
-      .get<{ data: Announcement[] }>('/api/v1/announcements')
+      .get<{ data: any }>('/api/v1/admin/announcements')
       .then((res) => {
         if (res.success && res.data) {
-          const list = Array.isArray(res.data) ? (res.data as any) : (res.data as any)?.items || [];
-          setAnnouncements(list);
+          const rawList = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
+          const normalized: Announcement[] = rawList.map((item: any) => ({
+            id: item.id || `ann-${Math.random()}`,
+            title: item.title || 'Untitled Announcement',
+            content: item.content || '',
+            priority: item.priority || 'normal',
+            targetAudience: item.targetAudience || item.audience || 'all',
+            audience: item.audience || item.targetAudience || 'all',
+            status: item.status || 'published',
+            createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+          }));
+          setAnnouncements(normalized);
+          setLoading(false);
+          return;
+        }
+        fallbackPublicFetch();
+      })
+      .catch(() => {
+        fallbackPublicFetch();
+      });
+  };
+
+  const fallbackPublicFetch = () => {
+    apiClient
+      .get<{ data: any }>('/api/v1/announcements')
+      .then((res) => {
+        if (res.success && res.data) {
+          const rawList = Array.isArray(res.data) ? res.data : (res.data as any)?.items || [];
+          const normalized: Announcement[] = rawList.map((item: any) => ({
+            id: item.id || `ann-${Math.random()}`,
+            title: item.title || 'Untitled Announcement',
+            content: item.content || '',
+            priority: item.priority || 'normal',
+            targetAudience: item.targetAudience || item.audience || 'all',
+            audience: item.audience || item.targetAudience || 'all',
+            status: item.status || 'published',
+            createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+          }));
+          setAnnouncements(normalized);
+        } else {
+          setMockAnnouncements();
         }
         setLoading(false);
       })
       .catch(() => {
-        setAnnouncements([
-          {
-            id: 'ann-1',
-            title: 'Welcome to the 2026 AI Innovation Cohort',
-            content: 'Admitted members can now access internal GPU clusters and weekly reading sessions in Turing Wing Lab B.',
-            priority: 'high',
-            targetAudience: 'members',
-            status: 'published',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 'ann-2',
-            title: 'Fall Assessment Cycle 1 Open for Prospective Applicants',
-            content: 'The 25-MCQ admission assessment is now active for all registered student applicants.',
-            priority: 'medium',
-            targetAudience: 'applicants',
-            status: 'published',
-            createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-          },
-        ]);
+        setMockAnnouncements();
         setLoading(false);
       });
+  };
+
+  const setMockAnnouncements = () => {
+    setAnnouncements([
+      {
+        id: 'ann-1',
+        title: 'Welcome to the 2026 AI Innovation Cohort',
+        content: 'Admitted members can now access internal GPU clusters and weekly reading sessions in Turing Wing Lab B.',
+        priority: 'high',
+        targetAudience: 'members',
+        audience: 'members',
+        status: 'published',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'ann-2',
+        title: 'Fall Assessment Cycle 1 Open for Prospective Applicants',
+        content: 'The 25-MCQ admission assessment is now active for all registered student applicants.',
+        priority: 'medium',
+        targetAudience: 'applicants',
+        audience: 'applicants',
+        status: 'published',
+        createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      },
+    ]);
   };
 
   useEffect(() => {
@@ -71,10 +117,11 @@ export const AdminAnnouncementsPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await apiClient.post('/api/v1/announcements', {
+      await apiClient.post('/api/v1/admin/announcements', {
         title,
         content,
         priority,
+        audience: targetAudience,
         targetAudience,
         status: 'published',
       });
@@ -90,6 +137,7 @@ export const AdminAnnouncementsPage: React.FC = () => {
           title,
           content,
           priority,
+          audience: targetAudience,
           targetAudience,
           status: 'published',
           createdAt: new Date().toISOString(),
@@ -207,8 +255,12 @@ export const AdminAnnouncementsPage: React.FC = () => {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="lavender">{a.targetAudience.toUpperCase()}</Badge>
-                    <span className="text-[11px] text-ink-muted">{new Date(a.createdAt).toLocaleDateString()}</span>
+                    <Badge variant="lavender">
+                      {String(a.targetAudience || a.audience || 'all').toUpperCase()}
+                    </Badge>
+                    <span className="text-[11px] text-ink-muted">
+                      {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'Recent'}
+                    </span>
                   </div>
                 </div>
                 <p className="text-xs text-ink-secondary leading-relaxed">{a.content}</p>

@@ -15,6 +15,9 @@ import {
 import { AIRecommendationProvider } from './ai/recommendationProvider.types';
 import { GeminiRecommendationProvider } from './ai/geminiRecommendationProvider';
 import { DeterministicRecommendationProvider } from './ai/deterministicRecommendationProvider';
+import { validateSafeCourseUrl } from './providers/ssrfGuard';
+import { fetchCoursePage } from './providers/safeFetcher';
+import { courseExtractorRegistry } from './providers/extractors';
 
 // In-memory cache fallback for recommendation results & rate limits
 interface CachedRecommendationRecord {
@@ -690,6 +693,212 @@ export class CourseRecommendationsService {
   }
 
   /**
+   * Admin: Extract external course metadata from official URL
+   */
+  async extractExternalCourseMetadata(
+    url: string,
+    adminUserId: string,
+    requestId?: string
+  ): Promise<{
+    success: boolean;
+    sourceUrl: string;
+    canonicalUrl: string;
+    provider: string;
+    providerDisplayName: string;
+    metadata: {
+      title: string | null;
+      description: string | null;
+      imageUrl: string | null;
+      category: string | null;
+      difficulty: string | null;
+      skills: string[];
+      duration?: string | null;
+      priceType?: string | null;
+      rating?: number | null;
+      externalCourseId?: string | null;
+    };
+    extraction: {
+      titleSource: string;
+      descriptionSource: string;
+      imageSource: string;
+      categorySource?: string;
+      difficultySource?: string;
+      skillsSource?: string;
+      providerSource: string;
+    };
+    alreadyExists: boolean;
+    isDuplicate: boolean;
+    existingCourse?: {
+      id: string;
+      title: string;
+      provider: string;
+      status: string;
+      officialUrl: string;
+    } | null;
+  }> {
+    // 1. Audit Start
+    await auditService.createLog({
+      actorId: adminUserId,
+      action: 'COURSE_METADATA_EXTRACTION_STARTED',
+      entityType: 'EXTERNAL_COURSE',
+      entityId: 'extraction-session',
+      metadata: { url },
+      requestId,
+    });
+
+    try {
+      // 2. Strict URL Validation & SSRF Guard
+      const check = await validateSafeCourseUrl(url, { checkDns: true });
+      if (!check.isValid || !check.canonicalUrl || !check.providerKey) {
+        throw new AppError(check.error || 'Invalid or forbidden course URL.', 400, 'INVALID_URL');
+      }
+
+      const canonicalUrl = check.canonicalUrl;
+
+      // 3. Duplicate Detection
+      let isDuplicate = false;
+      let existingCourse: {
+        id: string;
+        title: string;
+        provider: string;
+        status: string;
+        officialUrl: string;
+      } | null = null;
+
+      if (supabaseAdmin) {
+        try {
+          const { data: existing } = await supabaseAdmin
+            .from('external_courses')
+            .select('id, title, provider, status, official_url')
+            .eq('official_url', canonicalUrl)
+            .maybeSingle();
+
+          if (existing) {
+            isDuplicate = true;
+            existingCourse = {
+              id: existing.id,
+              title: existing.title,
+              provider: existing.provider,
+              status: existing.status,
+              officialUrl: existing.official_url,
+            };
+          }
+        } catch {
+          // Fall through to memory check
+        }
+      }
+
+      if (!isDuplicate) {
+        const memMatch = Array.from(memoryExternalCourses.values()).find(
+          (c) => c.officialUrl === canonicalUrl || c.officialUrl === url
+        );
+        if (memMatch) {
+          isDuplicate = true;
+          existingCourse = {
+            id: memMatch.id,
+            title: memMatch.title,
+            provider: memMatch.provider,
+            status: memMatch.status,
+            officialUrl: memMatch.officialUrl,
+          };
+        }
+      }
+
+      // 4. Safe Fetch of official page HTML
+      const pageResult = await fetchCoursePage(canonicalUrl, { checkDns: true });
+
+      // 5. Run Extractor
+      const extractor = courseExtractorRegistry.getExtractor(check.providerKey, check.providerDisplayName);
+      const extracted = await extractor.extract(pageResult.html, url, canonicalUrl);
+
+      // 6. Audit Completed
+      await auditService.createLog({
+        actorId: adminUserId,
+        action: 'COURSE_METADATA_EXTRACTION_COMPLETED',
+        entityType: 'EXTERNAL_COURSE',
+        entityId: extracted.externalCourseId || 'extracted-url',
+        metadata: {
+          url,
+          provider: check.providerKey,
+          title: extracted.title,
+          isDuplicate,
+        },
+        requestId,
+      });
+
+      return {
+        success: true,
+        sourceUrl: url,
+        canonicalUrl,
+        provider: check.providerKey,
+        providerDisplayName: check.providerDisplayName || 'External Provider',
+        metadata: {
+          title: extracted.title,
+          description: extracted.description,
+          imageUrl: extracted.imageUrl,
+          category: extracted.category,
+          difficulty: extracted.difficulty,
+          skills: extracted.skills,
+          duration: extracted.duration,
+          priceType: extracted.priceType,
+          rating: extracted.rating,
+          externalCourseId: extracted.externalCourseId,
+        },
+        extraction: extracted.extraction,
+        alreadyExists: isDuplicate,
+        isDuplicate,
+        existingCourse,
+      };
+    } catch (err: unknown) {
+      await auditService.createLog({
+        actorId: adminUserId,
+        action: 'COURSE_METADATA_EXTRACTION_FAILED',
+        entityType: 'EXTERNAL_COURSE',
+        entityId: 'extraction-session',
+        metadata: { url, error: err instanceof Error ? err.message : String(err) },
+        requestId,
+      });
+
+      throw err;
+    }
+  }
+
+  /**
+   * Admin: Publish an existing course draft
+   */
+  async publishExternalCourse(
+    id: string,
+    adminUserId: string,
+    requestId?: string
+  ): Promise<ExternalCourseEntity> {
+    const publishedAt = new Date().toISOString();
+    const updated = await this.updateExternalCourse(
+      id,
+      {
+        status: 'published',
+        publishedAt,
+        lastVerifiedAt: publishedAt,
+      },
+      adminUserId
+    );
+
+    await auditService.createLog({
+      actorId: adminUserId,
+      action: 'EXTERNAL_COURSE_PUBLISHED',
+      entityType: 'EXTERNAL_COURSE',
+      entityId: id,
+      metadata: {
+        title: updated.title,
+        provider: updated.provider,
+        officialUrl: updated.officialUrl,
+      },
+      requestId,
+    });
+
+    return updated;
+  }
+
+  /**
    * Admin: Create a new external course with strict URL validation and duplicate prevention
    */
   async createExternalCourse(
@@ -697,16 +906,17 @@ export class CourseRecommendationsService {
       title: string;
       provider: string;
       officialUrl: string;
-      category: string;
+      category?: string;
       skills?: string[];
       difficulty?: ExternalCourseEntity['difficulty'];
-      description: string;
+      description?: string;
       imageUrl?: string;
       duration?: string;
       language?: string;
       priceType?: ExternalCourseEntity['priceType'];
       rating?: number;
       status?: ExternalCourseEntity['status'];
+      extractionMetadata?: Record<string, unknown>;
     },
     adminUserId: string
   ): Promise<ExternalCourseEntity> {
@@ -719,6 +929,8 @@ export class CourseRecommendationsService {
     }
 
     const normalizedUrl = urlCheck.normalizedUrl;
+    const courseStatus = data.status || 'draft';
+    const publishedAt = courseStatus === 'published' ? new Date().toISOString() : undefined;
 
     // 2. Prevent duplicate course records for the same provider + URL
     if (supabaseAdmin) {
@@ -740,32 +952,47 @@ export class CourseRecommendationsService {
         title: data.title.trim(),
         provider: data.provider.trim(),
         official_url: normalizedUrl,
-        category: data.category.trim(),
+        category: (data.category || 'AI').trim(),
         skills: data.skills || [],
         difficulty: data.difficulty || 'beginner',
-        description: data.description.trim(),
+        description: (data.description || '').trim(),
         source: 'curated',
-        status: data.status || 'published',
+        status: courseStatus,
+        published_at: publishedAt || null,
+        extraction_metadata: data.extractionMetadata || {},
         last_verified_at: new Date().toISOString(),
       };
       if (data.imageUrl) insertPayload.image_url = data.imageUrl;
 
-      const { data: inserted, error } = await supabaseAdmin
+      let { data: inserted, error } = await supabaseAdmin
         .from('external_courses')
         .insert(insertPayload)
         .select()
         .single();
 
-      if (error) {
-        throw new AppError(`Failed to save external course: ${error.message}`, 500, 'DATABASE_ERROR');
+      // Gracefully handle database instances where Migration 17 is still pending in schema cache
+      if (error && (error.message.includes('extraction_metadata') || error.message.includes('published_at'))) {
+        delete insertPayload.extraction_metadata;
+        delete insertPayload.published_at;
+        const retryResult = await supabaseAdmin
+          .from('external_courses')
+          .insert(insertPayload)
+          .select()
+          .single();
+        inserted = retryResult.data;
+        error = retryResult.error;
+      }
+
+      if (error || !inserted) {
+        throw new AppError(`Failed to save external course: ${error?.message || 'Insertion failed'}`, 500, 'DATABASE_ERROR');
       }
 
       await auditService.createLog({
         actorId: adminUserId,
-        action: 'EXTERNAL_COURSE_CREATED',
+        action: courseStatus === 'published' ? 'EXTERNAL_COURSE_PUBLISHED' : 'EXTERNAL_COURSE_CREATED',
         entityType: 'EXTERNAL_COURSE',
         entityId: inserted.id,
-        metadata: { title: data.title, provider: data.provider, officialUrl: normalizedUrl },
+        metadata: { title: data.title, provider: data.provider, officialUrl: normalizedUrl, status: courseStatus },
       });
 
       return {
@@ -784,7 +1011,9 @@ export class CourseRecommendationsService {
         priceType: inserted.price_type,
         rating: inserted.rating,
         isActive: inserted.is_active !== false,
-        status: inserted.status,
+        status: (inserted.status || courseStatus) as any,
+        publishedAt: inserted.published_at ?? (courseStatus === 'published' ? publishedAt : null),
+        extractionMetadata: inserted.extraction_metadata ?? data.extractionMetadata,
         lastVerifiedAt: inserted.last_verified_at,
         createdAt: inserted.created_at,
         updatedAt: inserted.updated_at,
@@ -797,8 +1026,8 @@ export class CourseRecommendationsService {
       title: data.title.trim(),
       provider: data.provider.trim(),
       providerKey,
-      description: data.description.trim(),
-      category: data.category.trim(),
+      description: (data.description || '').trim(),
+      category: (data.category || 'AI').trim(),
       skills: data.skills || [],
       difficulty: data.difficulty || 'beginner',
       officialUrl: normalizedUrl,
@@ -808,12 +1037,23 @@ export class CourseRecommendationsService {
       priceType: data.priceType || 'free',
       rating: data.rating,
       isActive: true,
-      status: data.status || 'published',
+      status: courseStatus,
+      publishedAt,
+      extractionMetadata: data.extractionMetadata,
       lastVerifiedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     memoryExternalCourses.set(newCourse.id, newCourse);
+
+    await auditService.createLog({
+      actorId: adminUserId,
+      action: courseStatus === 'published' ? 'EXTERNAL_COURSE_PUBLISHED' : 'EXTERNAL_COURSE_CREATED',
+      entityType: 'EXTERNAL_COURSE',
+      entityId: newCourse.id,
+      metadata: { title: data.title, provider: data.provider, officialUrl: normalizedUrl, status: courseStatus },
+    });
+
     return newCourse;
   }
 
@@ -848,28 +1088,44 @@ export class CourseRecommendationsService {
       if (updates.title) dbPayload.title = updates.title.trim();
       if (updates.provider) dbPayload.provider = updates.provider.trim();
       if (normalizedUrl) dbPayload.official_url = normalizedUrl;
-      if (updates.description) dbPayload.description = updates.description.trim();
+      if (updates.description !== undefined) dbPayload.description = updates.description.trim();
       if (updates.category) dbPayload.category = updates.category.trim();
       if (updates.skills) dbPayload.skills = updates.skills;
       if (updates.difficulty) dbPayload.difficulty = updates.difficulty;
       if (updates.imageUrl !== undefined) dbPayload.image_url = updates.imageUrl;
       if (updates.status) dbPayload.status = updates.status;
+      if (updates.publishedAt) dbPayload.published_at = updates.publishedAt;
+      if (updates.extractionMetadata) dbPayload.extraction_metadata = updates.extractionMetadata;
       if (updates.lastVerifiedAt) dbPayload.last_verified_at = updates.lastVerifiedAt;
 
-      const { data, error } = await supabaseAdmin
+      let { data, error } = await supabaseAdmin
         .from('external_courses')
         .update(dbPayload)
         .eq('id', id)
         .select()
         .single();
 
+      if (error && (error.message.includes('extraction_metadata') || error.message.includes('published_at'))) {
+        delete dbPayload.extraction_metadata;
+        delete dbPayload.published_at;
+        const retryResult = await supabaseAdmin
+          .from('external_courses')
+          .update(dbPayload)
+          .eq('id', id)
+          .select()
+          .single();
+        data = retryResult.data;
+        error = retryResult.error;
+      }
+
       if (error || !data) {
         throw new AppError(`Failed to update external course: ${error?.message || 'Course not found'}`, 400, 'UPDATE_FAILED');
       }
 
+      const isPublishTransition = updates.status === 'published';
       await auditService.createLog({
         actorId: adminUserId,
-        action: 'EXTERNAL_COURSE_UPDATED',
+        action: isPublishTransition ? 'EXTERNAL_COURSE_PUBLISHED' : 'EXTERNAL_COURSE_UPDATED',
         entityType: 'EXTERNAL_COURSE',
         entityId: id,
         metadata: updates as Record<string, unknown>,
@@ -891,7 +1147,9 @@ export class CourseRecommendationsService {
         priceType: data.price_type,
         rating: data.rating,
         isActive: data.is_active !== false,
-        status: data.status,
+        status: (data.status || updates.status || 'draft') as any,
+        publishedAt: data.published_at ?? (updates.publishedAt || (updates.status === 'published' ? new Date().toISOString() : null)),
+        extractionMetadata: data.extraction_metadata ?? updates.extractionMetadata,
         lastVerifiedAt: data.last_verified_at,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
@@ -902,6 +1160,16 @@ export class CourseRecommendationsService {
     if (!existing) throw new AppError('Course not found', 404, 'NOT_FOUND');
     const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
     memoryExternalCourses.set(id, updated);
+
+    const isPublishTransition = updates.status === 'published' && existing.status !== 'published';
+    await auditService.createLog({
+      actorId: adminUserId,
+      action: isPublishTransition ? 'EXTERNAL_COURSE_PUBLISHED' : 'EXTERNAL_COURSE_UPDATED',
+      entityType: 'EXTERNAL_COURSE',
+      entityId: id,
+      metadata: updates as Record<string, unknown>,
+    });
+
     return updated;
   }
 

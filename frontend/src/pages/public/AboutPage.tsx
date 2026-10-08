@@ -1,108 +1,33 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
 
-export const AboutPage: React.FC = () => {
-  return (
-    <div className="max-w-6xl mx-auto px-6 sm:px-8 py-16 space-y-16">
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <Badge variant="neutral">About AI CLUB</Badge>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink">
-          Pioneering Applied Intelligence & Engineering Excellence
-        </h1>
-        <p className="text-lg text-ink-secondary leading-relaxed">
-          Founded as an elite technical collective, AI CLUB bridges university academic research
-          and industry-scale machine learning systems through merit, rigor, and collaboration.
-        </p>
+export const AboutPage: React.FC = () => (
+  <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20">
+    <header className="max-w-3xl">
+      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance">AI is better explored together.</h1>
+      <p className="mt-6 text-lg text-ink-secondary leading-relaxed">AI CLUB at SIET is a student community for learning about artificial intelligence, developing projects, and sharing ideas.</p>
+    </header>
+    <section aria-labelledby="club-activities" className="mt-12 sm:mt-16 border-t border-surface-border pt-10">
+      <h2 id="club-activities" className="text-3xl font-bold tracking-tight">Find your way into AI</h2>
+      <div className="grid md:grid-cols-2 gap-10 mt-6">
+        <div><h3 className="text-xl font-semibold">Start with a question</h3><p className="mt-3 text-ink-secondary leading-relaxed">Use the learning tracks to identify a topic you want to understand. The curriculum spans mathematical foundations, deep learning, language models, and deployment.</p><Link to="/learn" className="public-text-link mt-3">Explore the curriculum</Link></div>
+        <div><h3 className="text-xl font-semibold">See the work</h3><p className="mt-3 text-ink-secondary leading-relaxed">The public project catalogue brings together published member work. Project pages show descriptions, contributors, and supporting links when provided.</p><Link to="/community/projects" className="public-text-link mt-3">Browse member projects</Link></div>
       </div>
-
-      {/* Core Mission Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card className="shadow-subtle">
-          <CardHeader>
-            <Badge variant="lavender" className="w-fit mb-2">Research</Badge>
-            <CardTitle className="text-xl">Empirical Investigation</CardTitle>
-            <CardDescription>
-              Delving deep into model architectures, parameter-efficient fine-tuning, and alignment science.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-ink-muted leading-relaxed">
-            Members participate in weekly paper clinics, reproduce seminal research papers, and author peer-reviewed submissions for global AI workshops and conferences.
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-subtle">
-          <CardHeader>
-            <Badge variant="success" className="w-fit mb-2">Engineering</Badge>
-            <CardTitle className="text-xl">Production Systems</CardTitle>
-            <CardDescription>
-              Translating mathematical models into low-latency, scalable microservices and user applications.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-ink-muted leading-relaxed">
-            From quantization and ONNX runtimes to distributed Kubernetes GPU clusters, members build software that operates reliably in real production environments.
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-subtle">
-          <CardHeader>
-            <Badge variant="orange" className="w-fit mb-2">Community</Badge>
-            <CardTitle className="text-xl">Merit-Based Governance</CardTitle>
-            <CardDescription>
-              An inclusive, high-standard community powered by objective evaluation and mentorship.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-ink-muted leading-relaxed">
-            Admission is evaluated solely on demonstrated capability via our standardized 25-MCQ assessment and portfolio review by the technical advisory committee.
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charter Section */}
-      <div className="rounded-card-lg bg-surface border border-surface-border p-8 sm:p-12 shadow-soft space-y-6">
-        <div className="space-y-2">
-          <Badge variant="neutral">The Collective Charter</Badge>
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink">Our Guiding Principles</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-ink-secondary leading-relaxed">
-          <div className="space-y-2">
-            <h3 className="font-semibold text-ink text-base">1. Code Over Claims</h3>
-            <p className="text-ink-muted">
-              We value working implementations, benchmarked results, and reproducible code above abstract assertions. Every project must be verifiable.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold text-ink text-base">2. Active Peer Review</h3>
-            <p className="text-ink-muted">
-              All member initiatives undergo rigorous design and code reviews. Feedback is technical, constructive, and oriented toward engineering craft.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold text-ink text-base">3. Continuous Learning</h3>
-            <p className="text-ink-muted">
-              The AI landscape evolves weekly. Members commit to continuous skill acquisition across modern frameworks, math foundations, and deployment stacks.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold text-ink text-base">4. Responsible Stewardship</h3>
-            <p className="text-ink-muted">
-              We emphasize ethical deployment, data privacy, model safety, and transparent evaluation in every system developed under the club umbrella.
-            </p>
-          </div>
-        </div>
-
-        <div className="pt-6 border-t border-surface-border flex flex-wrap items-center justify-between gap-4">
-          <div className="text-xs text-ink-muted">
-            Ready to contribute to groundbreaking projects?
-          </div>
-          <Link to="/register">
-            <Button size="md">Apply for Membership</Button>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
+    </section>
+    <section aria-labelledby="principles-heading" className="mt-12 sm:mt-16 border-t border-surface-border pt-10">
+      <h2 id="principles-heading" className="text-3xl font-bold tracking-tight">What we value</h2>
+      <dl className="mt-6 grid md:grid-cols-2 gap-x-12 gap-y-8">
+        <div><dt className="text-lg font-semibold">Show your work</dt><dd className="mt-2 text-ink-secondary leading-relaxed">Explain what you tried, what happened, and what you would change. Working examples make ideas easier to discuss.</dd></div>
+        <div><dt className="text-lg font-semibold">Learn with others</dt><dd className="mt-2 text-ink-secondary leading-relaxed">Ask questions, share what you discover, and offer specific, constructive feedback.</dd></div>
+        <div><dt className="text-lg font-semibold">Question the evidence</dt><dd className="mt-2 text-ink-secondary leading-relaxed">Consider how a model was evaluated and whether its results support the claims being made.</dd></div>
+        <div><dt className="text-lg font-semibold">Build responsibly</dt><dd className="mt-2 text-ink-secondary leading-relaxed">Think about data privacy, limitations, and the people affected by a system.</dd></div>
+      </dl>
+    </section>
+    <section aria-labelledby="membership-heading" className="mt-12 sm:mt-16 rounded-xl bg-canvas-alt p-6 sm:p-10">
+      <h2 id="membership-heading" className="text-2xl sm:text-3xl font-bold tracking-tight">Membership and events</h2>
+      <p className="mt-4 max-w-2xl text-ink-secondary leading-relaxed">Membership starts with an account, an entrance assessment, and administrative review. Read the assessment instructions before you begin and follow your application status in your account.</p>
+      <p className="mt-4 max-w-2xl text-ink-secondary leading-relaxed">Public events are a separate way to participate. An account lets you RSVP to events marked public; members-only events require active membership.</p>
+      <div className="mt-6 flex flex-wrap gap-4"><Link to="/register" className="public-action">Apply to join</Link><Link to="/events" className="public-action-secondary">Find an event</Link></div>
+    </section>
+  </div>
+);

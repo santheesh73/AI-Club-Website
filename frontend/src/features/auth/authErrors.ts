@@ -35,12 +35,33 @@ export function mapAuthError(error: unknown): string {
     return 'Email service limit reached. Please wait a few minutes before trying again.';
   }
 
-  if (lower.includes('rate limit') || lower.includes('too many requests')) {
+  if (
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('too many authentication attempts') ||
+    lower.includes('please wait') ||
+    lower.includes('retrying')
+  ) {
+    if (message.toLowerCase().includes('wait') || message.toLowerCase().includes('retrying')) {
+      return message;
+    }
     return 'Too many attempts. Please wait a few minutes before trying again.';
   }
 
   if (lower.includes('network') || lower.includes('failed to fetch')) {
     return 'Unable to reach the server. Please check your network connection and try again.';
+  }
+
+  // If the error message is already a human-readable backend message, display it cleanly
+  if (
+    message &&
+    message.length > 5 &&
+    message.length < 250 &&
+    !message.includes('at ') &&
+    !message.includes('Error:') &&
+    !message.includes('{')
+  ) {
+    return message;
   }
 
   return 'Authentication failed. Please verify your details and try again.';

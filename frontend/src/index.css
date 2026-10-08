@@ -55,3 +55,18 @@
     background: #A09F9B;
   }
 }
+
+@layer components {
+  .public-action {
+    @apply inline-flex min-h-11 items-center justify-center rounded-pill bg-ink px-6 py-3 text-sm font-medium text-canvas transition-colors hover:bg-ink-secondary;
+  }
+  .public-action-secondary {
+    @apply public-action border border-ink bg-transparent text-ink hover:bg-surface-muted;
+  }
+  .public-text-link {
+    @apply inline-flex min-h-11 items-center text-sm font-medium text-ink underline-offset-4 hover:underline;
+  }
+}
+
+::selection { background: #E8E6DF; color: #141413; }
+input, textarea { caret-color: #141413; }

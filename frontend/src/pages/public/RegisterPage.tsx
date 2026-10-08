@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { clearEventReturn, eventAuthUrl, rememberEventReturn, resolveEventReturn } from '@/features/auth/authReturn';
 
 export const RegisterPage: React.FC = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [eventReturn] = useState(() => resolveEventReturn(location.search, location.state, false));
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [department, setDepartment] = useState('');
-  const [registerNumber, setRegisterNumber] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -57,10 +58,15 @@ export const RegisterPage: React.FC = () => {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    const result = await signUp(email, password, fullName, {
-      department: department.trim() || undefined,
-      registerNumber: registerNumber.trim() || undefined,
-    });
+    if (eventReturn) rememberEventReturn(eventReturn);
+    let result;
+    try {
+      result = await signUp(email.trim(), password, fullName.trim(), undefined, eventReturn || undefined);
+    } catch {
+      setGeneralError('We could not create your account. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
     setIsSubmitting(false);
 
     if (!result.success) {
@@ -68,8 +74,12 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Redirect to profile upon registration
-    navigate('/profile');
+    if (result.requiresEmailVerification || result.hasSession === false) {
+      setVerificationEmail(email.trim());
+      return;
+    }
+    if (eventReturn) clearEventReturn();
+    navigate(eventReturn || '/applicant/dashboard', { replace: true });
   };
 
   return (
@@ -77,12 +87,9 @@ export const RegisterPage: React.FC = () => {
       <div className="w-full max-w-md">
         <Card className="shadow-elevated border-surface-border">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-2">
-              <Badge variant="neutral">Account Setup</Badge>
-            </div>
-            <CardTitle className="text-2xl font-bold tracking-tight">Create AI CLUB Account</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">{verificationEmail ? 'Check your email' : 'Create an AI Club account'}</CardTitle>
             <CardDescription>
-              Join the innovation community. This registers your platform identity.
+              {verificationEmail ? `A confirmation step is required for ${verificationEmail}. Open the verification link in your email, then sign in.` : eventReturn ? 'Create an account, then return to the event to review RSVP eligibility. Public events do not require the membership assessment.' : 'Start your membership application. You can review the next steps before choosing to begin the assessment.'}
             </CardDescription>
           </CardHeader>
 
@@ -96,7 +103,7 @@ export const RegisterPage: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {verificationEmail ? <div className="space-y-5 text-sm text-ink-secondary"><p>{eventReturn ? 'Your event destination is saved. After verification, return to the event and choose RSVP to reserve your place.' : 'After verification, sign in to review your membership application steps.'}</p><p>Creating an account does not reserve an event place or start a timed assessment.</p><Link to={eventAuthUrl('login', eventReturn)} className="inline-flex min-h-11 items-center rounded-pill bg-ink text-canvas px-5 py-2.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">Continue to sign in</Link></div> : <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <Input
                 label="Full Name"
                 placeholder="Ada Lovelace"
@@ -117,21 +124,6 @@ export const RegisterPage: React.FC = () => {
                 autoComplete="email"
                 required
               />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
-                  label="Department (Optional)"
-                  placeholder="Computer Science"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                />
-                <Input
-                  label="Roll / Reg No. (Optional)"
-                  placeholder="2026-CS-042"
-                  value={registerNumber}
-                  onChange={(e) => setRegisterNumber(e.target.value)}
-                />
-              </div>
 
               <Input
                 label="Password"
@@ -163,15 +155,15 @@ export const RegisterPage: React.FC = () => {
                   className="w-full shadow-subtle"
                   isLoading={isSubmitting}
                 >
-                  Create Platform Account
+                  Create account
                 </Button>
               </div>
-            </form>
+            </form>}
           </CardContent>
 
           <CardFooter className="justify-center text-xs text-ink-muted">
             Already have an account?{' '}
-            <Link to="/login" className="ml-1 text-ink font-semibold hover:underline">
+            <Link to={eventAuthUrl('login', eventReturn)} className="ml-1 text-ink font-semibold hover:underline underline-offset-4">
               Sign In
             </Link>
           </CardFooter>

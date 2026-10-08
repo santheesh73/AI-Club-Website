@@ -44,4 +44,10 @@ adminRouter.get('/:id/registrations', (req, res, next) => eventsController.getEv
 
 export const memberEventsRoutes = memberRouter;
 export const adminEventsRoutes = adminRouter;
-export const eventsRoutes = memberRouter;
+const publicRouter = Router();
+publicRouter.get('/', validate(eventQuerySchema), (req, res, next) => eventsController.getPublicEvents(req, res, next));
+publicRouter.get('/:eventId/registration', authenticate, requireRole(['applicant', 'member', 'admin']), (req, res, next) => eventsController.getRegistrationStatus(req, res, next));
+publicRouter.post('/:eventId/register', authenticate, requireRole(['applicant', 'member', 'admin']), (req, res, next) => eventsController.registerForEvent(req, res, next));
+publicRouter.delete('/:eventId/registration', authenticate, requireRole(['applicant', 'member', 'admin']), (req, res, next) => eventsController.cancelRegistration(req, res, next));
+publicRouter.get('/:slug', (req, res, next) => eventsController.getPublicEventBySlug(req, res, next));
+export const eventsRoutes = publicRouter;
