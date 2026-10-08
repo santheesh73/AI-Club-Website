@@ -64,6 +64,8 @@ export interface ExternalCourseEntity {
   rating?: number;
   isActive: boolean;
   status: 'draft' | 'published' | 'archived';
+  publishedAt?: string;
+  extractionMetadata?: Record<string, unknown>;
   lastVerifiedAt: string;
   createdAt: string;
   updatedAt: string;

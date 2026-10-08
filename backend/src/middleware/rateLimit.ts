@@ -130,3 +130,10 @@ export const reportRateLimiter = createRateLimiter({
   max: 10,
   message: 'Report submission limit reached. Please wait before submitting additional reports.',
 });
+
+export const extractionRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: 'Course extraction rate limit reached. Please wait before extracting more URLs.',
+});
+
