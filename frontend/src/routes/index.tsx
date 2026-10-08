@@ -6,60 +6,61 @@ import { MemberLayout } from '@/components/layout/MemberLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { RouteGuard } from '@/routes/RouteGuard';
 import { LandingPage } from '@/pages/public/LandingPage';
-import { AboutPage } from '@/pages/public/AboutPage';
-import { LearnPage } from '@/pages/public/LearnPage';
-import { EventsPage } from '@/pages/public/EventsPage';
+const AboutPage = React.lazy(() => import('@/pages/public/AboutPage').then(module => ({ default: module.AboutPage })));
+const LearnPage = React.lazy(() => import('@/pages/public/LearnPage').then(module => ({ default: module.LearnPage })));
+const EventsPage = React.lazy(() => import('@/pages/public/EventsPage').then(module => ({ default: module.EventsPage })));
+const PublicEventDetailPage = React.lazy(() => import('@/pages/public/PublicEventDetailPage').then(module => ({ default: module.PublicEventDetailPage })));
 
-import { LoginPage } from '@/pages/public/LoginPage';
-import { RegisterPage } from '@/pages/public/RegisterPage';
-import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
-import { ApplicantDashboard } from '@/pages/applicant/ApplicantDashboard';
-import { ApplicationPage } from '@/pages/applicant/ApplicationPage';
-import { AssessmentPage } from '@/pages/applicant/AssessmentPage';
-import { AssessmentResultPage } from '@/pages/applicant/AssessmentResultPage';
-import { AdminDashboard } from '@/pages/admin/AdminDashboard';
-import { AdminApplicationsPage } from '@/pages/admin/AdminApplicationsPage';
-import { AdminApplicationDetailPage } from '@/pages/admin/AdminApplicationDetailPage';
-import { AdminMembersPage } from '@/pages/admin/AdminMembersPage';
-import { AdminAnnouncementsPage } from '@/pages/admin/AdminAnnouncementsPage';
-import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage';
-import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
-import { MemberDashboard } from '@/pages/member/MemberDashboard';
-import { MemberMembershipPage } from '@/pages/member/MemberMembershipPage';
-import { MemberProfilePage } from '@/pages/member/MemberProfilePage';
-import { MemberApplicationPage } from '@/pages/member/MemberApplicationPage';
-import { MemberAssessmentPage } from '@/pages/member/MemberAssessmentPage';
-import { MemberEventsPage } from '@/pages/member/MemberEventsPage';
-import { MemberEventDetailPage } from '@/pages/member/MemberEventDetailPage';
-import { AdminEventsPage } from '@/pages/admin/AdminEventsPage';
-import { AdminEventCreatePage } from '@/pages/admin/AdminEventCreatePage';
-import { AdminEventEditPage } from '@/pages/admin/AdminEventEditPage';
-import { AdminEventRegistrationsPage } from '@/pages/admin/AdminEventRegistrationsPage';
-import { MemberCoursesPage } from '@/pages/member/MemberCoursesPage';
-import { MemberCourseDetailPage } from '@/pages/member/MemberCourseDetailPage';
-import { MemberMyCoursesPage } from '@/pages/member/MemberMyCoursesPage';
-import { MemberLearningPage } from '@/pages/member/MemberLearningPage';
-import { AdminCoursesPage } from '@/pages/admin/AdminCoursesPage';
-import { AdminExternalCoursesPage } from '@/pages/admin/AdminExternalCoursesPage';
-import { AdminCourseCreatePage } from '@/pages/admin/AdminCourseCreatePage';
-import { AdminCourseEditPage } from '@/pages/admin/AdminCourseEditPage';
-import { AdminCourseEnrollmentsPage } from '@/pages/admin/AdminCourseEnrollmentsPage';
+const LoginPage = React.lazy(() => import('@/pages/public/LoginPage').then(module => ({ default: module.LoginPage })));
+const RegisterPage = React.lazy(() => import('@/pages/public/RegisterPage').then(module => ({ default: module.RegisterPage })));
+const ForgotPasswordPage = React.lazy(() => import('@/pages/public/ForgotPasswordPage').then(module => ({ default: module.ForgotPasswordPage })));
+const ApplicantDashboard = React.lazy(() => import('@/pages/applicant/ApplicantDashboard').then(module => ({ default: module.ApplicantDashboard })));
+const ApplicationPage = React.lazy(() => import('@/pages/applicant/ApplicationPage').then(module => ({ default: module.ApplicationPage })));
+const AssessmentPage = React.lazy(() => import('@/pages/applicant/AssessmentPage').then(module => ({ default: module.AssessmentPage })));
+const AssessmentResultPage = React.lazy(() => import('@/pages/applicant/AssessmentResultPage').then(module => ({ default: module.AssessmentResultPage })));
+const AdminDashboard = React.lazy(() => import('@/pages/admin/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminApplicationsPage = React.lazy(() => import('@/pages/admin/AdminApplicationsPage').then(module => ({ default: module.AdminApplicationsPage })));
+const AdminApplicationDetailPage = React.lazy(() => import('@/pages/admin/AdminApplicationDetailPage').then(module => ({ default: module.AdminApplicationDetailPage })));
+const AdminMembersPage = React.lazy(() => import('@/pages/admin/AdminMembersPage').then(module => ({ default: module.AdminMembersPage })));
+const AdminAnnouncementsPage = React.lazy(() => import('@/pages/admin/AdminAnnouncementsPage').then(module => ({ default: module.AdminAnnouncementsPage })));
+const AdminAuditLogsPage = React.lazy(() => import('@/pages/admin/AdminAuditLogsPage').then(module => ({ default: module.AdminAuditLogsPage })));
+const AdminSettingsPage = React.lazy(() => import('@/pages/admin/AdminSettingsPage').then(module => ({ default: module.AdminSettingsPage })));
+const MemberDashboard = React.lazy(() => import('@/pages/member/MemberDashboard').then(module => ({ default: module.MemberDashboard })));
+const MemberMembershipPage = React.lazy(() => import('@/pages/member/MemberMembershipPage').then(module => ({ default: module.MemberMembershipPage })));
+const MemberProfilePage = React.lazy(() => import('@/pages/member/MemberProfilePage').then(module => ({ default: module.MemberProfilePage })));
+const MemberApplicationPage = React.lazy(() => import('@/pages/member/MemberApplicationPage').then(module => ({ default: module.MemberApplicationPage })));
+const MemberAssessmentPage = React.lazy(() => import('@/pages/member/MemberAssessmentPage').then(module => ({ default: module.MemberAssessmentPage })));
+const MemberEventsPage = React.lazy(() => import('@/pages/member/MemberEventsPage').then(module => ({ default: module.MemberEventsPage })));
+const MemberEventDetailPage = React.lazy(() => import('@/pages/member/MemberEventDetailPage').then(module => ({ default: module.MemberEventDetailPage })));
+const AdminEventsPage = React.lazy(() => import('@/pages/admin/AdminEventsPage').then(module => ({ default: module.AdminEventsPage })));
+const AdminEventCreatePage = React.lazy(() => import('@/pages/admin/AdminEventCreatePage').then(module => ({ default: module.AdminEventCreatePage })));
+const AdminEventEditPage = React.lazy(() => import('@/pages/admin/AdminEventEditPage').then(module => ({ default: module.AdminEventEditPage })));
+const AdminEventRegistrationsPage = React.lazy(() => import('@/pages/admin/AdminEventRegistrationsPage').then(module => ({ default: module.AdminEventRegistrationsPage })));
+const MemberCoursesPage = React.lazy(() => import('@/pages/member/MemberCoursesPage').then(module => ({ default: module.MemberCoursesPage })));
+const MemberCourseDetailPage = React.lazy(() => import('@/pages/member/MemberCourseDetailPage').then(module => ({ default: module.MemberCourseDetailPage })));
+const MemberMyCoursesPage = React.lazy(() => import('@/pages/member/MemberMyCoursesPage').then(module => ({ default: module.MemberMyCoursesPage })));
+const MemberLearningPage = React.lazy(() => import('@/pages/member/MemberLearningPage').then(module => ({ default: module.MemberLearningPage })));
+const AdminCoursesPage = React.lazy(() => import('@/pages/admin/AdminCoursesPage').then(module => ({ default: module.AdminCoursesPage })));
+const AdminExternalCoursesPage = React.lazy(() => import('@/pages/admin/AdminExternalCoursesPage').then(module => ({ default: module.AdminExternalCoursesPage })));
+const AdminCourseCreatePage = React.lazy(() => import('@/pages/admin/AdminCourseCreatePage').then(module => ({ default: module.AdminCourseCreatePage })));
+const AdminCourseEditPage = React.lazy(() => import('@/pages/admin/AdminCourseEditPage').then(module => ({ default: module.AdminCourseEditPage })));
+const AdminCourseEnrollmentsPage = React.lazy(() => import('@/pages/admin/AdminCourseEnrollmentsPage').then(module => ({ default: module.AdminCourseEnrollmentsPage })));
 
-import { MemberProjectsPage } from '@/pages/member/MemberProjectsPage';
-import { MemberProjectCreatePage } from '@/pages/member/MemberProjectCreatePage';
-import { MemberProjectEditPage } from '@/pages/member/MemberProjectEditPage';
-import { MemberAchievementsPage } from '@/pages/member/MemberAchievementsPage';
-import { CommunityProjectsPage } from '@/pages/community/CommunityProjectsPage';
-import { ProjectDetailPage } from '@/pages/community/ProjectDetailPage';
-import { AdminCommunityPage } from '@/pages/admin/AdminCommunityPage';
-import { MemberNotificationsPage } from '@/pages/member/MemberNotificationsPage';
-import { MemberActivityPage } from '@/pages/member/MemberActivityPage';
-import { MemberLearningAnalyticsPage } from '@/pages/member/MemberLearningAnalyticsPage';
-import { MemberAiPage } from '@/pages/member/MemberAiPage';
-import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
-import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
-import { AdminIntelligencePage } from '@/pages/admin/AdminIntelligencePage';
-import { AdminAssessmentPage } from '@/pages/admin/AdminAssessmentPage';
+const MemberProjectsPage = React.lazy(() => import('@/pages/member/MemberProjectsPage').then(module => ({ default: module.MemberProjectsPage })));
+const MemberProjectCreatePage = React.lazy(() => import('@/pages/member/MemberProjectCreatePage').then(module => ({ default: module.MemberProjectCreatePage })));
+const MemberProjectEditPage = React.lazy(() => import('@/pages/member/MemberProjectEditPage').then(module => ({ default: module.MemberProjectEditPage })));
+const MemberAchievementsPage = React.lazy(() => import('@/pages/member/MemberAchievementsPage').then(module => ({ default: module.MemberAchievementsPage })));
+const CommunityProjectsPage = React.lazy(() => import('@/pages/community/CommunityProjectsPage').then(module => ({ default: module.CommunityProjectsPage })));
+const ProjectDetailPage = React.lazy(() => import('@/pages/community/ProjectDetailPage').then(module => ({ default: module.ProjectDetailPage })));
+const AdminCommunityPage = React.lazy(() => import('@/pages/admin/AdminCommunityPage').then(module => ({ default: module.AdminCommunityPage })));
+const MemberNotificationsPage = React.lazy(() => import('@/pages/member/MemberNotificationsPage').then(module => ({ default: module.MemberNotificationsPage })));
+const MemberActivityPage = React.lazy(() => import('@/pages/member/MemberActivityPage').then(module => ({ default: module.MemberActivityPage })));
+const MemberLearningAnalyticsPage = React.lazy(() => import('@/pages/member/MemberLearningAnalyticsPage').then(module => ({ default: module.MemberLearningAnalyticsPage })));
+const MemberAiPage = React.lazy(() => import('@/pages/member/MemberAiPage').then(module => ({ default: module.MemberAiPage })));
+const AdminNotificationsPage = React.lazy(() => import('@/pages/admin/AdminNotificationsPage').then(module => ({ default: module.AdminNotificationsPage })));
+const AdminAnalyticsPage = React.lazy(() => import('@/pages/admin/AdminAnalyticsPage').then(module => ({ default: module.AdminAnalyticsPage })));
+const AdminIntelligencePage = React.lazy(() => import('@/pages/admin/AdminIntelligencePage').then(module => ({ default: module.AdminIntelligencePage })));
+const AdminAssessmentPage = React.lazy(() => import('@/pages/admin/AdminAssessmentPage').then(module => ({ default: module.AdminAssessmentPage })));
 import { useAuth } from '@/features/auth';
 
 const ProfileRouteHandler: React.FC = () => {
@@ -76,6 +77,7 @@ const ProfileRouteHandler: React.FC = () => {
 
 export const AppRoutes: React.FC = () => {
   return (
+    <React.Suspense fallback={<div role="status" className="px-6 py-12 text-ink-secondary">Loading page…</div>}>
     <Routes>
       {/* ================= PUBLIC & AUTH ROUTES ================= */}
       <Route element={<PublicLayout />}>
@@ -83,6 +85,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/learn" element={<LearnPage />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:slug" element={<PublicEventDetailPage />} />
         <Route path="/projects" element={<CommunityProjectsPage />} />
         <Route path="/community" element={<CommunityProjectsPage />} />
         <Route path="/community/projects" element={<CommunityProjectsPage />} />
@@ -136,7 +139,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="application" element={<MemberApplicationPage />} />
         <Route path="assessment" element={<MemberAssessmentPage />} />
         <Route path="events" element={<MemberEventsPage />} />
-        <Route path="events/:id" element={<MemberEventDetailPage />} />
+        <Route path="events/:slug" element={<MemberEventDetailPage />} />
         <Route path="courses" element={<MemberCoursesPage />} />
         <Route path="courses/:slug" element={<MemberCourseDetailPage />} />
         <Route path="my-courses" element={<MemberMyCoursesPage />} />
@@ -199,5 +202,6 @@ export const AppRoutes: React.FC = () => {
       {/* Fallback 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </React.Suspense>
   );
 };

@@ -39,7 +39,8 @@ export function useMembership() {
     fetchMembership();
   }, [fetchMembership]);
 
-  const fallbackMemberRecord: MembershipRecord | null = auth?.profile?.role === 'member'
+  const isExplicitDemo = import.meta.env.DEV && Boolean((auth?.profile as { isDemo?: boolean } | null)?.isDemo);
+  const fallbackMemberRecord: MembershipRecord | null = isExplicitDemo && auth?.profile?.role === 'member'
     ? {
         id: 'mem-demo-001',
         userId: auth.profile.id,

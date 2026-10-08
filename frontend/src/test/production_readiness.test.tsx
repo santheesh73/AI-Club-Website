@@ -153,6 +153,24 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
       expect(screen.queryByText('Admin Control Center')).not.toBeInTheDocument();
     });
 
+    it('does not treat a member role as an active membership when access is suspended or unavailable', () => {
+      vi.spyOn(authContext, 'useAuth').mockReturnValue({
+        isAuthenticated: true,
+        isLoading: false,
+        profile: { id: 'u-inactive', email: 'member@example.com', role: 'member' },
+        user: null,
+      } as ReturnType<typeof authContext.useAuth>);
+      vi.spyOn(membershipContext, 'useMembership').mockReturnValue({
+        membership: null, isActiveMember: false, isLoading: false, error: null, refetch: vi.fn(),
+      });
+      render(<MemoryRouter initialEntries={['/member']}><Routes>
+        <Route path="/applicant/dashboard" element={<div>Membership application</div>} />
+        <Route path="/member" element={<RouteGuard requiredRole="member"><div>Protected Member Dashboard</div></RouteGuard>} />
+      </Routes></MemoryRouter>);
+      expect(screen.getByText('Membership application')).toBeInTheDocument();
+      expect(screen.queryByText('Protected Member Dashboard')).not.toBeInTheDocument();
+    });
+
     it('permits active member into /member route', () => {
       vi.spyOn(authContext, 'useAuth').mockReturnValue({
         isAuthenticated: true,

@@ -2,8 +2,29 @@ import { Request, Response, NextFunction } from 'express';
 import { sendSuccess, AppError } from '../../utils/response';
 import { eventsService } from './events.service';
 import { EventQueryDto } from './events.types';
+import { isAuthorizedAdmin } from '../../middleware/auth';
 
 export class EventsController {
+  async getPublicEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const query = req.query as unknown as EventQueryDto;
+      const result = await eventsService.getPublicEvents(query);
+      sendSuccess(res, result.items, 200, { total: result.total, page: query.page || 1, pageSize: query.pageSize || 20 });
+    } catch (err) { next(err); }
+  }
+
+  async getPublicEventBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try { sendSuccess(res, await eventsService.getPublicEventBySlug(req.params.slug)); }
+    catch (err) { next(err); }
+  }
+
+  async getRegistrationStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
+      sendSuccess(res, await eventsService.getRegistrationStatus(req.params.eventId, req.user.id, isAuthorizedAdmin(req.user.email, req.user.role)));
+    } catch (err) { next(err); }
+  }
+
   // ============================================================================
   // ADMIN CONTROLLER METHODS
   // ============================================================================
@@ -176,7 +197,7 @@ export class EventsController {
       const registration = await eventsService.registerForEvent(
         req.params.eventId,
         req.user.id,
-        req.user.role,
+        isAuthorizedAdmin(req.user.email, req.user.role) ? 'admin' : req.user.role === 'admin' ? 'applicant' : req.user.role,
         req.headers['x-request-id'] as string
       );
       sendSuccess(res, registration, 201);

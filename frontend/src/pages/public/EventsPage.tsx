@@ -1,155 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CalendarDays, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Link } from 'react-router-dom';
-import { apiClient } from '@/services/apiClient';
+import { eventsApi } from '@/services/eventsApi';
+import { isPublicEventDto, type PublicEventDto } from '@/types/events';
 
-interface PublicEvent {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  capacity?: number;
-  isMemberOnly?: boolean;
-}
+export const formatEventDate = (value: string): string => new Date(value).toLocaleString(undefined, {
+  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+});
 
 export const EventsPage: React.FC = () => {
-  const [events, setEvents] = useState<PublicEvent[]>([]);
+  const [events, setEvents] = useState<PublicEventDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-    apiClient
-      .get<{ data: PublicEvent[] }>('/api/v1/events')
-      .then((res) => {
-        if (isMounted) {
-          if (res.success && res.data) {
-            const list = Array.isArray(res.data) ? (res.data as any) : (res.data as any)?.items || [];
-            setEvents(list);
-          }
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          // Provide fallback default scheduled events
-          setEvents([
-            {
-              id: 'evt-ai-summit',
-              title: 'Annual Applied AI Research Symposium',
-              description: 'Keynotes by industry researchers, student paper presentations, and architectural showcases across vision and language.',
-              category: 'Symposium',
-              startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 4 * 3600000).toISOString(),
-              location: 'Main Auditorium & Live Stream',
-              isMemberOnly: false,
-            },
-            {
-              id: 'evt-hackathon',
-              title: 'Autonomous Agents 48-Hour Hackathon',
-              description: 'Team sprint focused on building practical multi-agent systems using LangGraph, tool calling, and local LLM backends.',
-              category: 'Hackathon',
-              startDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
-              endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-              location: 'AI Research Lab B, Turing Wing',
-              isMemberOnly: true,
-            },
-            {
-              id: 'evt-reading-group',
-              title: 'Seminal Paper Reading Clinic: Reasoning in Large Models',
-              description: 'Line-by-line breakdown of Test-Time Compute Scaling, Monte Carlo Tree Search for LLMs, and chain-of-thought optimization.',
-              category: 'Seminar',
-              startDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(),
-              endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000 + 2 * 3600000).toISOString(),
-              location: 'Conference Room 304',
-              isMemberOnly: false,
-            },
-          ]);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const formatDate = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      return d.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
+    let current = true;
+    setLoading(true);
+    setError(null);
+    async function load() {
+      try {
+        const response = await eventsApi.getPublicEvents({ timeline: 'upcoming', pageSize: 100 });
+        if (!current) return;
+        if (!response || !response.success) setError('We could not load the event calendar. Please try again.');
+        else if (!Array.isArray(response.data) || !response.data.every(isPublicEventDto)) setError('The event calendar returned incomplete information. Please try again.');
+        else setEvents(response.data);
+      } catch {
+        if (current) setError('We could not reach the event calendar. Please try again.');
+      } finally {
+        if (current) setLoading(false);
+      }
     }
-  };
+    void load();
+    return () => { current = false; };
+  }, [attempt]);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 sm:px-8 py-16 space-y-16">
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <Badge variant="neutral">Calendar of Activities</Badge>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink">
-          Community Events & Seminars
-        </h1>
-        <p className="text-lg text-ink-secondary leading-relaxed">
-          Explore upcoming hackathons, paper clinics, guest keynotes, and project sprint deadlines.
-        </p>
-      </div>
-
-      {/* Events List */}
-      {loading ? (
-        <div className="text-center py-16 text-sm text-ink-muted">Loading scheduled events...</div>
-      ) : events.length === 0 ? (
-        <Card className="text-center py-16 text-ink-muted shadow-subtle">
-          <CardContent>No upcoming events currently scheduled. Check back soon.</CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {events.map((evt) => (
-            <Card key={evt.id} className="shadow-subtle hover:shadow-elevated transition-shadow flex flex-col justify-between">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="lavender">{evt.category || 'Event'}</Badge>
-                  {evt.isMemberOnly && (
-                    <Badge variant="orange">Members Only</Badge>
-                  )}
-                </div>
-                <CardTitle className="text-lg font-bold leading-snug">{evt.title}</CardTitle>
-                <CardDescription className="text-xs text-ink-muted mt-2 leading-relaxed">
-                  {evt.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 text-xs text-ink-secondary pt-2 border-t border-surface-border">
-                <div className="font-semibold text-ink">
-                  {formatDate(evt.startDate)}
-                </div>
-                <div className="text-ink-muted flex items-center gap-1">
-                  <span>📍</span>
-                  <span>{evt.location}</span>
-                </div>
-              </CardContent>
-              <CardFooter className="pt-2">
-                <Link to="/register" className="w-full">
-                  <Button variant="outline" size="sm" className="w-full">
-                    {evt.isMemberOnly ? 'Join Club to RSVP' : 'Register to Attend'}
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+    <div className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20">
+      <header className="max-w-3xl mb-12 sm:mb-16">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink">Events at AI Club</h1>
+        <p className="mt-5 text-lg text-ink-secondary leading-relaxed">Find an upcoming session and see what you need to attend. Public events accept RSVPs from any signed-in account; members-only events require club membership.</p>
+      </header>
+      {loading ? <p role="status" className="py-12 text-ink-secondary">Loading events…</p>
+        : error ? <div className="py-10 space-y-5"><p role="alert" className="text-ink-secondary">{error}</p><Button variant="outline" onClick={() => setAttempt((value) => value + 1)}>Retry loading events</Button></div>
+        : events.length === 0 ? <div className="py-12 border-y border-surface-border"><h2 className="text-2xl font-semibold text-ink">No upcoming events yet</h2><p className="mt-3 text-ink-secondary">Published events will appear here when they are scheduled.</p><Link to="/learn" className="inline-flex min-h-11 items-center gap-2 mt-5 font-medium text-ink underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded">Explore learning <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></div>
+        : <ul className="divide-y divide-surface-border border-y border-surface-border">
+          {events.map((event) => <li key={event.id} className="py-8 sm:py-10 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-3"><Badge variant="neutral">{event.category.replace(/_/g, ' ')}</Badge><Badge variant={event.eligibility === 'public' ? 'success' : 'lavender'}>{event.eligibility === 'public' ? 'Public event' : 'Members only'}</Badge>{event.status === 'cancelled' && <Badge variant="orange">Cancelled</Badge>}{event.isFull && event.status !== 'cancelled' && <Badge variant="orange">Full</Badge>}</div>
+              <h2 className="text-2xl font-semibold tracking-tight text-ink">{event.title}</h2>
+              <p className="mt-3 max-w-[70ch] text-ink-secondary leading-relaxed">{event.shortDescription}</p>
+              <div className="mt-4 flex flex-col gap-2 text-sm text-ink-secondary"><p className="flex items-start gap-2"><CalendarDays className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" /><time dateTime={event.startAt}>{formatEventDate(event.startAt)}</time></p><p className="flex items-start gap-2"><MapPin className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />{event.location || (event.isOnline ? 'Online' : 'Location to be announced')}</p></div>
+            </div>
+            <Link to={'/events/' + event.slug} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-surface-border px-5 py-2.5 font-medium text-ink hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-canvas">View event <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+          </li>)}
+        </ul>}
     </div>
   );
 };

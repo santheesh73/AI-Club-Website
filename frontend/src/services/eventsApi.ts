@@ -9,9 +9,45 @@ import type {
   UpdateEventInput,
   EventCategory,
   EventStatus,
+  PublicEventDto,
+  EventRegistrationRecord,
+  EventRegistrationStatusDto,
 } from '@/types/events';
 
 export const eventsApi = {
+  async getPublicEvents(query: {
+    category?: EventCategory;
+    timeline?: 'upcoming' | 'past' | 'all';
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<ApiResponse<PublicEventDto[]>> {
+    const params = new URLSearchParams();
+    if (query.category) params.set('category', query.category);
+    if (query.timeline) params.set('timeline', query.timeline);
+    if (query.search) params.set('search', query.search);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
+    const qs = params.toString();
+    return apiClient.get<PublicEventDto[]>(`/api/v1/events${qs ? `?${qs}` : ''}`);
+  },
+
+  async getPublicEventBySlug(slug: string): Promise<ApiResponse<PublicEventDto>> {
+    return apiClient.get<PublicEventDto>(`/api/v1/events/${encodeURIComponent(slug)}`);
+  },
+
+  async getPublicEventRegistration(eventId: string): Promise<ApiResponse<EventRegistrationStatusDto>> {
+    return apiClient.get<EventRegistrationStatusDto>(`/api/v1/events/${encodeURIComponent(eventId)}/registration`);
+  },
+
+  async registerForPublicEvent(eventId: string): Promise<ApiResponse<EventRegistrationRecord>> {
+    return apiClient.post<EventRegistrationRecord>(`/api/v1/events/${encodeURIComponent(eventId)}/register`);
+  },
+
+  async cancelPublicEventRegistration(eventId: string): Promise<ApiResponse<EventRegistrationRecord>> {
+    return apiClient.delete<EventRegistrationRecord>(`/api/v1/events/${encodeURIComponent(eventId)}/registration`);
+  },
+
   // ============================================================================
   // MEMBER API CALLS
   // ============================================================================

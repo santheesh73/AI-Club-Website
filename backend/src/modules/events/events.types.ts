@@ -147,3 +147,11 @@ export interface RegistrationAttendeeDto {
   status: RegistrationStatus;
   registeredAt: string;
 }
+
+// Explicit discovery projection: never serialize an EventRecord directly publicly.
+export type PublicEventDto = Pick<EventRecord,
+  'id' | 'slug' | 'title' | 'shortDescription' | 'description' | 'category' |
+  'eventMode' | 'location' | 'isOnline' | 'coverImageUrl' | 'startAt' | 'endAt' |
+  'registrationOpenAt' | 'registrationCloseAt' | 'capacity' | 'eligibility' |
+  'status' | 'speaker' | 'organizer' | 'requirements' | 'tags'
+> & { availableSeats: number | null; isFull: boolean };

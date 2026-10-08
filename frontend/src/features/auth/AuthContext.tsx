@@ -5,6 +5,7 @@ import { env } from '@/lib/env';
 import { apiClient } from '@/services/apiClient';
 import type { UserProfile } from '@/types/user';
 import { mapAuthError } from './authErrors';
+import { eventAuthUrl, validateEventReturn } from './authReturn';
 
 export const AUTHORIZED_ADMIN_EMAIL = 'santheesh651@gmail.com';
 
@@ -29,8 +30,9 @@ interface AuthContextType {
     email: string,
     password: string,
     fullName: string,
-    metadata?: Partial<UserProfile>
-  ) => Promise<{ success: boolean; error?: string }>;
+    metadata?: Partial<UserProfile>,
+    returnTo?: string
+  ) => Promise<{ success: boolean; error?: string; hasSession?: boolean; requiresEmailVerification?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -296,7 +298,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       setIsLoading(false);
-      return { success: true };
+      return { success: false, error: 'Sign in did not create an active session. Please try again.' };
     } catch (err) {
       setIsLoading(false);
       return { success: false, error: mapAuthError(err) };
@@ -308,7 +310,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     email: string,
     password: string,
     fullName: string,
-    metadata?: Partial<UserProfile>
+    metadata?: Partial<UserProfile>,
+    returnTo?: string
   ) => {
     setIsLoading(true);
     try {
@@ -330,7 +333,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser({ id: devUser.id, email } as unknown as User);
         setSession({ user: { id: devUser.id, email } } as unknown as Session);
         setIsLoading(false);
-        return { success: true };
+        return { success: true, hasSession: true, requiresEmailVerification: false };
       }
 
       // 1. Call backend registration endpoint
@@ -353,6 +356,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             email: email.trim(),
             password,
             options: {
+              emailRedirectTo: `${window.location.origin}${eventAuthUrl('login', validateEventReturn(returnTo))}`,
               data: {
                 full_name: fullName.trim(),
                 role: 'applicant',
@@ -365,16 +369,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { success: false, error: mapAuthError(error) };
           }
 
-          if (data.user) {
-            setUser(data.user);
-            if (data.session) {
-              setSession(data.session);
-              await fetchProfile(data.user.id, data.user.email, fullName);
-            }
-          }
+          setSession(data.session);
+          setUser(data.user);
+          if (data.user && data.session) await fetchProfile(data.user.id, data.user.email, fullName);
+          else setProfile(null);
 
           setIsLoading(false);
-          return { success: true };
+          return { success: true, hasSession: Boolean(data.session), requiresEmailVerification: !data.session };
         }
 
         setIsLoading(false);
@@ -390,7 +391,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       setIsLoading(false);
-      return { success: true };
+      return { success: true, hasSession: true, requiresEmailVerification: false };
     } catch (err) {
       setIsLoading(false);
       return { success: false, error: mapAuthError(err) };

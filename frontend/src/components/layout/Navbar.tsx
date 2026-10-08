@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { getContextualHomePath } from '@/utils/navigation';
 
@@ -8,135 +8,66 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, profile, signOut, isAdmin } = useAuth();
-  const isLandingPage = location.pathname === '/';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const homeTarget = getContextualHomePath(isAuthenticated, profile, isAdmin);
-
   const navLinks = [
     { label: 'About', path: '/about' },
     { label: 'Learn', path: '/learn' },
     { label: 'Events', path: '/events' },
   ];
 
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuButton.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', dismiss);
+    return () => document.removeEventListener('keydown', dismiss);
+  }, [menuOpen]);
+
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    setSigningOut(true);
+    try { await signOut(); navigate('/'); }
+    finally { setSigningOut(false); }
   };
 
-  const getInitials = (name?: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
-  };
+  const accountLinks = isAuthenticated ? (
+    <>
+      <Link to={homeTarget} className="public-action">{isAdmin ? 'Admin center' : profile?.role === 'member' ? 'Member portal' : 'My application'}</Link>
+      <button type="button" onClick={handleSignOut} disabled={signingOut} className="public-text-link disabled:opacity-50">{signingOut ? 'Signing out…' : 'Sign out'}</button>
+    </>
+  ) : (
+    <>
+      <Link to="/login" className="public-text-link">Sign in</Link>
+      <Link to="/register" className="public-action">Join Club</Link>
+    </>
+  );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-surface-border bg-canvas/80 backdrop-blur-md">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-8">
-        {/* Brand Logo */}
-        <Link to={homeTarget} className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-canvas font-bold text-lg tracking-wider group-hover:scale-105 transition-transform">
-            AI
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-lg tracking-tight text-ink">AI CLUB</span>
-            <span className="text-[10px] tracking-widest text-ink-muted uppercase">Innovation Hub</span>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-surface-border bg-canvas">
+      <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-6 sm:px-8">
+        <Link to="/" className="flex items-center gap-3 shrink-0" aria-label="AI Club home">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-canvas font-bold text-lg" aria-hidden="true">AI</span>
+          <span className="font-semibold text-lg tracking-tight">AI CLUB</span>
         </Link>
-
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-sm font-medium transition-colors ${
-                  isActive ? 'text-ink font-semibold' : 'text-ink-secondary hover:text-ink'
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6">
+          {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path ? 'page' : undefined} className="public-text-link aria-[current=page]:underline">{link.label}</Link>)}
         </nav>
-
-        {/* Action Buttons: Suppressed on Landing Page per strict requirement */}
-        {!isLandingPage && (
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <>
-                {profile?.role === 'applicant' && (
-                  <Link to="/applicant/assessment">
-                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
-                      Take Assessment &rarr;
-                    </Button>
-                  </Link>
-                )}
-                {profile?.role === 'member' && (
-                  <Link to="/member/dashboard">
-                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
-                      Member Portal &rarr;
-                    </Button>
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
-                      Admin Center &rarr;
-                    </Button>
-                  </Link>
-                )}
-                <Link
-                  to={
-                    profile?.role === 'member'
-                      ? '/member/profile'
-                      : isAdmin
-                      ? '/admin'
-                      : '/applicant/assessment'
-                  }
-                  className="flex items-center gap-2 group"
-                >
-                  {profile?.avatarUrl ? (
-                    <img
-                      src={profile.avatarUrl}
-                      alt={profile.fullName || 'User'}
-                      className="h-8 w-8 rounded-full object-cover border border-surface-border group-hover:scale-105 transition-transform"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-ink text-canvas text-xs font-semibold flex items-center justify-center group-hover:scale-105 transition-transform">
-                      {getInitials(profile?.fullName)}
-                    </div>
-                  )}
-                  <span className="hidden sm:inline text-xs font-medium text-ink group-hover:underline">
-                    {profile?.fullName || (profile?.role === 'member' ? 'Member' : 'Applicant')}
-                  </span>
-                </Link>
-                <Button onClick={handleSignOut} variant="ghost" size="sm">
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button variant="primary" size="sm">
-                    Join AI CLUB
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-4">{accountLinks}</div>
+        <button ref={menuButton} type="button" aria-expanded={menuOpen} aria-controls="public-mobile-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setMenuOpen(!menuOpen)} className="md:hidden flex h-11 w-11 items-center justify-center rounded-xl border border-surface-border hover:bg-surface-muted">
+          {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+        </button>
       </div>
+      {menuOpen && <nav id="public-mobile-navigation" aria-label="Mobile navigation" className="md:hidden border-t border-surface-border px-6 py-4 flex flex-col gap-2">
+        {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path ? 'page' : undefined} className="public-text-link justify-start aria-[current=page]:underline">{link.label}</Link>)}
+        <div className="flex flex-wrap items-center gap-4 border-t border-surface-border pt-4 mt-2">{accountLinks}</div>
+      </nav>}
     </header>
   );
 };

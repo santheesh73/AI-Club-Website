@@ -76,8 +76,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   if (requiredRole === 'member') {
     const userEmail = normalizeEmail(user?.email || profile?.email);
     const isExactAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL && profile?.role === 'admin';
-    const isMemberRole = profile?.role === 'member';
-    if (!isActiveMember && !isExactAdmin && !isMemberRole) {
+    if (!isActiveMember && !isExactAdmin) {
       // Redirect to applicant portal if no active membership is established
       return <Navigate to="/applicant/dashboard" replace />;
     }

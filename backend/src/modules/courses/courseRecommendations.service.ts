@@ -726,6 +726,7 @@ export class CourseRecommendationsService {
       skillsSource?: string;
       providerSource: string;
     };
+    alreadyExists: boolean;
     isDuplicate: boolean;
     existingCourse?: {
       id: string;

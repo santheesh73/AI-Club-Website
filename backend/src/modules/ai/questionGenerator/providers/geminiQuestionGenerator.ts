@@ -11,7 +11,7 @@ export class GeminiQuestionGenerator implements AIQuestionGenerator {
 
   constructor(customModel?: string) {
     this.modelName = customModel || env.GEMINI_MODEL || 'gemini-3.8-flash';
-    if (env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim() !== '' && env.GEMINI_API_KEY !== 'your-gemini-api-key') {
+    if (env.NODE_ENV !== 'test' && env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim() !== '' && env.GEMINI_API_KEY !== 'your-gemini-api-key') {
       try {
         this.client = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
       } catch (err: unknown) {

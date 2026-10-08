@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, AUTHORIZED_ADMIN_EMAIL } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { GraduationCap, ShieldCheck, UserCheck, Sparkles } from 'lucide-react';
+import { clearEventReturn, eventAuthUrl, rememberEventReturn, resolveEventReturn, validatePortalReturn } from '@/features/auth/authReturn';
 
 export const LoginPage: React.FC = () => {
-  const { signIn, loginAsDemo } = useAuth();
+  const { signIn, loginAsDemo, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,7 +18,16 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/profile';
+  const [eventReturn] = useState(() => resolveEventReturn(location.search, location.state));
+  const from = validatePortalReturn(location.state);
+
+  useEffect(() => {
+    if (!eventReturn) return;
+    if (isAuthenticated && !authLoading) {
+      clearEventReturn();
+      navigate(eventReturn, { replace: true });
+    } else rememberEventReturn(eventReturn);
+  }, [eventReturn, isAuthenticated, authLoading, navigate]);
 
   const handleRoleSwitch = (role: 'student' | 'member' | 'admin') => {
     setSelectedRole(role);
@@ -44,7 +53,7 @@ export const LoginPage: React.FC = () => {
         if (demoRole === 'member') {
           navigate('/member/dashboard', { replace: true });
         } else {
-          navigate('/applicant/assessment', { replace: true });
+          navigate('/applicant/dashboard', { replace: true });
         }
       }
     } catch {
@@ -78,7 +87,14 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const result = await signIn(email, password);
+    let result;
+    try {
+      result = await signIn(email.trim(), password);
+    } catch {
+      setError('We could not sign you in. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
     setIsSubmitting(false);
 
     if (!result.success) {
@@ -88,6 +104,12 @@ export const LoginPage: React.FC = () => {
 
     const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL;
     const isMember = result.profile?.role === 'member';
+
+    if (eventReturn) {
+      clearEventReturn();
+      navigate(eventReturn, { replace: true });
+      return;
+    }
 
     // Role-based authoritative navigation
     if (selectedRole === 'admin') {
@@ -100,11 +122,11 @@ export const LoginPage: React.FC = () => {
     }
 
     // Student / Member flow
-    if (from && from !== '/profile') {
+    if (from) {
       if (from.startsWith('/admin')) {
-        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/assessment', { replace: true });
+        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/dashboard', { replace: true });
       } else if (from.startsWith('/member')) {
-        navigate(isMember || isAdmin ? from : '/applicant/assessment', { replace: true });
+        navigate(isMember || isAdmin ? from : '/applicant/dashboard', { replace: true });
       } else {
         navigate(from, { replace: true });
       }
@@ -114,7 +136,7 @@ export const LoginPage: React.FC = () => {
       } else if (isMember) {
         navigate('/member/dashboard', { replace: true });
       } else {
-        navigate('/applicant/assessment', { replace: true });
+        navigate('/applicant/dashboard', { replace: true });
       }
     }
   };
@@ -125,7 +147,7 @@ export const LoginPage: React.FC = () => {
         <Card className="shadow-elevated border-surface-border">
           <CardHeader className="text-center pb-2">
             {/* Role-based [STUDENT / MEMBER / ADMIN] switching tabs */}
-            <div className="grid grid-cols-3 p-1 mb-5 rounded-xl bg-canvas border border-surface-border shadow-inner">
+            {!eventReturn && <div className="grid grid-cols-3 p-1 mb-5 rounded-xl bg-canvas border border-surface-border shadow-inner">
               <button
                 type="button"
                 onClick={() => handleRoleSwitch('student')}
@@ -164,17 +186,7 @@ export const LoginPage: React.FC = () => {
                 <ShieldCheck className={`h-3.5 w-3.5 ${selectedRole === 'admin' ? 'text-accent-green' : ''}`} />
                 <span>ADMIN</span>
               </button>
-            </div>
-
-            <div className="mx-auto mb-2">
-              <Badge variant={selectedRole === 'admin' ? 'orange' : selectedRole === 'member' ? 'lavender' : 'neutral'}>
-                {selectedRole === 'admin'
-                  ? 'Admin Gateway'
-                  : selectedRole === 'member'
-                  ? 'Member Demo Experience'
-                  : 'Student Applicant Gateway'}
-              </Badge>
-            </div>
+            </div>}
 
             <CardTitle className="text-2xl font-bold tracking-tight">
               {selectedRole === 'admin'
@@ -188,7 +200,7 @@ export const LoginPage: React.FC = () => {
                 ? 'Restricted control console for authorized AI CLUB administration.'
                 : selectedRole === 'member'
                 ? 'Instant preview of the inducted member dashboard, digital ID card, courses, and projects.'
-                : 'Access your student identity, applications, and entrance assessment.'}
+                : eventReturn ? 'Sign in, then return to the event and choose RSVP to reserve your place. The membership assessment is not required for public events.' : 'Access your account, membership application, and event RSVPs.'}
             </CardDescription>
           </CardHeader>
 
@@ -267,7 +279,7 @@ export const LoginPage: React.FC = () => {
             </form>
 
             {/* Quick 1-Click Demo Actions */}
-            <div className="mt-6 pt-5 border-t border-surface-border space-y-3">
+            {!eventReturn && <div className="mt-6 pt-5 border-t border-surface-border space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-accent-lavender" />
@@ -307,7 +319,7 @@ export const LoginPage: React.FC = () => {
                   </p>
                 </button>
               </div>
-            </div>
+            </div>}
           </CardContent>
 
           <CardFooter className="justify-center text-xs text-ink-muted">
@@ -322,7 +334,7 @@ export const LoginPage: React.FC = () => {
             ) : (
               <>
                 Don't have an account yet?{' '}
-                <Link to="/register" className="ml-1 text-ink font-semibold hover:underline">
+                <Link to={eventAuthUrl('register', eventReturn)} className="ml-1 text-ink font-semibold hover:underline underline-offset-4">
                   Create Account
                 </Link>
               </>

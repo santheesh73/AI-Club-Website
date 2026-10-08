@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
@@ -315,13 +316,13 @@ export class MembershipService {
       }
     }
 
-    for (const m of localMemberships.values()) {
-      if (m.userId === userId && m.status === 'active') {
-        return m;
-      }
-    }
+    // Stored lifecycle state takes precedence over a synthetic demo identity.
+    // Otherwise suspending/revoking the demo member silently recreates active access.
+    const knownMemberships = Array.from(localMemberships.values()).filter((record) => record.userId === userId);
+    if (env.NODE_ENV === 'production') return null;
+    if (knownMemberships.length > 0) return knownMemberships.find((record) => record.status === 'active') || null;
 
-    // Demo member fallback in non-production / demo mode
+    // Demo fallback is permitted only outside production and without stored membership state.
     if (userId === 'demo-member-001' || userId === 'member-user-id') {
       return {
         id: 'mem-demo-001',

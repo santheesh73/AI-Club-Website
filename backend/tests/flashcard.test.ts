@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
+import { env } from '../src/config/env';
 import { app } from '../src/server';
 import {
   flashcardService,
@@ -309,17 +310,30 @@ describe('AI CLUB Flashcard / Spotlight System Tests (FLASH-001 to FLASH-017)', 
     expect(res.body.success).toBe(false);
   });
 
-  it('FLASH-015: Suspended/Revoked member cannot access dashboard or flashcards', async () => {
+  it.each(['suspended', 'revoked'] as const)('FLASH-015: %s member cannot access dashboard or flashcards', async (status) => {
     // Suspend member
     const activeRec = await membershipService.getMembershipByUserId(memberUserId);
     expect(activeRec).toBeDefined();
-    await membershipService.updateMembershipStatus(activeRec!.id, 'suspended', 'Admin suspension test');
+    await membershipService.updateMembershipStatus(activeRec!.id, status, 'Admin lifecycle test');
 
     const res = await request(app)
       .get('/api/v1/membership/me/flashcards')
       .set('Authorization', memberToken);
 
     expect([403, 404]).toContain(res.status);
+    expect(await membershipService.getMembershipByUserId(memberUserId)).toBeNull();
+    const dashboard = await request(app).get('/api/v1/membership/me/dashboard').set('Authorization', memberToken);
+    expect([403, 404]).toContain(dashboard.status);
+  });
+
+  it('production does not synthesize an active demo membership', async () => {
+    const previous = env.NODE_ENV;
+    env.NODE_ENV = 'production';
+    try {
+      expect(await membershipService.getMembershipByUserId(memberUserId)).toBeNull();
+      expect(await membershipService.getMembershipByUserId('demo-member-001')).toBeNull();
+      await expect(membershipService.getMemberDashboard('demo-member-001')).rejects.toMatchObject({ code: 'MEMBERSHIP_NOT_FOUND' });
+    } finally { env.NODE_ENV = previous; }
   });
 
   it('FLASH-016: Dashboard API does not expose unnecessary database fields', async () => {

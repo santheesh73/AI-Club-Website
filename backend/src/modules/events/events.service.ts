@@ -1,9 +1,11 @@
+import { env } from '../../config/env';
 import { supabaseAdmin } from '../../services/supabase';
 import { AppError } from '../../utils/response';
 import { logger } from '../../utils/logger';
 import { auditService } from '../admin/audit.service';
 import { notificationsService } from '../notifications/notifications.service';
 import {
+  PublicEventDto,
   EventRecord,
   EventRegistrationRecord,
   CreateEventDto,
@@ -14,6 +16,7 @@ import {
   AdminEventSummaryDto,
   RegistrationAttendeeDto,
 } from './events.types';
+import { membershipService } from '../membership/membership.service';
 import { localMemoryProfiles } from '../profile/profile.controller';
 
 // In-memory fallback stores for local testing / isolated unit tests
@@ -23,6 +26,89 @@ export const localMemoryRegistrations = new Map<string, EventRegistrationRecord>
 const isUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
 export class EventsService {
+  private readonly eventLocks = new Map<string, Promise<void>>();
+  private get useDatabase(): boolean { return !!supabaseAdmin && env.NODE_ENV !== 'test'; }
+  private assertStorage(): void {
+    if (env.NODE_ENV === 'production' && !supabaseAdmin) throw new AppError('Event storage unavailable', 503, 'SERVICE_UNAVAILABLE');
+  }
+  private async withEventLock<T>(id: string, task: () => Promise<T>): Promise<T> {
+    const previous = this.eventLocks.get(id) || Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => { release = resolve; });
+    this.eventLocks.set(id, current);
+    await previous;
+    try { return await task(); }
+    finally { release(); if (this.eventLocks.get(id) === current) this.eventLocks.delete(id); }
+  }
+  private storageFailure(err: unknown): never {
+    logger.error('Event persistence failed', { err });
+    throw new AppError('Event storage unavailable. Please retry.', 503, 'EVENT_STORAGE_FAILED');
+  }
+  private mapRegistration(row: any): EventRegistrationRecord {
+    return { id: row.id, eventId: row.event_id, userId: row.user_id, status: row.status,
+      registeredAt: row.registered_at, cancelledAt: row.cancelled_at,
+      createdAt: row.created_at, updatedAt: row.updated_at };
+  }
+  private rpcFailure(error: { message: string }): never {
+    const codes: Record<string, number> = { EVENT_NOT_FOUND: 404, EVENT_NOT_PUBLISHED: 400,
+      EVENT_CANCELLED: 400, EVENT_COMPLETED: 400, REGISTRATION_NOT_OPEN: 400,
+      REGISTRATION_CLOSED: 400, EVENT_ALREADY_STARTED: 400, ALREADY_REGISTERED: 409,
+      EVENT_FULL: 409, MEMBERSHIP_REQUIRED: 403, FORBIDDEN: 403,
+      REGISTRATION_NOT_FOUND: 404, CANCELLATION_WINDOW_CLOSED: 400 };
+    const code = Object.keys(codes).find((value) => error.message.includes(value));
+    if (code) throw new AppError(code.replace(/_/g, ' ').toLowerCase(), codes[code], code);
+    this.storageFailure(error);
+  }
+
+  private async publicProjection(event: EventRecord): Promise<PublicEventDto> {
+    const { id, slug, title, shortDescription, description, category, eventMode, location,
+      isOnline, coverImageUrl, startAt, endAt, registrationOpenAt, registrationCloseAt,
+      capacity, eligibility, status, speaker, organizer, requirements, tags } = event;
+    const count = await this.getEventRegistrationCount(id);
+    const availableSeats = capacity == null ? null : Math.max(0, capacity - count);
+    return { id, slug, title, shortDescription, description, category, eventMode, location,
+      isOnline, coverImageUrl, startAt, endAt, registrationOpenAt, registrationCloseAt,
+      capacity, eligibility, status, speaker, organizer, requirements, tags,
+      availableSeats, isFull: availableSeats !== null && availableSeats === 0 };
+  }
+  async getPublicEvents(query: EventQueryDto): Promise<{ items: PublicEventDto[]; total: number }> {
+    this.assertStorage();
+    let events = Array.from(localMemoryEvents.values());
+    if (this.useDatabase) {
+      try {
+        const { data, error } = await supabaseAdmin!.from('events').select('*')
+          .neq('status', 'draft').in('eligibility', ['public', 'members_only']);
+        if (error) this.storageFailure(error);
+        events = (data || []).map((row) => this.mapDbRowToEvent(row));
+      } catch (err) { this.storageFailure(err); }
+    }
+    events = events.filter((event) => event.status !== 'draft' && event.eligibility !== 'admin_only');
+    if (query.category) events = events.filter((event) => event.category === query.category);
+    if (query.status) events = events.filter((event) => event.status === query.status);
+    if (query.search) { const search = query.search.toLowerCase(); events = events.filter((event) =>
+      [event.title, event.shortDescription, event.speaker || ''].some((text) => text.toLowerCase().includes(search))); }
+    const now = Date.now();
+    if (query.timeline === 'upcoming') events = events.filter((event) => Date.parse(event.startAt) >= now && event.status !== 'completed' && event.status !== 'cancelled');
+    if (query.timeline === 'past') events = events.filter((event) => Date.parse(event.startAt) < now || event.status === 'completed');
+    events.sort((a, b) => (Date.parse(a.startAt) - Date.parse(b.startAt)) * (query.sortOrder === 'desc' ? -1 : 1));
+    const total = events.length; const page = query.page || 1; const pageSize = query.pageSize || 20;
+    return { items: await Promise.all(events.slice((page - 1) * pageSize, page * pageSize).map((event) => this.publicProjection(event))), total };
+  }
+  async getPublicEventBySlug(slug: string): Promise<PublicEventDto> {
+    const event = await this.getEventBySlug(slug);
+    if (!event || event.status === 'draft' || event.eligibility === 'admin_only') throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+    return this.publicProjection(event);
+  }
+  async getRegistrationStatus(eventId: string, userId: string, isAdmin = false): Promise<{ isRegistered: boolean; registration: EventRegistrationRecord | null; meetingUrl: string | null }> {
+    const event = await this.getEventById(eventId);
+    if (!event || event.status === 'draft' || (event.eligibility === 'admin_only' && !isAdmin)) throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+    const registration = await this.getUserEventRegistration(eventId, userId);
+    const isRegistered = registration?.status === 'registered';
+    const canAttend = isRegistered && event.status !== 'cancelled' &&
+      (event.eligibility === 'public' || isAdmin || await this.isUserActiveMember(userId));
+    return { isRegistered, registration, meetingUrl: canAttend ? event.meetingUrl || null : null };
+  }
+
   /**
    * Reset local state for testing isolation
    */
@@ -47,23 +133,16 @@ export class EventsService {
     while (true) {
       let isTaken = false;
 
-      if (supabaseAdmin) {
+      if (this.useDatabase) {
         try {
-          const query = supabaseAdmin.from('events').select('id').eq('slug', slugCandidate);
+          const query = supabaseAdmin!.from('events').select('id').eq('slug', slugCandidate);
           if (existingId) {
             query.neq('id', existingId);
           }
-          const { data } = await query.maybeSingle();
+          const { data, error } = await query.maybeSingle();
+          if (error) this.storageFailure(error);
           if (data) isTaken = true;
-        } catch {
-          // If query fails, fall back to checking in-memory
-          for (const ev of localMemoryEvents.values()) {
-            if (ev.slug === slugCandidate && ev.id !== existingId) {
-              isTaken = true;
-              break;
-            }
-          }
-        }
+        } catch (err) { this.storageFailure(err); }
       } else {
         for (const ev of localMemoryEvents.values()) {
           if (ev.slug === slugCandidate && ev.id !== existingId) {
@@ -84,27 +163,17 @@ export class EventsService {
    * Helper: check if user has an active membership record
    */
   private async isUserActiveMember(userId: string): Promise<boolean> {
-    if (supabaseAdmin) {
+    this.assertStorage();
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin
-          .from('memberships')
-          .select('id, status')
-          .eq('user_id', userId)
-          .eq('status', 'active')
-          .maybeSingle();
-
-        if (data) return true;
-      } catch {
-        // Fallback check
-      }
+        const { data, error } = await supabaseAdmin!.from('memberships').select('id')
+          .eq('user_id', userId).eq('status', 'active').maybeSingle();
+        if (error) this.storageFailure(error);
+        return !!data;
+      } catch (err) { this.storageFailure(err); }
     }
-
-    // In local testing/fallback mode
-    if (userId === 'admin-user-id' || userId === 'member-user-id' || userId.includes('member') || userId.includes('admin')) {
-      return true;
-    }
-
-    return false;
+    // Local demo/test access must also honor stored suspension and revocation.
+    return (await membershipService.getMembershipByUserId(userId))?.status === 'active';
   }
 
   // ============================================================================
@@ -119,6 +188,7 @@ export class EventsService {
     actorId: string,
     requestId?: string
   ): Promise<EventRecord> {
+    this.assertStorage();
     const slug = await this.generateUniqueSlug(dto.title);
     const now = new Date().toISOString();
 
@@ -154,9 +224,10 @@ export class EventsService {
     };
 
     const isActorUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId);
-    if (supabaseAdmin && isActorUuid) {
+    if (this.useDatabase) {
+      if (!isActorUuid) this.storageFailure('Invalid actor identity');
       try {
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('events')
           .insert({
             title: newEvent.title,
@@ -193,7 +264,7 @@ export class EventsService {
         newEvent.id = data.id;
       } catch (err: unknown) {
         if (err instanceof AppError) throw err;
-        logger.warn('Database error in createEvent, storing in local fallback', { err });
+        this.storageFailure(err);
       }
     }
 
@@ -266,10 +337,9 @@ export class EventsService {
       updatedAt: new Date().toISOString(),
     };
 
-    const isEventUuid = isUuid(eventId);
-    if (supabaseAdmin && isEventUuid) {
+    if (this.useDatabase) {
       try {
-        await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('events')
           .update({
             title: updated.title,
@@ -293,9 +363,10 @@ export class EventsService {
             tags: updated.tags,
             updated_at: updated.updatedAt,
           })
-          .eq('id', eventId);
+          .eq('id', eventId).select('id').single();
+        if (error || !data) this.storageFailure(error);
       } catch (err: unknown) {
-        logger.warn('Database error in updateEvent', { err });
+        this.storageFailure(err);
       }
     }
 
@@ -338,18 +409,19 @@ export class EventsService {
       updatedAt: now,
     };
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('events')
           .update({
             status: 'published',
             published_at: now,
             updated_at: now,
           })
-          .eq('id', eventId);
+          .eq('id', eventId).select('id').single();
+        if (error || !data) this.storageFailure(error);
       } catch (err: unknown) {
-        logger.warn('Database error in publishEvent', { err });
+        this.storageFailure(err);
       }
     }
 
@@ -398,9 +470,9 @@ export class EventsService {
       updatedAt: now,
     };
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('events')
           .update({
             status: 'cancelled',
@@ -408,9 +480,10 @@ export class EventsService {
             cancellation_reason: reason.trim(),
             updated_at: now,
           })
-          .eq('id', eventId);
+          .eq('id', eventId).select('id').single();
+        if (error || !data) this.storageFailure(error);
       } catch (err: unknown) {
-        logger.warn('Database error in cancelEvent', { err });
+        this.storageFailure(err);
       }
     }
 
@@ -432,19 +505,19 @@ export class EventsService {
    * List all events for admin oversight
    */
   async getAdminEvents(query: EventQueryDto): Promise<{ items: AdminEventSummaryDto[]; total: number }> {
+    this.assertStorage();
     let allEvents = Array.from(localMemoryEvents.values());
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin.from('events').select('*');
-        if (data && data.length > 0) {
+        const { data, error } = await supabaseAdmin!.from('events').select('*');
+        if (error) this.storageFailure(error);
+        if (data) {
           allEvents = data.map(this.mapDbRowToEvent);
           // Sync with local memory
           allEvents.forEach((ev) => localMemoryEvents.set(ev.id, ev));
         }
-      } catch {
-        // Fallback
-      }
+      } catch (err) { this.storageFailure(err); }
     }
 
     // Apply filtering
@@ -505,13 +578,14 @@ export class EventsService {
       throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
     }
 
+    this.assertStorage();
     let registrations = Array.from(localMemoryRegistrations.values()).filter(
       (r) => r.eventId === eventId
     );
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('event_registrations')
           .select(`
             id,
@@ -528,8 +602,9 @@ export class EventsService {
             )
           `)
           .eq('event_id', eventId);
+        if (error) this.storageFailure(error);
 
-        if (data && data.length > 0) {
+        if (data) {
           return data.map((row: any) => ({
             id: row.id,
             userId: row.user_id,
@@ -541,9 +616,7 @@ export class EventsService {
             registeredAt: row.registered_at,
           }));
         }
-      } catch {
-        // Fallback
-      }
+      } catch (err) { this.storageFailure(err); }
     }
 
     // In-memory mapping
@@ -573,29 +646,29 @@ export class EventsService {
     userId: string,
     query: EventQueryDto
   ): Promise<{ items: MemberEventCardDto[]; total: number }> {
+    this.assertStorage();
     let allEvents = Array.from(localMemoryEvents.values());
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('events')
           .select('*')
           .in('status', ['published', 'ongoing', 'completed'])
           .in('eligibility', ['public', 'members_only']);
+        if (error) this.storageFailure(error);
 
-        if (data && data.length > 0) {
+        if (data) {
           const dbEvents = data.map(this.mapDbRowToEvent);
           dbEvents.forEach((ev) => localMemoryEvents.set(ev.id, ev));
-          allEvents = Array.from(localMemoryEvents.values());
+          allEvents = dbEvents;
         }
-      } catch {
-        // Fallback
-      }
+      } catch (err) { this.storageFailure(err); }
     }
 
     // Filter to visible events only (no draft, cancelled can be hidden or viewed in archive)
     let filtered = allEvents.filter(
-      (ev) => ev.status === 'published' || ev.status === 'ongoing' || ev.status === 'completed'
+      (ev) => ev.eligibility !== 'admin_only' && (ev.status === 'published' || ev.status === 'ongoing' || ev.status === 'completed')
     );
 
     if (query.category) {
@@ -659,7 +732,7 @@ export class EventsService {
       throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
     }
 
-    if (event.status === 'draft') {
+    if (event.status === 'draft' || event.eligibility === 'admin_only') {
       throw new AppError('Event not found or unpublished', 404, 'EVENT_NOT_FOUND');
     }
 
@@ -681,7 +754,7 @@ export class EventsService {
   }
 
   /**
-   * Register active member for an event (Capacity & Concurrency Protected)
+   * Register an authenticated account using the selected event eligibility.
    */
   async registerForEvent(
     eventId: string,
@@ -689,235 +762,170 @@ export class EventsService {
     actorRole: string,
     requestId?: string
   ): Promise<EventRegistrationRecord> {
-    // 1. Verify Active Membership
-    const isActive = await this.isUserActiveMember(userId);
-    if (!isActive && actorRole !== 'admin') {
-      throw new AppError(
-        'Active club membership required to register for member events',
-        403,
-        'MEMBERSHIP_REQUIRED'
-      );
-    }
-
-    // 2. Fetch event
-    const event = await this.getEventById(eventId);
-    if (!event) {
-      throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
-    }
-
-    // 3. Verify event state
-    if (event.status === 'draft') {
-      throw new AppError('Event is not yet published', 400, 'EVENT_NOT_PUBLISHED');
-    }
-    if (event.status === 'cancelled') {
-      throw new AppError('This event has been cancelled', 400, 'EVENT_CANCELLED');
-    }
-    if (event.status === 'completed') {
-      throw new AppError('This event has already completed', 400, 'EVENT_COMPLETED');
-    }
-
-    const now = new Date();
-    // 4. Verify registration window
-    if (now < new Date(event.registrationOpenAt)) {
-      throw new AppError('Event registration is not open yet', 400, 'REGISTRATION_NOT_OPEN');
-    }
-    if (now > new Date(event.registrationCloseAt)) {
-      throw new AppError('Event registration has closed', 400, 'REGISTRATION_CLOSED');
-    }
-    if (now >= new Date(event.startAt)) {
-      throw new AppError('Event has already started', 400, 'EVENT_ALREADY_STARTED');
-    }
-
-    // 5. Check if already registered
-    const existingReg = await this.getUserEventRegistration(eventId, userId);
-    if (existingReg && existingReg.status === 'registered') {
-      throw new AppError('You are already registered for this event', 409, 'ALREADY_REGISTERED');
-    }
-
-    // 6. Check Capacity (Transaction-Safe)
-    const currentCount = await this.getEventRegistrationCount(eventId);
-    if (event.capacity !== null && event.capacity !== undefined && currentCount >= event.capacity) {
-      throw new AppError(
-        'This event has reached full registration capacity',
-        409,
-        'EVENT_FULL'
-      );
-    }
-
-    const regTimestamp = now.toISOString();
-    let finalReg: EventRegistrationRecord;
-
-    if (existingReg && existingReg.status === 'cancelled') {
-      // Re-activate previously cancelled registration
-      finalReg = {
-        ...existingReg,
-        status: 'registered',
-        registeredAt: regTimestamp,
-        cancelledAt: null,
-        updatedAt: regTimestamp,
-      };
-
-      const isEventUuid = isUuid(eventId);
-      const isUserUuid = isUuid(userId);
-      if (supabaseAdmin && isEventUuid && isUserUuid) {
-        try {
-          await supabaseAdmin
-            .from('event_registrations')
-            .update({
-              status: 'registered',
-              registered_at: regTimestamp,
-              cancelled_at: null,
-              updated_at: regTimestamp,
-            })
-            .eq('id', existingReg.id);
-        } catch (err: unknown) {
-          logger.warn('Database error in re-registering', { err });
-        }
+    return this.withEventLock(eventId, async () => {
+      this.assertStorage();
+      const event = await this.getEventById(eventId);
+      if (!event) throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+      if (event.eligibility === 'admin_only' && actorRole !== 'admin') throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+      if (event.eligibility === 'members_only' && actorRole !== 'admin' && !(await this.isUserActiveMember(userId))) {
+        throw new AppError('Active club membership required', 403, 'MEMBERSHIP_REQUIRED');
       }
-    } else {
-      // New registration
-      finalReg = {
-        id: `reg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        eventId,
+      // 3. Verify event state
+      if (event.status === 'draft') {
+        throw new AppError('Event is not yet published', 400, 'EVENT_NOT_PUBLISHED');
+      }
+      if (event.status === 'cancelled') {
+        throw new AppError('This event has been cancelled', 400, 'EVENT_CANCELLED');
+      }
+      if (event.status === 'completed') {
+        throw new AppError('This event has already completed', 400, 'EVENT_COMPLETED');
+      }
+
+      const now = new Date();
+      // 4. Verify registration window
+      if (now < new Date(event.registrationOpenAt)) {
+        throw new AppError('Event registration is not open yet', 400, 'REGISTRATION_NOT_OPEN');
+      }
+      if (now > new Date(event.registrationCloseAt)) {
+        throw new AppError('Event registration has closed', 400, 'REGISTRATION_CLOSED');
+      }
+      if (now >= new Date(event.startAt)) {
+        throw new AppError('Event has already started', 400, 'EVENT_ALREADY_STARTED');
+      }
+
+      // 5. Check if already registered
+      const existingReg = await this.getUserEventRegistration(eventId, userId);
+      if (existingReg && existingReg.status === 'registered') {
+        throw new AppError('You are already registered for this event', 409, 'ALREADY_REGISTERED');
+      }
+
+      // 6. Check Capacity (Transaction-Safe)
+      const currentCount = await this.getEventRegistrationCount(eventId);
+      if (event.capacity !== null && event.capacity !== undefined && currentCount >= event.capacity) {
+        throw new AppError(
+          'This event has reached full registration capacity',
+          409,
+          'EVENT_FULL'
+        );
+      }
+
+      const regTimestamp = now.toISOString();
+      let finalReg: EventRegistrationRecord;
+
+      if (this.useDatabase) {
+        try {
+          const { data, error } = await supabaseAdmin!.rpc('register_event_atomic', { p_event_id: eventId, p_user_id: userId });
+          if (error) this.rpcFailure(error);
+          if (!data) this.storageFailure('Empty registration response');
+          finalReg = this.mapRegistration(Array.isArray(data) ? data[0] : data);
+        } catch (err) { if (err instanceof AppError) throw err; this.storageFailure(err); }
+      } else {
+        finalReg = existingReg && existingReg.status === 'cancelled'
+          ? { ...existingReg, status: 'registered', registeredAt: regTimestamp, cancelledAt: null, updatedAt: regTimestamp }
+          : { id: `reg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, eventId, userId,
+              status: 'registered', registeredAt: regTimestamp, cancelledAt: null, createdAt: regTimestamp, updatedAt: regTimestamp };
+      }
+
+      localMemoryRegistrations.set(finalReg.id, finalReg);
+
+      await auditService.createLog({
+        actorId: userId,
+        action: 'EVENT_REGISTERED',
+        entityType: 'EVENT_REGISTRATION',
+        entityId: finalReg.id,
+        metadata: { eventId, eventTitle: event.title },
+        requestId,
+      });
+
+      await notificationsService.createNotification({
         userId,
-        status: 'registered',
-        registeredAt: regTimestamp,
-        cancelledAt: null,
-        createdAt: regTimestamp,
-        updatedAt: regTimestamp,
-      };
+        type: 'EVENT_REGISTRATION_CONFIRMED',
+        title: 'Seat Reserved',
+        message: `Your registration for "${event.title}" has been confirmed.`,
+        actionUrl: event.eligibility === 'public' ? `/events/${event.slug}` : `/member/events/${event.slug}`,
+        metadata: { eventId, eventSlug: event.slug },
+      });
 
-      const isEventUuid = isUuid(eventId);
-      const isUserUuid = isUuid(userId);
-      if (supabaseAdmin && isEventUuid && isUserUuid) {
-        try {
-          const { data, error } = await supabaseAdmin
-            .from('event_registrations')
-            .insert({
-              event_id: eventId,
-              user_id: userId,
-              status: 'registered',
-              registered_at: regTimestamp,
-            })
-            .select()
-            .single();
-
-          if (error) {
-            if (error.code === '23505') {
-              throw new AppError('You are already registered for this event', 409, 'ALREADY_REGISTERED');
-            }
-            throw new AppError(error.message, 500, 'REGISTRATION_FAILED');
-          }
-          finalReg.id = data.id;
-        } catch (err: unknown) {
-          if (err instanceof AppError) throw err;
-          logger.warn('Database error in registerForEvent, using fallback', { err });
-        }
-      }
-    }
-
-    localMemoryRegistrations.set(finalReg.id, finalReg);
-
-    await auditService.createLog({
-      actorId: userId,
-      action: 'EVENT_REGISTERED',
-      entityType: 'EVENT_REGISTRATION',
-      entityId: finalReg.id,
-      metadata: { eventId, eventTitle: event.title },
-      requestId,
+      return finalReg;
     });
-
-    await notificationsService.createNotification({
-      userId,
-      type: 'EVENT_REGISTRATION_CONFIRMED',
-      title: 'Seat Reserved',
-      message: `Your registration for "${event.title}" has been confirmed.`,
-      actionUrl: `/member/events/${event.slug}`,
-      metadata: { eventId, eventSlug: event.slug },
-    });
-
-    return finalReg;
   }
 
   /**
-   * Cancel an existing member registration
+   * Cancel the authenticated account's own registration
    */
   async cancelRegistration(
     eventId: string,
     userId: string,
     requestId?: string
   ): Promise<EventRegistrationRecord> {
-    const event = await this.getEventById(eventId);
-    if (!event) {
-      throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
-    }
-
-    const reg = await this.getUserEventRegistration(eventId, userId);
-    if (!reg || reg.status !== 'registered') {
-      throw new AppError('Active registration record not found', 404, 'REGISTRATION_NOT_FOUND');
-    }
-
-    // Cancellation Policy: Allowed until event start
-    const now = new Date();
-    if (now >= new Date(event.startAt)) {
-      throw new AppError(
-        'Cancellation is not permitted after the event has started',
-        400,
-        'CANCELLATION_WINDOW_CLOSED'
-      );
-    }
-    if (event.status === 'completed') {
-      throw new AppError(
-        'Cannot cancel registration for a completed event',
-        400,
-        'EVENT_COMPLETED'
-      );
-    }
-
-    const nowIso = now.toISOString();
-    const updated: EventRegistrationRecord = {
-      ...reg,
-      status: 'cancelled',
-      cancelledAt: nowIso,
-      updatedAt: nowIso,
-    };
-
-    if (supabaseAdmin) {
-      try {
-        await supabaseAdmin
-          .from('event_registrations')
-          .update({
-            status: 'cancelled',
-            cancelled_at: nowIso,
-            updated_at: nowIso,
-          })
-          .eq('id', reg.id);
-      } catch (err: unknown) {
-        logger.warn('Database error in cancelRegistration', { err });
+    return this.withEventLock(eventId, async () => {
+      this.assertStorage();
+      const event = await this.getEventById(eventId);
+      if (!event) {
+        throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
       }
-    }
 
-    localMemoryRegistrations.set(reg.id, updated);
+      const reg = await this.getUserEventRegistration(eventId, userId);
+      if (!reg || reg.status !== 'registered') {
+        throw new AppError('Active registration record not found', 404, 'REGISTRATION_NOT_FOUND');
+      }
 
-    await auditService.createLog({
-      actorId: userId,
-      action: 'EVENT_REGISTRATION_CANCELLED',
-      entityType: 'EVENT_REGISTRATION',
-      entityId: reg.id,
-      metadata: { eventId, eventTitle: event.title },
-      requestId,
+      // Cancellation Policy: Allowed until event start
+      const now = new Date();
+      if (now >= new Date(event.startAt)) {
+        throw new AppError(
+          'Cancellation is not permitted after the event has started',
+          400,
+          'CANCELLATION_WINDOW_CLOSED'
+        );
+      }
+      if (event.status === 'completed') {
+        throw new AppError(
+          'Cannot cancel registration for a completed event',
+          400,
+          'EVENT_COMPLETED'
+        );
+      }
+
+      const nowIso = now.toISOString();
+      let updated: EventRegistrationRecord = {
+        ...reg,
+        status: 'cancelled',
+        cancelledAt: nowIso,
+        updatedAt: nowIso,
+      };
+
+      if (this.useDatabase) {
+        try {
+          const { data, error } = await supabaseAdmin!.rpc('cancel_event_registration_atomic', { p_event_id: eventId, p_user_id: userId });
+          if (error) this.rpcFailure(error);
+          if (!data) this.storageFailure('Empty cancellation response');
+          updated = this.mapRegistration(Array.isArray(data) ? data[0] : data);
+        } catch (err) { if (err instanceof AppError) throw err; this.storageFailure(err); }
+      }
+
+      localMemoryRegistrations.set(reg.id, updated);
+
+      await auditService.createLog({
+        actorId: userId,
+        action: 'EVENT_REGISTRATION_CANCELLED',
+        entityType: 'EVENT_REGISTRATION',
+        entityId: reg.id,
+        metadata: { eventId, eventTitle: event.title },
+        requestId,
+      });
+
+      await notificationsService.createNotification({
+        userId,
+        type: 'EVENT_CANCELLED',
+        title: 'Registration Cancelled',
+        message: `Your registration for "${event.title}" has been cancelled.`,
+        actionUrl: event.eligibility === 'public' ? `/events/${event.slug}` : `/member/events/${event.slug}`,
+        metadata: { eventId, eventSlug: event.slug },
+      });
+
+      return updated;
     });
-
-    await notificationsService.createNotification({
-      userId,
-      type: 'EVENT_CANCELLED',
-      title: 'Registration Cancelled',
-      message: `Your registration for "${event.title}" has been cancelled.`,
-      actionUrl: `/member/events/${event.slug}`,
-      metadata: { eventId, eventSlug: event.slug },
-    });
-
-    return updated;
   }
 
   /**
@@ -927,19 +935,21 @@ export class EventsService {
     upcoming: MemberEventCardDto[];
     past: MemberEventCardDto[];
   }> {
+    this.assertStorage();
     let registrations = Array.from(localMemoryRegistrations.values()).filter(
       (r) => r.userId === userId && r.status === 'registered'
     );
 
-    if (supabaseAdmin) {
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin!
           .from('event_registrations')
           .select('*')
           .eq('user_id', userId)
           .eq('status', 'registered');
+        if (error) this.storageFailure(error);
 
-        if (data && data.length > 0) {
+        if (data) {
           registrations = data.map((r: any) => ({
             id: r.id,
             eventId: r.event_id,
@@ -952,9 +962,7 @@ export class EventsService {
             updatedAt: r.updated_at,
           }));
         }
-      } catch {
-        // Fallback
-      }
+      } catch (err) { this.storageFailure(err); }
     }
 
     const eventIds = registrations.map((r) => r.eventId);
@@ -993,108 +1001,51 @@ export class EventsService {
   // ============================================================================
 
   async getEventById(id: string): Promise<EventRecord | null> {
-    if (localMemoryEvents.has(id)) {
-      return localMemoryEvents.get(id)!;
-    }
-
-    if (supabaseAdmin && isUuid(id)) {
+    this.assertStorage();
+    if (this.useDatabase) {
+      if (!isUuid(id)) return null;
       try {
-        const { data } = await supabaseAdmin.from('events').select('*').eq('id', id).maybeSingle();
-        if (data) {
-          const ev = this.mapDbRowToEvent(data);
-          localMemoryEvents.set(ev.id, ev);
-          return ev;
-        }
-      } catch {
-        // Fallback
-      }
+        const { data, error } = await supabaseAdmin!.from('events').select('*').eq('id', id).maybeSingle();
+        if (error) this.storageFailure(error);
+        return data ? this.mapDbRowToEvent(data) : null;
+      } catch (err) { this.storageFailure(err); }
     }
-    return null;
+    return localMemoryEvents.get(id) || null;
   }
-
   async getEventBySlug(slug: string): Promise<EventRecord | null> {
-    for (const ev of localMemoryEvents.values()) {
-      if (ev.slug === slug) return ev;
-    }
-
-    if (supabaseAdmin) {
+    this.assertStorage();
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin.from('events').select('*').eq('slug', slug).maybeSingle();
-        if (data) {
-          const ev = this.mapDbRowToEvent(data);
-          localMemoryEvents.set(ev.id, ev);
-          return ev;
-        }
-      } catch {
-        // Fallback
-      }
+        const { data, error } = await supabaseAdmin!.from('events').select('*').eq('slug', slug).maybeSingle();
+        if (error) this.storageFailure(error);
+        return data ? this.mapDbRowToEvent(data) : null;
+      } catch (err) { this.storageFailure(err); }
     }
-    return null;
+    return Array.from(localMemoryEvents.values()).find((event) => event.slug === slug) || null;
   }
-
   async getEventRegistrationCount(eventId: string): Promise<number> {
-    if (supabaseAdmin && isUuid(eventId)) {
+    this.assertStorage();
+    if (this.useDatabase) {
       try {
-        const { count, error } = await supabaseAdmin
-          .from('event_registrations')
-          .select('*', { count: 'exact', head: true })
-          .eq('event_id', eventId)
-          .eq('status', 'registered');
-
-        if (!error && count !== null) return count;
-      } catch {
-        // Fallback
-      }
+        const { count, error } = await supabaseAdmin!.from('event_registrations').select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId).eq('status', 'registered');
+        if (error || count === null) this.storageFailure(error);
+        return count!;
+      } catch (err) { this.storageFailure(err); }
     }
-
-    let count = 0;
-    for (const r of localMemoryRegistrations.values()) {
-      if (r.eventId === eventId && r.status === 'registered') {
-        count += 1;
-      }
-    }
-    return count;
+    return Array.from(localMemoryRegistrations.values()).filter((reg) => reg.eventId === eventId && reg.status === 'registered').length;
   }
-
-  async getUserEventRegistration(
-    eventId: string,
-    userId: string
-  ): Promise<EventRegistrationRecord | null> {
-    for (const r of localMemoryRegistrations.values()) {
-      if (r.eventId === eventId && r.userId === userId) {
-        return r;
-      }
-    }
-
-    if (supabaseAdmin && isUuid(eventId) && isUuid(userId)) {
+  async getUserEventRegistration(eventId: string, userId: string): Promise<EventRegistrationRecord | null> {
+    this.assertStorage();
+    if (this.useDatabase) {
       try {
-        const { data } = await supabaseAdmin
-          .from('event_registrations')
-          .select('*')
-          .eq('event_id', eventId)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (data) {
-          const rec: EventRegistrationRecord = {
-            id: data.id,
-            eventId: data.event_id,
-            userId: data.user_id,
-            status: data.status,
-            registeredAt: data.registered_at,
-            cancelledAt: data.cancelled_at,
-            metadata: data.metadata || {},
-            createdAt: data.created_at,
-            updatedAt: data.updated_at,
-          };
-          localMemoryRegistrations.set(rec.id, rec);
-          return rec;
-        }
-      } catch {
-        // Fallback
-      }
+        const { data, error } = await supabaseAdmin!.from('event_registrations').select('*')
+          .eq('event_id', eventId).eq('user_id', userId).order('registered_at', { ascending: false }).limit(1).maybeSingle();
+        if (error) this.storageFailure(error);
+        return data ? this.mapRegistration(data) : null;
+      } catch (err) { this.storageFailure(err); }
     }
-    return null;
+    return Array.from(localMemoryRegistrations.values()).find((reg) => reg.eventId === eventId && reg.userId === userId) || null;
   }
 
   private mapDbRowToEvent(row: any): EventRecord {
