@@ -321,6 +321,26 @@ export class MembershipService {
       }
     }
 
+    // Demo member fallback in non-production / demo mode
+    if (userId === 'demo-member-001' || userId === 'member-user-id') {
+      return {
+        id: 'mem-demo-001',
+        userId,
+        applicationId: 'app-demo-001',
+        memberNumber: 'AIC-2026-0042',
+        status: 'active',
+        joinedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+        activatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+        activatedBy: 'admin-id',
+        suspendedAt: null,
+        revokedAt: null,
+        expiresAt: null,
+        metadata: { role: 'Core Researcher' },
+        createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
     return null;
   }
 

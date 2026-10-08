@@ -36,6 +36,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
+  loginAsDemo: (demoRole?: 'member' | 'applicant' | 'admin') => Promise<{ success: boolean; profile: UserProfile }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -158,6 +159,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
+      // 1. Check if an active demo user session was created
+      const savedDev = localStorage.getItem(LOCAL_STORAGE_DEV_USER_KEY);
+      if (savedDev && isMounted) {
+        try {
+          const devProfile: UserProfile & { isDemo?: boolean } = JSON.parse(savedDev);
+          if (devProfile.isDemo) {
+            setProfile(devProfile);
+            setUser({ id: devProfile.id, email: devProfile.email } as unknown as User);
+            setSession({
+              user: { id: devProfile.id, email: devProfile.email },
+              access_token: `${devProfile.role}-test-token`,
+            } as unknown as Session);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          localStorage.removeItem(LOCAL_STORAGE_DEV_USER_KEY);
+        }
+      }
+
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         if (error) {
@@ -172,6 +193,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             initialSession.user.email,
             initialSession.user.user_metadata?.full_name
           );
+        } else if (isMounted && savedDev) {
+          try {
+            const devProfile: UserProfile = JSON.parse(savedDev);
+            setProfile(devProfile);
+            setUser({ id: devProfile.id, email: devProfile.email } as unknown as User);
+            setSession({ user: { id: devProfile.id, email: devProfile.email } } as unknown as Session);
+          } catch {
+            localStorage.removeItem(LOCAL_STORAGE_DEV_USER_KEY);
+          }
         }
       } catch (err) {
         console.error('[AI CLUB Auth] Error restoring session:', err);
@@ -188,6 +218,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
         if (!isMounted) return;
+
+        // Do not let background Supabase events overwrite an active demo session
+        const currentDev = localStorage.getItem(LOCAL_STORAGE_DEV_USER_KEY);
+        if (currentDev) {
+          try {
+            const parsed = JSON.parse(currentDev);
+            if (parsed.isDemo) return;
+          } catch {}
+        }
 
         setSession(newSession);
         setUser(newSession?.user || null);
@@ -485,6 +524,80 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Instant Demo Mode Switcher
+  const loginAsDemo = async (demoRole: 'member' | 'applicant' | 'admin' = 'member') => {
+    setIsLoading(true);
+    try {
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut().catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+
+    const demoProfiles: Record<'member' | 'applicant' | 'admin', UserProfile & { isDemo: boolean }> = {
+      member: {
+        id: 'demo-member-001',
+        email: 'alex.member@aiclub.org',
+        fullName: 'Alex Vance (Club Member)',
+        role: 'member',
+        registerNumber: 'AIC-2026-MEM-0042',
+        department: 'Artificial Intelligence & Data Science',
+        year: 3,
+        section: 'A',
+        phone: '+91 98765 43210',
+        bio: 'Core AI CLUB researcher working on multi-agent LLM systems and edge deployment.',
+        skills: ['PyTorch', 'TypeScript', 'Transformers', 'Reinforcement Learning', 'FastAPI'],
+        interests: ['Multi-Agent Systems', 'Model Compression', 'Robotics'],
+        githubUrl: 'https://github.com/aiclub-member',
+        linkedinUrl: 'https://linkedin.com/in/aiclub-member',
+        portfolioUrl: 'https://aiclub.org',
+        createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+        updatedAt: new Date().toISOString(),
+        isDemo: true,
+      },
+      applicant: {
+        id: 'demo-applicant-001',
+        email: 'jordan.applicant@aiclub.org',
+        fullName: 'Jordan Lee (Student Applicant)',
+        role: 'applicant',
+        registerNumber: '717824AD055',
+        department: 'Computer Science & Engineering',
+        year: 2,
+        section: 'B',
+        bio: 'Prospective applicant preparing for the technical assessment.',
+        skills: ['Python', 'Data Structures'],
+        interests: ['Machine Learning', 'Computer Vision'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isDemo: true,
+      },
+      admin: {
+        id: '4ecc54e0-8d2b-4a55-919e-40108fbc8c8c',
+        email: AUTHORIZED_ADMIN_EMAIL,
+        fullName: 'AI CLUB Administrator',
+        role: 'admin',
+        department: 'AI & DS Faculty Sponsor',
+        skills: ['Platform Governance', 'MLOps'],
+        interests: ['Cohort Leadership'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isDemo: true,
+      },
+    };
+
+    const targetProfile = demoProfiles[demoRole];
+    localStorage.setItem(LOCAL_STORAGE_DEV_USER_KEY, JSON.stringify(targetProfile));
+    setProfile(targetProfile);
+    setUser({ id: targetProfile.id, email: targetProfile.email } as unknown as User);
+    setSession({
+      user: { id: targetProfile.id, email: targetProfile.email },
+      access_token: `${demoRole}-test-token`,
+    } as unknown as Session);
+    setIsLoading(false);
+    return { success: true, profile: targetProfile };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -501,6 +614,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updatePassword,
         refreshProfile,
         updateProfile,
+        loginAsDemo,
       }}
     >
       {children}

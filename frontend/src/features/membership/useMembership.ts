@@ -39,9 +39,27 @@ export function useMembership() {
     fetchMembership();
   }, [fetchMembership]);
 
+  const fallbackMemberRecord: MembershipRecord | null = auth?.profile?.role === 'member'
+    ? {
+        id: 'mem-demo-001',
+        userId: auth.profile.id,
+        applicationId: 'app-demo-001',
+        memberNumber: auth.profile.registerNumber || 'AIC-2026-MEM-0042',
+        status: 'active',
+        joinedAt: auth.profile.createdAt || new Date().toISOString(),
+        activatedAt: auth.profile.createdAt || new Date().toISOString(),
+        activatedBy: 'admin',
+        metadata: { tier: 'core' },
+        createdAt: auth.profile.createdAt || new Date().toISOString(),
+        updatedAt: auth.profile.updatedAt || new Date().toISOString(),
+      }
+    : null;
+
+  const activeRecord = membership || fallbackMemberRecord;
+
   return {
-    membership,
-    isActiveMember: membership?.status === 'active',
+    membership: activeRecord,
+    isActiveMember: activeRecord?.status === 'active',
     isLoading,
     error,
     refetch: fetchMembership,

@@ -67,6 +67,7 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
         updatePassword: vi.fn(),
         refreshProfile: vi.fn(),
         updateProfile: vi.fn(),
+        loginAsDemo: vi.fn(),
       });
 
       vi.spyOn(membershipContext, 'useMembership').mockReturnValue({
@@ -121,6 +122,7 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
         updatePassword: vi.fn(),
         refreshProfile: vi.fn(),
         updateProfile: vi.fn(),
+        loginAsDemo: vi.fn(),
       });
 
       vi.spyOn(membershipContext, 'useMembership').mockReturnValue({
@@ -175,6 +177,7 @@ describe('Milestone 10: Frontend Production Readiness & Security Tests', () => {
         updatePassword: vi.fn(),
         refreshProfile: vi.fn(),
         updateProfile: vi.fn(),
+        loginAsDemo: vi.fn(),
       });
 
       vi.spyOn(membershipContext, 'useMembership').mockReturnValue({
