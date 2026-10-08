@@ -38,4 +38,20 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Refined Editorial Scrollbars */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #E8E6DF;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #A09F9B;
+  }
 }

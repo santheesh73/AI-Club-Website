@@ -28,6 +28,8 @@ export interface ActivateMembershipDto {
   notes?: string;
 }
 
+import type { FlashcardDto } from '../dashboard/flashcard.types';
+
 export interface MemberDashboardData {
   profile: {
     id: string;
@@ -74,6 +76,7 @@ export interface MemberDashboardData {
     durationSeconds?: number;
     submittedAt: string | null;
   } | null;
+  flashcards?: FlashcardDto[];
 }
 
 export interface MemberListItemDto {

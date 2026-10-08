@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { membershipService } from './membership.service';
+import { flashcardService } from '../dashboard/flashcard.service';
 import { sendSuccess, AppError } from '../../utils/response';
 
 export class MembershipController {
@@ -103,6 +104,30 @@ export class MembershipController {
       }
 
       sendSuccess(res, dashboard.assessment);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get member dashboard spotlight flashcards
+   * GET /api/v1/membership/me/flashcards
+   */
+  async getMyFlashcards(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const membership = await membershipService.getMembershipByUserId(userId);
+      if (!membership || membership.status !== 'active') {
+        throw new AppError(
+          'Active membership required to access member flashcards.',
+          403,
+          'ACTIVE_MEMBERSHIP_REQUIRED'
+        );
+      }
+
+      const limit = req.query.limit ? Number(req.query.limit) : 5;
+      const flashcards = await flashcardService.getMemberFlashcards(userId, limit);
+      sendSuccess(res, { flashcards });
     } catch (error) {
       next(error);
     }

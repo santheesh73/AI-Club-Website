@@ -584,8 +584,9 @@ export class EventsService {
           .in('eligibility', ['public', 'members_only']);
 
         if (data && data.length > 0) {
-          allEvents = data.map(this.mapDbRowToEvent);
-          allEvents.forEach((ev) => localMemoryEvents.set(ev.id, ev));
+          const dbEvents = data.map(this.mapDbRowToEvent);
+          dbEvents.forEach((ev) => localMemoryEvents.set(ev.id, ev));
+          allEvents = Array.from(localMemoryEvents.values());
         }
       } catch {
         // Fallback

@@ -1,3 +1,5 @@
+import type { FlashcardDto } from './flashcard';
+
 export type MembershipStatus =
   | 'active'
   | 'alumni'
@@ -24,6 +26,7 @@ export interface MembershipRecord {
 }
 
 export interface MemberDashboardData {
+  flashcards?: FlashcardDto[];
   profile: {
     id: string;
     fullName: string;
