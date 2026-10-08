@@ -68,9 +68,9 @@ export const LoginPage: React.FC = () => {
     // Student / Member flow
     if (from && from !== '/profile') {
       if (from.startsWith('/admin')) {
-        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/dashboard', { replace: true });
+        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/assessment', { replace: true });
       } else if (from.startsWith('/member')) {
-        navigate(isMember || isAdmin ? from : '/applicant/dashboard', { replace: true });
+        navigate(isMember || isAdmin ? from : '/applicant/assessment', { replace: true });
       } else {
         navigate(from, { replace: true });
       }
@@ -80,7 +80,7 @@ export const LoginPage: React.FC = () => {
       } else if (isMember) {
         navigate('/member/dashboard', { replace: true });
       } else {
-        navigate('/applicant/dashboard', { replace: true });
+        navigate('/applicant/assessment', { replace: true });
       }
     }
   };

@@ -102,7 +102,7 @@ export const MemberEventDetailPage: React.FC = () => {
           {/* Hero Header */}
           <div className="p-6 sm:p-8 rounded-card-lg bg-surface border border-surface-border shadow-soft space-y-4">
             <div className="flex items-center gap-2">
-              <Badge variant="lavender">{event.category.toUpperCase()}</Badge>
+              <Badge variant="lavender">{(event.category || 'event').toUpperCase()}</Badge>
               {event.isRegistered && (
                 <Badge variant="success">
                   <CheckCircle2 className="h-3 w-3 mr-1 inline" />

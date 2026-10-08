@@ -13,7 +13,6 @@ import { EventsPage } from '@/pages/public/EventsPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
-import { ProfilePage } from '@/pages/applicant/ProfilePage';
 import { ApplicantDashboard } from '@/pages/applicant/ApplicantDashboard';
 import { ApplicationPage } from '@/pages/applicant/ApplicationPage';
 import { AssessmentPage } from '@/pages/applicant/AssessmentPage';
@@ -61,6 +60,19 @@ import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage';
 import { AdminIntelligencePage } from '@/pages/admin/AdminIntelligencePage';
 import { AdminAssessmentPage } from '@/pages/admin/AdminAssessmentPage';
+import { useAuth } from '@/features/auth';
+
+const ProfileRouteHandler: React.FC = () => {
+  const { profile, isAdmin } = useAuth();
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+  if (profile?.role === 'member') {
+    return <Navigate to="/member/profile" replace />;
+  }
+  // Applicants have no separate profile page; they go directly to assessment
+  return <Navigate to="/applicant/assessment" replace />;
+};
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -83,7 +95,7 @@ export const AppRoutes: React.FC = () => {
           path="/profile"
           element={
             <RouteGuard>
-              <ProfilePage />
+              <ProfileRouteHandler />
             </RouteGuard>
           }
         />
@@ -100,7 +112,7 @@ export const AppRoutes: React.FC = () => {
       >
         <Route index element={<ApplicantDashboard />} />
         <Route path="dashboard" element={<ApplicantDashboard />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile" element={<Navigate to="/applicant/assessment" replace />} />
         <Route path="apply" element={<ApplicationPage />} />
         <Route path="application" element={<ApplicationPage />} />
         <Route path="assessment" element={<AssessmentPage />} />

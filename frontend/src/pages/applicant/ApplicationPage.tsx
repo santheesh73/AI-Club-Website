@@ -8,7 +8,6 @@ import {
   FileText,
   User,
   GraduationCap,
-  ArrowRight,
   AlertCircle,
 } from 'lucide-react';
 
@@ -37,7 +36,6 @@ export const ApplicationPage: React.FC = () => {
     );
   }
 
-  const profileComplete = statusData?.profileComplete ?? false;
   const canStartAssessment = statusData?.canStartAssessment ?? false;
   const assessmentStatus = statusData?.assessmentStatus ?? 'not_started';
 
@@ -85,7 +83,7 @@ export const ApplicationPage: React.FC = () => {
           <div className="max-w-md mx-auto space-y-1">
             <h3 className="text-lg font-semibold text-ink">No Active Application Found</h3>
             <p className="text-xs text-ink-muted">
-              You haven't initiated an official club application yet. Once your academic profile is filled, you can start immediately.
+              You haven't initiated an official club application yet. Click below to start your application and take the assessment.
             </p>
           </div>
           <div className="pt-2">
@@ -93,10 +91,9 @@ export const ApplicationPage: React.FC = () => {
               variant="primary"
               onClick={handleCreate}
               isLoading={isCreating}
-              disabled={!profileComplete || isCreating}
+              disabled={isCreating}
             >
-              <span>Generate Application Dossier</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
+              <span>Generate Application Dossier &rarr;</span>
             </Button>
           </div>
         </div>
@@ -107,13 +104,8 @@ export const ApplicationPage: React.FC = () => {
         <div className="flex items-center justify-between pb-4 border-b border-surface-border">
           <div className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-ink-muted" />
-            <h3 className="text-base font-semibold text-ink">Verified Student Profile</h3>
+            <h3 className="text-base font-semibold text-ink">Student Identity</h3>
           </div>
-          <Link to="/profile">
-            <Button variant="outline" size="sm">
-              Edit Profile
-            </Button>
-          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -168,7 +160,6 @@ export const ApplicationPage: React.FC = () => {
 
       {/* Admissions Pipeline Status */}
       <ApplicationTimeline
-        profileComplete={profileComplete}
         hasApplication={!!application}
         applicationStatus={application?.status}
         assessmentStatus={assessmentStatus}

@@ -43,6 +43,18 @@ export function createRateLimiter(options: RateLimiterOptions = {}) {
       return next();
     }
 
+    // In development mode, bypass rate limiting for localhost to prevent developer lockout
+    const clientIp = req.ip || req.socket?.remoteAddress || '';
+    const isLocalhost =
+      clientIp === '127.0.0.1' ||
+      clientIp === '::1' ||
+      clientIp === '::ffff:127.0.0.1' ||
+      req.hostname === 'localhost';
+
+    if (env.NODE_ENV === 'development' && isLocalhost) {
+      return next();
+    }
+
     const key = options.keyGenerator
       ? options.keyGenerator(req)
       : (req.user?.id || req.ip || req.socket.remoteAddress || 'anonymous');

@@ -3,7 +3,7 @@ import { CheckCircle2, Clock, AlertCircle, CircleDashed } from 'lucide-react';
 import type { ApplicationStatus } from '@/types/application';
 
 interface ApplicationTimelineProps {
-  profileComplete: boolean;
+  profileComplete?: boolean;
   hasApplication: boolean;
   applicationStatus?: ApplicationStatus;
   assessmentStatus?: 'not_started' | 'in_progress' | 'completed' | 'expired';
@@ -17,61 +17,40 @@ interface Step {
 }
 
 export const ApplicationTimeline: React.FC<ApplicationTimelineProps> = ({
-  profileComplete,
   hasApplication,
   applicationStatus,
   assessmentStatus = 'not_started',
 }) => {
   const steps: Step[] = [
     {
-      id: 'profile',
-      title: '1. Student Profile',
-      description: profileComplete
-        ? 'Verified academic credentials & skills'
-        : 'Complete required student fields',
-      status: profileComplete ? 'completed' : 'current',
-    },
-    {
-      id: 'application',
-      title: '2. Club Application',
+      id: 'account',
+      title: '1. Account & Candidate Record',
       description: hasApplication
-        ? 'Official application generated'
-        : profileComplete
-        ? 'Ready to initiate application'
-        : 'Pending completed student profile',
-      status: hasApplication
-        ? 'completed'
-        : profileComplete
-        ? 'current'
-        : 'pending',
+        ? 'Candidate account and application generated'
+        : 'Candidate account registered',
+      status: 'completed',
     },
     {
       id: 'assessment',
-      title: '3. 25-MCQ Assessment',
+      title: '2. 25-MCQ Technical Assessment',
       description:
         assessmentStatus === 'completed'
-          ? 'Exam evaluated & recorded'
+          ? 'Exam evaluated & score authoritatively recorded'
           : assessmentStatus === 'in_progress'
-          ? 'Assessment in progress'
-          : hasApplication
-          ? '30-minute timed technical exam'
-          : 'Pending application initiation',
+          ? 'Timed assessment in progress'
+          : '30-minute timed entrance examination',
       status:
         assessmentStatus === 'completed'
           ? 'completed'
-          : assessmentStatus === 'in_progress'
-          ? 'current'
-          : hasApplication
-          ? 'current'
-          : 'pending',
+          : 'current',
     },
     {
       id: 'under_review',
-      title: '4. Under Committee Review',
+      title: '3. Under Committee Review',
       description:
         applicationStatus === 'under_review' || assessmentStatus === 'completed'
-          ? 'Submission queued for admissions board'
-          : 'Awaiting assessment submission',
+          ? 'Submission queued for admissions evaluation'
+          : 'Awaiting assessment completion',
       status:
         applicationStatus === 'under_review' || assessmentStatus === 'completed'
           ? 'current'
@@ -79,15 +58,15 @@ export const ApplicationTimeline: React.FC<ApplicationTimelineProps> = ({
     },
     {
       id: 'admin_decision',
-      title: '5. Admissions Decision',
+      title: '4. Admissions Decision',
       description:
         applicationStatus === 'accepted'
-          ? 'Application Accepted'
+          ? 'Application Accepted into AI CLUB'
           : applicationStatus === 'rejected'
           ? 'Application Decision Released'
           : applicationStatus === 'waitlisted'
-          ? 'Cohort Waitlisted'
-          : 'Admissions committee evaluation (Milestone 4)',
+          ? 'Candidate Waitlisted'
+          : 'Admissions committee cohort evaluation',
       status:
         applicationStatus === 'accepted' ||
         applicationStatus === 'rejected' ||
@@ -97,9 +76,12 @@ export const ApplicationTimeline: React.FC<ApplicationTimelineProps> = ({
     },
     {
       id: 'membership',
-      title: '6. Member Induction',
-      description: 'Full platform access & onboarding (Milestone 5)',
-      status: 'pending',
+      title: '5. Member Induction & Full Profile Setup',
+      description:
+        applicationStatus === 'accepted'
+          ? 'Complete member credentials, portfolio, and project showcase'
+          : 'Unlocked upon cohort selection as official club member',
+      status: applicationStatus === 'accepted' ? 'current' : 'pending',
     },
   ];
 
@@ -109,11 +91,11 @@ export const ApplicationTimeline: React.FC<ApplicationTimelineProps> = ({
         <div>
           <h3 className="text-base font-semibold text-ink">Admission Pipeline</h3>
           <p className="text-xs text-ink-muted">
-            Track your progression from registration to club induction.
+            Track your progression from registration to member induction.
           </p>
         </div>
         <span className="text-xs font-mono px-2.5 py-1 rounded-pill bg-canvas-alt text-ink-secondary border border-surface-border">
-          6-Stage Lifecycle
+          5-Stage Progression
         </span>
       </div>
 

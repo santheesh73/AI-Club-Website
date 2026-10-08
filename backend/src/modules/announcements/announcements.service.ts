@@ -8,6 +8,7 @@ export interface AnnouncementDto {
   content: string;
   priority: 'low' | 'normal' | 'high' | 'urgent';
   audience: 'all' | 'applicants' | 'members' | 'admins';
+  targetAudience?: 'all' | 'applicants' | 'members' | 'admins';
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;
   expiresAt?: string;
@@ -52,6 +53,7 @@ export class AnnouncementsService {
       content: row.content,
       priority: row.priority,
       audience: row.audience,
+      targetAudience: row.audience,
       status: row.status,
       publishedAt: row.published_at,
       expiresAt: row.expires_at,
@@ -84,6 +86,7 @@ export class AnnouncementsService {
       content: row.content,
       priority: row.priority,
       audience: row.audience,
+      targetAudience: row.audience,
       status: row.status,
       publishedAt: row.published_at,
       expiresAt: row.expires_at,

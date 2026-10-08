@@ -71,9 +71,9 @@ export const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <>
                 {profile?.role === 'applicant' && (
-                  <Link to="/applicant/dashboard">
+                  <Link to="/applicant/assessment">
                     <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-subtle">
-                      Assessment Dashboard &rarr;
+                      Take Assessment &rarr;
                     </Button>
                   </Link>
                 )}
@@ -91,7 +91,16 @@ export const Navbar: React.FC = () => {
                     </Button>
                   </Link>
                 )}
-                <Link to="/profile" className="flex items-center gap-2 group">
+                <Link
+                  to={
+                    profile?.role === 'member'
+                      ? '/member/profile'
+                      : isAdmin
+                      ? '/admin'
+                      : '/applicant/assessment'
+                  }
+                  className="flex items-center gap-2 group"
+                >
                   {profile?.avatarUrl ? (
                     <img
                       src={profile.avatarUrl}
@@ -104,7 +113,7 @@ export const Navbar: React.FC = () => {
                     </div>
                   )}
                   <span className="hidden sm:inline text-xs font-medium text-ink group-hover:underline">
-                    {profile?.fullName || 'Profile'}
+                    {profile?.fullName || (profile?.role === 'member' ? 'Member' : 'Applicant')}
                   </span>
                 </Link>
                 <Button onClick={handleSignOut} variant="ghost" size="sm">

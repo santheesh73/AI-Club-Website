@@ -43,7 +43,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ profile, onEdit }) => 
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold tracking-tight text-ink">{profile.fullName}</h2>
                 <Badge variant={profile.role === 'admin' ? 'default' : profile.role === 'member' ? 'success' : 'neutral'}>
-                  {profile.role.toUpperCase()}
+                  {(profile.role || 'member').toUpperCase()}
                 </Badge>
               </div>
               <p className="text-sm text-ink-muted mt-1">{profile.email}</p>

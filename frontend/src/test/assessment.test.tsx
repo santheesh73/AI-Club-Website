@@ -123,12 +123,11 @@ describe('AI CLUB Milestone 3: Application & Assessment Component Tests', () => 
       />
     );
 
-    expect(screen.getByText(/1\. Student Profile/i)).toBeInTheDocument();
-    expect(screen.getByText(/2\. Club Application/i)).toBeInTheDocument();
-    expect(screen.getByText(/3\. 25-MCQ Assessment/i)).toBeInTheDocument();
-    expect(screen.getByText(/4\. Under Committee Review/i)).toBeInTheDocument();
-    expect(screen.getByText(/5\. Admissions Decision/i)).toBeInTheDocument();
-    expect(screen.getByText(/6\. Member Induction/i)).toBeInTheDocument();
+    expect(screen.getByText(/1\. Account & Candidate Record/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. 25-MCQ Technical Assessment/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Under Committee Review/i)).toBeInTheDocument();
+    expect(screen.getByText(/4\. Admissions Decision/i)).toBeInTheDocument();
+    expect(screen.getByText(/5\. Member Induction & Full Profile Setup/i)).toBeInTheDocument();
   });
 
   it('ApplicationCard displays application ID and status', () => {

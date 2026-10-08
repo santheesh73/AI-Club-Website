@@ -126,7 +126,7 @@ export const AdminEventEditPage: React.FC = () => {
             Edit Event: {event.title}
           </h1>
           <Badge variant={event.status === 'published' ? 'success' : 'neutral'}>
-            {event.status.toUpperCase()}
+            {(event.status || 'published').toUpperCase()}
           </Badge>
         </div>
         <p className="text-xs text-ink-muted mt-0.5 font-mono">
@@ -138,7 +138,7 @@ export const AdminEventEditPage: React.FC = () => {
         <div className="p-4 rounded-card-sm bg-canvas border border-surface-border text-xs text-ink-secondary flex items-start gap-2.5">
           <AlertCircle className="h-4 w-4 text-ink-muted flex-shrink-0 mt-0.5" />
           <p>
-            This event is marked as <strong>{event.status.toUpperCase()}</strong>. In accordance with platform integrity rules, past or cancelled events are in read-only preservation mode.
+            This event is marked as <strong>{(event.status || 'published').toUpperCase()}</strong>. In accordance with platform integrity rules, past or cancelled events are in read-only preservation mode.
           </p>
         </div>
       )}

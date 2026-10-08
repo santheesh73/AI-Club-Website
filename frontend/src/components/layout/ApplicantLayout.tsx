@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { getContextualHomePath } from '@/utils/navigation';
 import { Button } from '@/components/ui/Button';
-import { LayoutDashboard, FileText, CheckSquare, Award, User, LogOut, Shield, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, FileText, CheckSquare, Award, LogOut, Shield, ArrowRight } from 'lucide-react';
 
 export const ApplicantLayout: React.FC = () => {
   const location = useLocation();
@@ -17,11 +17,10 @@ export const ApplicantLayout: React.FC = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/applicant', icon: LayoutDashboard },
-    { label: 'Application', path: '/applicant/application', icon: FileText },
-    { label: 'Assessment', path: '/applicant/assessment', icon: CheckSquare },
+    { label: 'Assessment Test', path: '/applicant/assessment', icon: CheckSquare },
     { label: 'Results', path: '/applicant/result', icon: Award },
-    { label: 'Profile', path: '/profile', icon: User },
+    { label: 'Dashboard', path: '/applicant/dashboard', icon: LayoutDashboard },
+    { label: 'Application', path: '/applicant/application', icon: FileText },
   ];
 
   return (

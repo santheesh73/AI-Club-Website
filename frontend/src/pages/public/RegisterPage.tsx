@@ -14,8 +14,6 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [department, setDepartment] = useState('');
-  const [registerNumber, setRegisterNumber] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -57,10 +55,7 @@ export const RegisterPage: React.FC = () => {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    const result = await signUp(email, password, fullName, {
-      department: department.trim() || undefined,
-      registerNumber: registerNumber.trim() || undefined,
-    });
+    const result = await signUp(email, password, fullName);
     setIsSubmitting(false);
 
     if (!result.success) {
@@ -68,8 +63,8 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    // Redirect to profile upon registration
-    navigate('/profile');
+    // Direct applicant immediately to the assessment page for the test
+    navigate('/applicant/assessment', { replace: true });
   };
 
   return (
@@ -78,11 +73,11 @@ export const RegisterPage: React.FC = () => {
         <Card className="shadow-elevated border-surface-border">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-2">
-              <Badge variant="neutral">Account Setup</Badge>
+              <Badge variant="neutral">Student Registration</Badge>
             </div>
             <CardTitle className="text-2xl font-bold tracking-tight">Create AI CLUB Account</CardTitle>
             <CardDescription>
-              Join the innovation community. This registers your platform identity.
+              Create your account and proceed directly to your entrance assessment.
             </CardDescription>
           </CardHeader>
 
@@ -118,21 +113,6 @@ export const RegisterPage: React.FC = () => {
                 required
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
-                  label="Department (Optional)"
-                  placeholder="Computer Science"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                />
-                <Input
-                  label="Roll / Reg No. (Optional)"
-                  placeholder="2026-CS-042"
-                  value={registerNumber}
-                  onChange={(e) => setRegisterNumber(e.target.value)}
-                />
-              </div>
-
               <Input
                 label="Password"
                 type="password"
@@ -163,7 +143,7 @@ export const RegisterPage: React.FC = () => {
                   className="w-full shadow-subtle"
                   isLoading={isSubmitting}
                 >
-                  Create Platform Account
+                  Create Account & Begin Assessment &rarr;
                 </Button>
               </div>
             </form>

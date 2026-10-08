@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import {
   FileText,
-  AlertCircle,
   CheckCircle2,
   HelpCircle,
   Sparkles,
@@ -28,7 +27,7 @@ export const ApplicantDashboard: React.FC = () => {
     const res = await createApplication();
     setIsCreating(false);
     if (res.success && res.data) {
-      navigate('/applicant/application');
+      navigate('/applicant/assessment');
     } else {
       setCreateError(res.error || 'Failed to initialize application.');
     }
@@ -43,10 +42,8 @@ export const ApplicantDashboard: React.FC = () => {
     );
   }
 
-  const profileComplete = statusData?.profileComplete ?? false;
-  const missingFields = statusData?.missingFields ?? [];
   const hasApp = statusData?.hasApplication ?? false;
-  const canStartAssessment = statusData?.canStartAssessment ?? false;
+  const canStartAssessment = statusData?.canStartAssessment ?? true;
   const assessmentStatus = statusData?.assessmentStatus ?? 'not_started';
 
   return (
@@ -66,16 +63,13 @@ export const ApplicantDashboard: React.FC = () => {
           </p>
         </div>
 
-        {hasApp && (
-          <div className="flex items-center gap-2 self-start md:self-center">
-            <Link to="/applicant/application">
-              <Button variant="outline" size="sm">
-                <FileText className="h-4 w-4 mr-1.5" />
-                <span>Application Details</span>
-              </Button>
-            </Link>
-          </div>
-        )}
+        <div className="flex items-center gap-2 self-start md:self-center">
+          <Link to="/applicant/assessment">
+            <Button variant="primary" size="sm" className="shadow-subtle">
+              <span>Take Assessment &rarr;</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Global Error Banner if any */}
@@ -92,33 +86,6 @@ export const ApplicantDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Incomplete Profile Alert */}
-      {!profileComplete && (
-        <div className="p-5 rounded-card bg-accent-orange-subtle/50 border border-accent-orange/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-subtle">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-accent-orange flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-accent-orange-dark">
-                Profile Incomplete
-              </h3>
-              <p className="text-xs text-ink-secondary">
-                To initiate a club application, your academic credentials must be filled:{' '}
-                <span className="font-medium text-accent-orange-dark">
-                  {missingFields.join(', ') || 'Register number, department, year, skills'}
-                </span>
-                .
-              </p>
-            </div>
-          </div>
-          <Link to="/profile" className="flex-shrink-0">
-            <Button variant="primary" size="sm">
-              <span>Complete Profile</span>
-              <ArrowRight className="h-4 w-4 ml-1.5" />
-            </Button>
-          </Link>
-        </div>
-      )}
-
       {/* Active Application or Application CTA */}
       {hasApp && application ? (
         <ApplicationCard
@@ -132,16 +99,16 @@ export const ApplicantDashboard: React.FC = () => {
             <div className="h-10 w-10 rounded-xl bg-ink text-canvas flex items-center justify-center font-bold">
               <FileText className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold text-ink">Begin Your AI CLUB Application</h2>
+            <h2 className="text-xl font-bold text-ink">Begin Your AI CLUB Assessment</h2>
             <p className="text-sm text-ink-muted leading-relaxed">
-              Applying gives you an official application identifier (`AIC-YYYY-XXXXXX`) and grants access to the server-administered 25-Question MCQ Assessment.
+              Your application record (`AIC-YYYY-XXXXXX`) will be active and grant immediate access to the server-administered 25-Question MCQ Assessment.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div className="p-4 rounded-card-sm bg-canvas-alt border border-surface-border space-y-1.5">
-              <span className="text-xs font-mono font-semibold text-ink">Step 1: Application</span>
-              <p className="text-xs text-ink-muted">Generates official candidate registration record.</p>
+              <span className="text-xs font-mono font-semibold text-ink">Step 1: Account & Application</span>
+              <p className="text-xs text-ink-muted">Automatic candidate registration record.</p>
             </div>
             <div className="p-4 rounded-card-sm bg-canvas-alt border border-surface-border space-y-1.5">
               <span className="text-xs font-mono font-semibold text-ink">Step 2: 25-MCQ Exam</span>
@@ -159,9 +126,9 @@ export const ApplicantDashboard: React.FC = () => {
               size="lg"
               onClick={handleStartApplication}
               isLoading={isCreating}
-              disabled={!profileComplete || isCreating}
+              disabled={isCreating}
             >
-              <span>Start Official Application</span>
+              <span>Start Assessment &rarr;</span>
               <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </div>
@@ -170,7 +137,6 @@ export const ApplicantDashboard: React.FC = () => {
 
       {/* Lifecycle Timeline */}
       <ApplicationTimeline
-        profileComplete={profileComplete}
         hasApplication={hasApp}
         applicationStatus={application?.status}
         assessmentStatus={assessmentStatus}
