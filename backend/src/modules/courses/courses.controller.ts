@@ -27,7 +27,7 @@ export class CoursesController {
   async getMemberEnrolledCourses(req: Request, res: Response) {
     const userId = req.user!.id;
     const data = await coursesService.getMemberEnrolledCourses(userId);
-    sendSuccess(res, data);
+    sendSuccess(res, [...data.active, ...data.completed]);
   }
 
   async getMemberCourseDetail(req: Request, res: Response) {
