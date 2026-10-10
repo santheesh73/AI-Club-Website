@@ -11,7 +11,9 @@ export const Footer: React.FC = () => (
       <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
         <Link to="/about" className="public-text-link">About</Link>
         <Link to="/learn" className="public-text-link">Learn</Link>
+        <Link to="/learn/first-model" className="public-text-link">Starter lesson</Link>
         <Link to="/events" className="public-text-link">Events</Link>
+        <Link to="/join" className="public-text-link">Joining guide</Link>
         <a href="https://github.com/santheesh73/AI-Club-Website" target="_blank" rel="noreferrer" className="public-text-link">Website source <span className="sr-only">(opens in a new tab)</span></a>
       </nav>
       <p className="text-sm text-ink-secondary">© {new Date().getFullYear()} AI CLUB</p>

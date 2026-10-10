@@ -6,6 +6,7 @@ import type { CourseCardDto, CourseCategoryRecord, CourseDifficulty } from '@/ty
 interface UseCoursesParams {
   initialCategory?: string;
   initialDifficulty?: CourseDifficulty;
+  initialSearch?: string;
 }
 
 export function useCourses(params: UseCoursesParams = {}) {
@@ -20,7 +21,7 @@ export function useCourses(params: UseCoursesParams = {}) {
 
   const [category, setCategory] = useState<string | undefined>(params.initialCategory);
   const [difficulty, setDifficulty] = useState<CourseDifficulty | undefined>(params.initialDifficulty);
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>(params.initialSearch?.slice(0, 100) || '');
   const [page, setPage] = useState<number>(1);
 
   // Load categories

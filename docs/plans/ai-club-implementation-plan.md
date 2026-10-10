@@ -1,6 +1,6 @@
 # AI Club implementation plan
 
-Status: implemented locally on 2026-10-08; deployment and staging database verification remain outstanding.
+Status: implemented locally on 2026-10-08, with [public-experience and production-build improvements](ai-club-public-experience-implementation.md) on 2026-10-09 and 2026-10-10; deployment and staging database verification remain outstanding.
 
 ## Outcome and scope
 

@@ -1,13 +1,15 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { ApplicantLayout } from '@/components/layout/ApplicantLayout';
-import { MemberLayout } from '@/components/layout/MemberLayout';
-import { AdminLayout } from '@/components/layout/AdminLayout';
+const ApplicantLayout = React.lazy(() => import('@/components/layout/ApplicantLayout').then(module => ({ default: module.ApplicantLayout })));
+const MemberLayout = React.lazy(() => import('@/components/layout/MemberLayout').then(module => ({ default: module.MemberLayout })));
+const AdminLayout = React.lazy(() => import('@/components/layout/AdminLayout').then(module => ({ default: module.AdminLayout })));
 import { RouteGuard } from '@/routes/RouteGuard';
 import { LandingPage } from '@/pages/public/LandingPage';
 const AboutPage = React.lazy(() => import('@/pages/public/AboutPage').then(module => ({ default: module.AboutPage })));
 const LearnPage = React.lazy(() => import('@/pages/public/LearnPage').then(module => ({ default: module.LearnPage })));
+const StarterLessonPage = React.lazy(() => import('@/pages/public/StarterLessonPage').then(module => ({ default: module.StarterLessonPage })));
+const JoinPage = React.lazy(() => import('@/pages/public/JoinPage').then(module => ({ default: module.JoinPage })));
 const EventsPage = React.lazy(() => import('@/pages/public/EventsPage').then(module => ({ default: module.EventsPage })));
 const PublicEventDetailPage = React.lazy(() => import('@/pages/public/PublicEventDetailPage').then(module => ({ default: module.PublicEventDetailPage })));
 
@@ -84,13 +86,14 @@ export const AppRoutes: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/learn" element={<LearnPage />} />
+        <Route path="/learn/first-model" element={<StarterLessonPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:slug" element={<PublicEventDetailPage />} />
         <Route path="/projects" element={<CommunityProjectsPage />} />
         <Route path="/community" element={<CommunityProjectsPage />} />
         <Route path="/community/projects" element={<CommunityProjectsPage />} />
         <Route path="/community/projects/:slug" element={<ProjectDetailPage />} />
-        <Route path="/join" element={<Navigate to="/register" replace />} />
+        <Route path="/join" element={<JoinPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

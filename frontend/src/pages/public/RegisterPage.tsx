@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/features/auth';
+import { isAuthorizedAdmin, useAuth } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
 import { clearEventReturn, eventAuthUrl, rememberEventReturn, resolveEventReturn } from '@/features/auth/authReturn';
 
 export const RegisterPage: React.FC = () => {
-  const { signUp } = useAuth();
+  const { signUp, isAuthenticated, isLoading: authLoading, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [eventReturn] = useState(() => resolveEventReturn(location.search, location.state, false));
@@ -21,6 +21,24 @@ export const RegisterPage: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fieldRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const generalErrorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || authLoading || isSubmitting) return;
+    if (eventReturn) clearEventReturn();
+    const dashboard = isAuthorizedAdmin(profile?.email, profile?.role) ? '/admin' : profile?.role === 'member' ? '/member/dashboard' : '/applicant/dashboard';
+    navigate(eventReturn || dashboard, { replace: true });
+  }, [isAuthenticated, authLoading, isSubmitting, eventReturn, profile, navigate]);
+
+  useEffect(() => {
+    const firstInvalid = Object.keys(errors)[0];
+    if (firstInvalid) fieldRefs.current[firstInvalid]?.focus();
+  }, [errors]);
+
+  useEffect(() => {
+    if (generalError) generalErrorRef.current?.focus();
+  }, [generalError]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -43,13 +61,19 @@ export const RegisterPage: React.FC = () => {
       newErrors.password = 'Password must be at least 6 characters long';
     }
 
-    if (password !== confirmPassword) {
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Confirm your password';
+    } else if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  if ((authLoading && !isSubmitting) || isAuthenticated) {
+    return <div role="status" className="min-h-[50vh] flex items-center justify-center p-6 text-sm text-ink-secondary">Opening your account…</div>;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,11 +109,11 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-160px)] flex items-center justify-center py-12 px-4 sm:px-6">
       <div className="w-full max-w-md">
-        <Card className="shadow-elevated border-surface-border">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold tracking-tight">{verificationEmail ? 'Check your email' : 'Create an AI Club account'}</CardTitle>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle as="h1" className="text-3xl font-bold tracking-tight">{verificationEmail ? 'Check your email' : 'Create an AI Club account'}</CardTitle>
             <CardDescription>
-              {verificationEmail ? `A confirmation step is required for ${verificationEmail}. Open the verification link in your email, then sign in.` : eventReturn ? 'Create an account, then return to the event to review RSVP eligibility. Public events do not require the membership assessment.' : 'Start your membership application. You can review the next steps before choosing to begin the assessment.'}
+              {verificationEmail ? `A confirmation step is required for ${verificationEmail}. Open the verification link in your email, then sign in.` : eventReturn ? 'Create an account, then return to the event to review RSVP eligibility. Public events do not require the membership assessment.' : 'Save your event RSVPs and review how to join the club. Creating an account does not start the assessment.'}
             </CardDescription>
           </CardHeader>
 
@@ -97,14 +121,19 @@ export const RegisterPage: React.FC = () => {
             {generalError && (
               <div
                 role="alert"
-                className="mb-6 p-4 rounded-cardSm bg-red-50 border border-red-200 text-xs text-red-800 font-medium"
+                ref={generalErrorRef}
+                tabIndex={-1}
+                className="mb-6 p-4 rounded-cardSm bg-red-50 text-sm text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-800"
               >
                 {generalError}
               </div>
             )}
 
-            {verificationEmail ? <div className="space-y-5 text-sm text-ink-secondary"><p>{eventReturn ? 'Your event destination is saved. After verification, return to the event and choose RSVP to reserve your place.' : 'After verification, sign in to review your membership application steps.'}</p><p>Creating an account does not reserve an event place or start a timed assessment.</p><Link to={eventAuthUrl('login', eventReturn)} className="inline-flex min-h-11 items-center rounded-pill bg-ink text-canvas px-5 py-2.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">Continue to sign in</Link></div> : <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {!verificationEmail && Object.keys(errors).length > 0 && <div role="alert" className="mb-6 rounded-cardSm bg-red-50 p-4 text-sm text-red-800">Check the {Object.keys(errors).length === 1 ? 'highlighted field' : `${Object.keys(errors).length} highlighted fields`} to create your account.</div>}
+            {verificationEmail ? <div className="space-y-5 text-sm text-ink-secondary"><p>{eventReturn ? 'Your event destination is saved. After verification, return to the event and choose RSVP to reserve your place.' : 'After verification, sign in to review your membership application steps.'}</p><p>Creating an account does not reserve an event place or start a timed assessment.</p><Link to={eventAuthUrl('login', eventReturn)} className="inline-flex min-h-11 items-center rounded-pill bg-ink text-canvas px-5 py-2.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2">Continue to sign in</Link></div> : <form onSubmit={handleSubmit} className="space-y-5" noValidate aria-busy={isSubmitting}>
               <Input
+                ref={(element) => { fieldRefs.current.fullName = element; }}
+                id="register-full-name"
                 label="Full Name"
                 placeholder="Ada Lovelace"
                 value={fullName}
@@ -115,6 +144,8 @@ export const RegisterPage: React.FC = () => {
               />
 
               <Input
+                ref={(element) => { fieldRefs.current.email = element; }}
+                id="register-email"
                 label="Email Address"
                 type="email"
                 placeholder="ada@university.edu"
@@ -126,6 +157,8 @@ export const RegisterPage: React.FC = () => {
               />
 
               <Input
+                ref={(element) => { fieldRefs.current.password = element; }}
+                id="register-password"
                 label="Password"
                 type="password"
                 placeholder="••••••••"
@@ -138,6 +171,8 @@ export const RegisterPage: React.FC = () => {
               />
 
               <Input
+                ref={(element) => { fieldRefs.current.confirmPassword = element; }}
+                id="register-confirm-password"
                 label="Confirm Password"
                 type="password"
                 placeholder="••••••••"
@@ -152,18 +187,18 @@ export const RegisterPage: React.FC = () => {
                 <Button
                   type="submit"
                   size="md"
-                  className="w-full shadow-subtle"
+                  className="w-full min-h-11"
                   isLoading={isSubmitting}
                 >
-                  Create account
+                  {isSubmitting ? 'Creating account…' : 'Create account'}
                 </Button>
               </div>
             </form>}
           </CardContent>
 
-          <CardFooter className="justify-center text-xs text-ink-muted">
-            Already have an account?{' '}
-            <Link to={eventAuthUrl('login', eventReturn)} className="ml-1 text-ink font-semibold hover:underline underline-offset-4">
+          <CardFooter className="justify-center flex-wrap gap-x-1 text-sm text-ink-secondary">
+            <span>Already have an account?</span>
+            <Link to={eventAuthUrl('login', eventReturn)} className="inline-flex min-h-11 items-center rounded px-2 text-ink font-semibold underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink">
               Sign In
             </Link>
           </CardFooter>
