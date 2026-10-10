@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, BookOpen, Sparkles, Filter, AlertCircle, Compass } from 'lucide-react';
 import { useCourses } from '@/features/courses/useCourses';
 import { CourseCard, RecommendedCoursesSection } from '@/features/courses';
@@ -16,6 +16,7 @@ const DIFFICULTIES: { label: string; value?: CourseDifficulty }[] = [
 ];
 
 export const MemberCoursesPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const {
     courses,
     categories,
@@ -28,7 +29,7 @@ export const MemberCoursesPage: React.FC = () => {
     search,
     setSearch,
     refetch,
-  } = useCourses();
+  } = useCourses({ initialSearch: searchParams.get('search')?.trim().slice(0, 100) });
 
   return (
     <div className="space-y-10 animate-in fade-in duration-300">
@@ -37,9 +38,8 @@ export const MemberCoursesPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <Badge variant="lavender">
             <Sparkles className="h-3 w-3 mr-1 inline" />
-            Learning Management Platform
+            Member learning
           </Badge>
-          <span className="text-xs font-mono text-ink-muted">Milestone 7 Academy</span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -48,16 +48,14 @@ export const MemberCoursesPage: React.FC = () => {
               AI CLUB Courses & Curriculum
             </h1>
             <p className="text-xs sm:text-sm text-ink-secondary mt-1 max-w-2xl leading-relaxed">
-              Production-grade courses, structured modular syllabi, and hands-on technical learning designed exclusively for inducted AI Innovation Collective members.
+              Explore the club’s published courses, choose a topic, and continue learning in your member workspace.
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link to="/member/courses/my">
-              <Button variant="secondary" size="sm">
+            <Link to="/member/my-courses" className="public-action-secondary">
                 <BookOpen className="h-4 w-4 mr-1.5" />
-                <span>My Enrolled Courses</span>
-              </Button>
+                <span>My courses</span>
             </Link>
           </div>
         </div>
@@ -73,8 +71,8 @@ export const MemberCoursesPage: React.FC = () => {
           </button>
 
           <Link
-            to="/member/courses/my"
-            className="px-3.5 py-1.5 rounded-card-sm text-xs font-semibold text-ink-secondary hover:bg-canvas flex items-center gap-1.5 transition-colors"
+            to="/member/my-courses"
+            className="min-h-11 px-3.5 py-1.5 rounded-card-sm text-xs font-semibold text-ink-secondary hover:bg-canvas flex items-center gap-1.5 transition-colors"
           >
             <BookOpen className="h-3.5 w-3.5" />
             <span>My Learning</span>
@@ -92,7 +90,7 @@ export const MemberCoursesPage: React.FC = () => {
             Internal Courses & Curriculum
           </h2>
           <p className="text-xs sm:text-sm text-ink-secondary mt-0.5">
-            Core community-led coursework, interactive assessments, and completion certifications.
+            Browse currently published club courses and their available lessons.
           </p>
         </div>
 
@@ -104,6 +102,7 @@ export const MemberCoursesPage: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
           <input
             type="text"
+            aria-label="Search member courses"
             placeholder="Search courses by title, topic..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -117,6 +116,7 @@ export const MemberCoursesPage: React.FC = () => {
           <div className="flex items-center gap-1.5 text-xs text-ink-muted">
             <Filter className="h-3.5 w-3.5" />
             <select
+              aria-label="Course category"
               value={category || ''}
               onChange={(e) => setCategory(e.target.value || undefined)}
               className="py-1.5 px-3 rounded-card-sm bg-canvas border border-surface-border text-xs text-ink focus:outline-none focus:border-ink transition-colors"
@@ -133,6 +133,7 @@ export const MemberCoursesPage: React.FC = () => {
           {/* Difficulty Dropdown */}
           <div className="flex items-center gap-1.5 text-xs text-ink-muted">
             <select
+              aria-label="Course difficulty"
               value={difficulty || ''}
               onChange={(e) => setDifficulty((e.target.value as CourseDifficulty) || undefined)}
               className="py-1.5 px-3 rounded-card-sm bg-canvas border border-surface-border text-xs text-ink focus:outline-none focus:border-ink transition-colors"

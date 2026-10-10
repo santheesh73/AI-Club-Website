@@ -13,8 +13,8 @@ export function getContextualHomePath(
   isAdmin?: boolean
 ): string {
   if (!isAuthenticated) return '/';
-  if (isAdmin || profile?.role === 'admin') return '/admin';
+  if (isAdmin) return '/admin';
   if (profile?.role === 'member') return '/member';
-  if (profile?.role === 'applicant') return '/applicant';
+  if (profile?.role === 'applicant' || profile?.role === 'admin') return '/applicant';
   return '/';
 }

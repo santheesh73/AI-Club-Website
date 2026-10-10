@@ -6,8 +6,9 @@
   "description": "AI CLUB - Frontend Client Application",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && node scripts/build.mjs",
     "preview": "vite preview",
+    "analyze:bundle": "node scripts/analyze-bundle.mjs",
     "test": "vitest run",
     "lint": "tsc -b --noEmit"
   },

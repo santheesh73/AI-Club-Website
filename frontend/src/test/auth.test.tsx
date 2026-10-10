@@ -8,7 +8,7 @@ import { AuthProvider } from '@/features/auth';
 import type { UserProfile } from '@/types/user';
 
 describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
-  it('LoginPage renders semantic form controls and handles input', () => {
+  it('LoginPage renders semantic form controls and handles input', async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -17,12 +17,12 @@ describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('RegisterPage displays validation errors when passwords do not match', () => {
+  it('RegisterPage displays validation errors when passwords do not match', async () => {
     render(
       <BrowserRouter>
         <AuthProvider>
@@ -31,7 +31,7 @@ describe('AI CLUB Milestone 2: Frontend Auth & Profile Tests', () => {
       </BrowserRouter>
     );
 
-    const nameInput = screen.getByLabelText(/full name/i);
+    const nameInput = await screen.findByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
     const passInput = screen.getByLabelText(/^password/i);
     const confirmInput = screen.getByLabelText(/confirm password/i);

@@ -39,13 +39,13 @@ export const Navbar: React.FC = () => {
 
   const accountLinks = isAuthenticated ? (
     <>
-      <Link to={homeTarget} className="public-action">{isAdmin ? 'Admin center' : profile?.role === 'member' ? 'Member portal' : 'My application'}</Link>
+      <Link to={homeTarget} className="public-action">My workspace</Link>
       <button type="button" onClick={handleSignOut} disabled={signingOut} className="public-text-link disabled:opacity-50">{signingOut ? 'Signing out…' : 'Sign out'}</button>
     </>
   ) : (
     <>
       <Link to="/login" className="public-text-link">Sign in</Link>
-      <Link to="/register" className="public-action">Join Club</Link>
+      <Link to="/join" className="public-action">Join Club</Link>
     </>
   );
 
@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
           <span className="font-semibold text-lg tracking-tight">AI CLUB</span>
         </Link>
         <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path ? 'page' : undefined} className="public-text-link aria-[current=page]:underline">{link.label}</Link>)}
+          {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path || location.pathname.startsWith(`${link.path}/`) ? 'page' : undefined} className="public-text-link aria-[current=page]:underline">{link.label}</Link>)}
         </nav>
         <div className="hidden md:flex items-center gap-4">{accountLinks}</div>
         <button ref={menuButton} type="button" aria-expanded={menuOpen} aria-controls="public-mobile-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setMenuOpen(!menuOpen)} className="md:hidden flex h-11 w-11 items-center justify-center rounded-xl border border-surface-border hover:bg-surface-muted">
@@ -65,7 +65,7 @@ export const Navbar: React.FC = () => {
         </button>
       </div>
       {menuOpen && <nav id="public-mobile-navigation" aria-label="Mobile navigation" className="md:hidden border-t border-surface-border px-6 py-4 flex flex-col gap-2">
-        {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path ? 'page' : undefined} className="public-text-link justify-start aria-[current=page]:underline">{link.label}</Link>)}
+        {navLinks.map((link) => <Link key={link.path} to={link.path} aria-current={location.pathname === link.path || location.pathname.startsWith(`${link.path}/`) ? 'page' : undefined} className="public-text-link justify-start aria-[current=page]:underline">{link.label}</Link>)}
         <div className="flex flex-wrap items-center gap-4 border-t border-surface-border pt-4 mt-2">{accountLinks}</div>
       </nav>}
     </header>

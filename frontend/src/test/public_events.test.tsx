@@ -20,7 +20,7 @@ const auth = vi.hoisted(() => ({
   loginAsDemo: vi.fn(),
 }));
 
-vi.mock('@/features/auth', () => ({ useAuth: () => auth, AUTHORIZED_ADMIN_EMAIL: 'admin@example.com' }));
+vi.mock('@/features/auth', () => ({ useAuth: () => auth, AUTHORIZED_ADMIN_EMAIL: 'admin@example.com', isAuthorizedAdmin: (email: string | undefined, role: string | undefined) => email === 'admin@example.com' && role === 'admin' }));
 vi.mock('@/services/eventsApi', () => ({ eventsApi: {
   getPublicEvents: vi.fn(),
   getPublicEventBySlug: vi.fn(),

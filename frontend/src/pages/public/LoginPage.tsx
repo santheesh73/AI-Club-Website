@@ -1,348 +1,105 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, AUTHORIZED_ADMIN_EMAIL } from '@/features/auth';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { isAuthorizedAdmin, useAuth } from '@/features/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
-import { GraduationCap, ShieldCheck, UserCheck, Sparkles } from 'lucide-react';
 import { clearEventReturn, eventAuthUrl, rememberEventReturn, resolveEventReturn, validatePortalReturn } from '@/features/auth/authReturn';
+import type { UserProfile } from '@/types/user';
+
+function accountDestination(profile: UserProfile | null | undefined, from: string | null): string {
+  const isAdmin = isAuthorizedAdmin(profile?.email, profile?.role);
+  const isMember = profile?.role === 'member';
+  const dashboard = isAdmin ? '/admin' : isMember ? '/member/dashboard' : '/applicant/dashboard';
+  if (!from) return dashboard;
+  if (from.startsWith('/admin')) return isAdmin ? from : dashboard;
+  if (from.startsWith('/member')) return isMember || isAdmin ? from : dashboard;
+  return from;
+}
 
 export const LoginPage: React.FC = () => {
-  const { signIn, loginAsDemo, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { signIn, isAuthenticated, isLoading: authLoading, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [selectedRole, setSelectedRole] = useState<'student' | 'member' | 'admin'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [eventReturn] = useState(() => resolveEventReturn(location.search, location.state));
   const from = validatePortalReturn(location.state);
 
   useEffect(() => {
-    if (!eventReturn) return;
-    if (isAuthenticated && !authLoading) {
-      clearEventReturn();
-      navigate(eventReturn, { replace: true });
-    } else rememberEventReturn(eventReturn);
-  }, [eventReturn, isAuthenticated, authLoading, navigate]);
-
-  const handleRoleSwitch = (role: 'student' | 'member' | 'admin') => {
-    setSelectedRole(role);
-    setError(null);
-    if (role === 'member') {
-      setEmail('alex.member@aiclub.org');
-      setPassword('demo-member-2026');
-    } else if (role === 'admin') {
-      setEmail(AUTHORIZED_ADMIN_EMAIL);
-      setPassword('');
-    } else {
-      setEmail('');
-      setPassword('');
+    if (eventReturn) rememberEventReturn(eventReturn);
+    if (isAuthenticated && !authLoading && !isSubmitting) {
+      if (eventReturn) clearEventReturn();
+      navigate(eventReturn || accountDestination(profile, from), { replace: true });
     }
-  };
+  }, [eventReturn, isAuthenticated, authLoading, isSubmitting, profile, from, navigate]);
 
-  const handleDemoLogin = async (demoRole: 'member' | 'applicant') => {
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (fieldErrors.email) emailRef.current?.focus();
+    else if (fieldErrors.password) passwordRef.current?.focus();
+    else if (error) errorRef.current?.focus();
+  }, [error, fieldErrors]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
+    const invalid: Record<string, string> = {};
+    if (!email.trim()) invalid.email = 'Enter your email address.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) invalid.email = 'Enter a valid email address.';
+    if (!password) invalid.password = 'Enter your password.';
+    setFieldErrors(invalid);
+    if (Object.keys(invalid).length) return;
+
+    setIsSubmitting(true);
     try {
-      const result = await loginAsDemo(demoRole);
-      if (result.success) {
-        if (demoRole === 'member') {
-          navigate('/member/dashboard', { replace: true });
-        } else {
-          navigate('/applicant/dashboard', { replace: true });
-        }
+      const result = await signIn(email.trim(), password);
+      if (!result.success) {
+        setError(result.error || 'We could not sign you in. Check your email and password, then try again.');
+        return;
       }
+      if (eventReturn) clearEventReturn();
+      navigate(eventReturn || accountDestination(result.profile, from), { replace: true });
     } catch {
-      setError('Unable to activate demo mode. Please try again.');
+      setError('We could not sign you in. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // If in Member demo mode, use direct demo login
-    if (selectedRole === 'member') {
-      await handleDemoLogin('member');
-      return;
-    }
-
-    if (!email.trim() || !password) {
-      setError('Please provide both your email address and password.');
-      return;
-    }
-
-    const userEmail = email.trim().toLowerCase();
-
-    // Strict client-side check if Admin mode is chosen
-    if (selectedRole === 'admin' && userEmail !== AUTHORIZED_ADMIN_EMAIL) {
-      setError(`ACCESS IS DENIED. U CAN'T SIGNIN THROUGH THE ADMIN GATEWAY`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    let result;
-    try {
-      result = await signIn(email.trim(), password);
-    } catch {
-      setError('We could not sign you in. Please try again.');
-      setIsSubmitting(false);
-      return;
-    }
-    setIsSubmitting(false);
-
-    if (!result.success) {
-      setError(result.error || 'Invalid credentials');
-      return;
-    }
-
-    const isAdmin = userEmail === AUTHORIZED_ADMIN_EMAIL;
-    const isMember = result.profile?.role === 'member';
-
-    if (eventReturn) {
-      clearEventReturn();
-      navigate(eventReturn, { replace: true });
-      return;
-    }
-
-    // Role-based authoritative navigation
-    if (selectedRole === 'admin') {
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
-      } else {
-        setError(`ACCESS IS DENIED. U CAN'T SIGNIN THROUGH THE ADMIN GATEWAY`);
-      }
-      return;
-    }
-
-    // Student / Member flow
-    if (from) {
-      if (from.startsWith('/admin')) {
-        navigate(isAdmin ? from : isMember ? '/member/dashboard' : '/applicant/dashboard', { replace: true });
-      } else if (from.startsWith('/member')) {
-        navigate(isMember || isAdmin ? from : '/applicant/dashboard', { replace: true });
-      } else {
-        navigate(from, { replace: true });
-      }
-    } else {
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
-      } else if (isMember) {
-        navigate('/member/dashboard', { replace: true });
-      } else {
-        navigate('/applicant/dashboard', { replace: true });
-      }
-    }
-  };
+  if ((authLoading && !isSubmitting) || isAuthenticated) {
+    return <div role="status" className="min-h-[50vh] flex items-center justify-center p-6 text-sm text-ink-secondary">Opening your account…</div>;
+  }
 
   return (
     <div className="min-h-[calc(100vh-160px)] flex items-center justify-center py-12 px-4 sm:px-6">
       <div className="w-full max-w-md">
-        <Card className="shadow-elevated border-surface-border">
-          <CardHeader className="text-center pb-2">
-            {/* Role-based [STUDENT / MEMBER / ADMIN] switching tabs */}
-            {!eventReturn && <div className="grid grid-cols-3 p-1 mb-5 rounded-xl bg-canvas border border-surface-border shadow-inner">
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('student')}
-                className={`py-2 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'student'
-                    ? 'bg-ink text-canvas shadow-subtle'
-                    : 'text-ink-secondary hover:text-ink'
-                }`}
-              >
-                <GraduationCap className="h-3.5 w-3.5" />
-                <span>STUDENT</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('member')}
-                className={`py-2 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'member'
-                    ? 'bg-ink text-canvas shadow-subtle'
-                    : 'text-ink-secondary hover:text-ink'
-                }`}
-              >
-                <UserCheck className={`h-3.5 w-3.5 ${selectedRole === 'member' ? 'text-accent-lavender' : ''}`} />
-                <span>MEMBER</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleSwitch('admin')}
-                className={`py-2 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'admin'
-                    ? 'bg-ink text-canvas shadow-subtle'
-                    : 'text-ink-secondary hover:text-ink'
-                }`}
-              >
-                <ShieldCheck className={`h-3.5 w-3.5 ${selectedRole === 'admin' ? 'text-accent-green' : ''}`} />
-                <span>ADMIN</span>
-              </button>
-            </div>}
-
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              {selectedRole === 'admin'
-                ? 'Sign In as Administrator'
-                : selectedRole === 'member'
-                ? 'Explore as Club Member'
-                : 'Sign In to AI CLUB'}
-            </CardTitle>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle as="h1" className="text-3xl font-bold tracking-tight">Sign in to AI Club</CardTitle>
             <CardDescription>
-              {selectedRole === 'admin'
-                ? 'Restricted control console for authorized AI CLUB administration.'
-                : selectedRole === 'member'
-                ? 'Instant preview of the inducted member dashboard, digital ID card, courses, and projects.'
-                : eventReturn ? 'Sign in, then return to the event and choose RSVP to reserve your place. The membership assessment is not required for public events.' : 'Access your account, membership application, and event RSVPs.'}
+              {eventReturn ? 'Sign in, then return to the event and choose RSVP to reserve your place. Public events do not require the membership assessment.' : 'Use your account email and password. We’ll take you to your workspace.'}
             </CardDescription>
           </CardHeader>
-
           <CardContent>
-            {error && (
-              <div
-                role="alert"
-                className="mb-6 p-4 rounded-cardSm bg-red-50 border border-red-200 text-xs text-red-800 font-medium"
-              >
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <Input
-                label={
-                  selectedRole === 'admin'
-                    ? 'Authorized Admin Email'
-                    : selectedRole === 'member'
-                    ? 'Demo Member Email'
-                    : 'Student Email Address'
-                }
-                type="email"
-                placeholder={
-                  selectedRole === 'admin'
-                    ? 'admin@aiclub.org'
-                    : selectedRole === 'member'
-                    ? 'alex.member@aiclub.org'
-                    : 'ada@university.edu'
-                }
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="login-password" className="block text-sm font-medium text-ink">
-                    Password
-                  </label>
-                  {selectedRole !== 'member' && (
-                    <Link
-                      to="/forgot-password"
-                      className="text-xs text-ink-muted hover:text-ink hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  )}
-                </div>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
-
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  size="md"
-                  className="w-full shadow-subtle"
-                  isLoading={isSubmitting}
-                >
-                  {selectedRole === 'admin'
-                    ? 'Sign In to Admin Portal'
-                    : selectedRole === 'member'
-                    ? 'Enter Member Portal (Demo) →'
-                    : 'Sign In'}
-                </Button>
-              </div>
+            {error && <div ref={errorRef} role="alert" tabIndex={-1} className="mb-6 rounded-cardSm bg-red-50 p-4 text-sm text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-800">{error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate aria-busy={isSubmitting}>
+              <Input ref={emailRef} id="login-email" label="Email address" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} error={fieldErrors.email} autoComplete="email" required />
+              <Input ref={passwordRef} id="login-password" label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={fieldErrors.password} autoComplete="current-password" required />
+              <Button type="submit" className="w-full min-h-11" isLoading={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</Button>
+              <div className="text-center"><Link to="/forgot-password" className="inline-flex min-h-11 items-center rounded px-2 text-sm text-ink-secondary underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink">Forgot password?</Link></div>
             </form>
-
-            {/* Quick 1-Click Demo Actions */}
-            {!eventReturn && <div className="mt-6 pt-5 border-t border-surface-border space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-accent-lavender" />
-                  Quick Demo Access
-                </span>
-                <span className="text-[10px] text-ink-muted">1-Click Launch</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('member')}
-                  disabled={isSubmitting}
-                  className="p-2.5 text-left rounded-cardSm border border-surface-border bg-canvas hover:border-ink hover:bg-surface transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-ink">Demo Member</span>
-                    <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Active</span>
-                  </div>
-                  <p className="text-[10px] text-ink-muted leading-tight">
-                    Member dashboard, digital ID & internal learning
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('applicant')}
-                  disabled={isSubmitting}
-                  className="p-2.5 text-left rounded-cardSm border border-surface-border bg-canvas hover:border-ink hover:bg-surface transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-ink">Demo Applicant</span>
-                    <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-surface-muted text-ink font-semibold">Test</span>
-                  </div>
-                  <p className="text-[10px] text-ink-muted leading-tight">
-                    Entrance test assessment & applicant timeline
-                  </p>
-                </button>
-              </div>
-            </div>}
           </CardContent>
-
-          <CardFooter className="justify-center text-xs text-ink-muted">
-            {selectedRole === 'admin' ? (
-              <span className="font-mono text-[11px] text-ink-muted">
-                Admin access restricted to verified allowlist.
-              </span>
-            ) : selectedRole === 'member' ? (
-              <span className="text-xs text-ink-muted">
-                Viewing demo mode as an inducted member.
-              </span>
-            ) : (
-              <>
-                Don't have an account yet?{' '}
-                <Link to={eventAuthUrl('register', eventReturn)} className="ml-1 text-ink font-semibold hover:underline underline-offset-4">
-                  Create Account
-                </Link>
-              </>
-            )}
+          <CardFooter className="justify-center flex-wrap gap-x-1 text-sm text-ink-secondary">
+            <span>New to the club?</span><Link to={eventAuthUrl('register', eventReturn)} className="inline-flex min-h-11 items-center rounded px-2 font-semibold text-ink underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink">Create account</Link>
           </CardFooter>
         </Card>
       </div>
     </div>
   );
 };
-
